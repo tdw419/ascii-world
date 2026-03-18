@@ -109,6 +109,55 @@ export class ProjectRegistry {
         }
     }
 
+    /**
+     * Synchronize registry with projects discovered on the filesystem
+     * @param baseDirs - Base directories to scan for projects
+     * @returns Array of newly registered project IDs
+     */
+    public syncDiscoveredProjects(baseDirs: string[]): string[] {
+        const newlyRegistered: string[] = [];
+        const allDiscoveredPaths: string[] = [];
+
+        // Scan each base directory
+        for (const baseDir of baseDirs) {
+            if (existsSync(baseDir)) {
+                const discovered = this.discoverProjects(baseDir);
+                allDiscoveredPaths.push(...discovered);
+            }
+        }
+
+        // 1. Register new projects
+        const existingPaths = new Set(Array.from(this.projects.values()).map(p => p.path));
+        
+        for (const projectPath of allDiscoveredPaths) {
+            if (!existingPaths.has(projectPath)) {
+                try {
+                    const port = this.findAvailablePort();
+                    const project = this.registerProject(projectPath, port);
+                    newlyRegistered.push(project.id);
+                    console.log(`Auto-discovered and registered project: ${project.name} on port ${port}`);
+                } catch (error) {
+                    console.error(`Failed to auto-register project at ${projectPath}:`, error);
+                }
+            }
+        }
+
+        // 2. Check for missing projects (optional: we might want to keep them but mark as 'error' or 'missing')
+        // For now, let's just log if a registered path no longer exists
+        for (const project of this.projects.values()) {
+            if (!existsSync(project.path)) {
+                console.warn(`Registered project ${project.id} path no longer exists: ${project.path}`);
+                // We could update status to 'error' here if we wanted
+            }
+        }
+
+        if (newlyRegistered.length > 0) {
+            this.save();
+        }
+
+        return newlyRegistered;
+    }
+
     public discoverProjects(searchPath: string): string[] {
         const discovered: string[] = [];
 

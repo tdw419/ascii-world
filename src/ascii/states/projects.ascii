@@ -12,8 +12,8 @@
 ║  │  [N] New Project...                                                      │║
 ║  └─────────────────────────────────────────────────────────────────────────┘║
 ║                                                                             ║
-║  Selected: {{selected_project}}                                             ║
+║  Selected: {{selected_project_id}}                                          ║
 ║                                                                             ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  [S] Start  [T] Stop  [R] Restart  [V] View ASCII  [E] Edit Project         ║
+║  [S] Start  [T] Stop  [R] Refresh  [V] View ASCII  [E] Edit Project         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝

@@ -7,7 +7,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
-export type ManagerState = 'PROJECTS' | 'TEMPLATES' | 'BINDINGS' | 'TEST' | 'GIT' | 'PROJECT_VIEW';
+export type ManagerState = 'PROJECTS' | 'TEMPLATES' | 'BINDINGS' | 'TEST' | 'GIT' | 'PROJECT_VIEW' | 'DASHBOARD';
 
 export interface TestResults {
     passed: number;
@@ -37,6 +37,16 @@ export interface GitStatus {
     };
 }
 
+export interface DashboardHealth {
+    projectId: string;
+    projectName: string;
+    port: number;
+    status: 'running' | 'stopped' | 'error';
+    uptime: string | null;
+    lastCheck: string | null;
+    responseTime: number | null;
+}
+
 export interface ManagerContext {
     state: ManagerState;
     selectedProjectId: string | null;
@@ -44,6 +54,8 @@ export interface ManagerContext {
     templateScrollOffset: number;
     testResults: TestResults | null;
     gitStatus: GitStatus | null;
+    dashboardHealth: DashboardHealth[] | null;
+    lastHealthCheck: number | null;
     editMode: boolean;
     editBuffer: string[];
     unsavedChanges: boolean;
@@ -88,6 +100,8 @@ export class ManagerStateManager {
             templateScrollOffset: 0,
             testResults: null,
             gitStatus: null,
+            dashboardHealth: null,
+            lastHealthCheck: null,
             editMode: false,
             editBuffer: [],
             unsavedChanges: false
@@ -117,15 +131,17 @@ export class ManagerStateManager {
                 { label: 'C', action: 'goto_bindings', target: 'BINDINGS' },
                 { label: 'D', action: 'goto_test', target: 'TEST' },
                 { label: 'E', action: 'goto_git', target: 'GIT' },
+                { label: 'F', action: 'goto_dashboard', target: 'DASHBOARD' },
                 { label: 'X', action: 'quit', target: 'QUIT' }
             ],
             stateTransitions: {
-                PROJECTS: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
-                TEMPLATES: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
-                BINDINGS: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
-                TEST: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
-                GIT: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
-                PROJECT_VIEW: { A: 'PROJECTS', X: 'PROJECTS' }
+                PROJECTS: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', F: 'DASHBOARD', X: 'QUIT' },
+                TEMPLATES: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', F: 'DASHBOARD', X: 'QUIT' },
+                BINDINGS: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', F: 'DASHBOARD', X: 'QUIT' },
+                TEST: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', F: 'DASHBOARD', X: 'QUIT' },
+                GIT: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', F: 'DASHBOARD', X: 'QUIT' },
+                PROJECT_VIEW: { A: 'PROJECTS', X: 'PROJECTS' },
+                DASHBOARD: { A: 'PROJECTS', F: 'DASHBOARD', X: 'QUIT' }
             }
         };
     }
@@ -182,7 +198,8 @@ export class ManagerStateManager {
                 'BINDINGS': 'goto_bindings',
                 'TEST': 'goto_test',
                 'GIT': 'goto_git',
-                'PROJECT_VIEW': 'goto_project_view'
+                'PROJECT_VIEW': 'goto_project_view',
+                'DASHBOARD': 'goto_dashboard'
             };
             return { success: true, action: actionMap[targetState] };
         }
@@ -194,7 +211,7 @@ export class ManagerStateManager {
      * Type guard to check if a string is a valid ManagerState
      */
     private isValidManagerState(state: string): state is ManagerState {
-        return state === 'PROJECTS' || state === 'TEMPLATES' || state === 'BINDINGS' || state === 'TEST' || state === 'GIT' || state === 'PROJECT_VIEW';
+        return state === 'PROJECTS' || state === 'TEMPLATES' || state === 'BINDINGS' || state === 'TEST' || state === 'GIT' || state === 'PROJECT_VIEW' || state === 'DASHBOARD';
     }
 
     /**
@@ -370,12 +387,35 @@ export class ManagerStateManager {
     }
 
     /**
+     * Set dashboard health data (creates a deep copy to maintain immutability)
+     */
+    public setDashboardHealth(health: DashboardHealth[]): void {
+        this._context = {
+            ...this._context,
+            dashboardHealth: health.map(h => ({ ...h })),
+            lastHealthCheck: Date.now()
+        };
+    }
+
+    /**
+     * Clear dashboard health data
+     */
+    public clearDashboardHealth(): void {
+        this._context = {
+            ...this._context,
+            dashboardHealth: null,
+            lastHealthCheck: null
+        };
+    }
+
+    /**
      * Get the current context (returns a copy to maintain immutability)
      */
     public getData(): ManagerContext {
         return {
             ...this._context,
-            editBuffer: [...this._context.editBuffer]
+            editBuffer: [...this._context.editBuffer],
+            dashboardHealth: this._context.dashboardHealth?.map(h => ({ ...h })) ?? null
         };
     }
 
@@ -408,6 +448,8 @@ export class ManagerStateManager {
             templateScrollOffset: 0,
             testResults: null,
             gitStatus: null,
+            dashboardHealth: null,
+            lastHealthCheck: null,
             editMode: false,
             editBuffer: [],
             unsavedChanges: false

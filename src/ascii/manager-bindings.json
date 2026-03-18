@@ -5,6 +5,7 @@
     { "label": "C", "action": "goto_bindings", "target": "BINDINGS" },
     { "label": "D", "action": "goto_test", "target": "TEST" },
     { "label": "E", "action": "goto_git", "target": "GIT" },
+    { "label": "F", "action": "goto_dashboard", "target": "DASHBOARD" },
     { "label": "X", "action": "quit", "target": "QUIT" },
     { "label": "1", "action": "select_item_1", "target": null },
     { "label": "2", "action": "select_item_2", "target": null },
@@ -12,7 +13,7 @@
     { "label": "N", "action": "new_item", "target": null },
     { "label": "S", "action": "start_project", "target": null },
     { "label": "T", "action": "stop_project", "target": null },
-    { "label": "R", "action": "restart_project", "target": null },
+    { "label": "R", "action": "refresh_discovery", "target": null },
     { "label": "V", "action": "view_detail", "target": null },
     { "label": "W", "action": "save_changes", "target": null },
     { "label": "U", "action": "undo_changes", "target": null },
@@ -28,6 +29,7 @@
       "C": "BINDINGS",
       "D": "TEST",
       "E": "GIT",
+      "F": "DASHBOARD",
       "X": "QUIT"
     },
     "TEMPLATES": {
@@ -36,6 +38,7 @@
       "C": "BINDINGS",
       "D": "TEST",
       "E": "GIT",
+      "F": "DASHBOARD",
       "X": "QUIT"
     },
     "BINDINGS": {
@@ -44,6 +47,7 @@
       "C": "BINDINGS",
       "D": "TEST",
       "E": "GIT",
+      "F": "DASHBOARD",
       "X": "QUIT"
     },
     "TEST": {
@@ -52,6 +56,7 @@
       "C": "BINDINGS",
       "D": "TEST",
       "E": "GIT",
+      "F": "DASHBOARD",
       "X": "QUIT"
     },
     "GIT": {
@@ -60,11 +65,17 @@
       "C": "BINDINGS",
       "D": "TEST",
       "E": "GIT",
+      "F": "DASHBOARD",
       "X": "QUIT"
     },
     "PROJECT_VIEW": {
       "A": "PROJECTS",
       "X": "PROJECTS"
+    },
+    "DASHBOARD": {
+      "A": "PROJECTS",
+      "F": "DASHBOARD",
+      "X": "QUIT"
     }
   }
 }

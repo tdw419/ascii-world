@@ -19,33 +19,35 @@ import sys
 import os
 import json
 import subprocess
+import shutil
 from pathlib import Path
 import click
 
-# Add parent to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Global state
-_json_output = False
-_repl_mode = False
+def _find_project_root() -> Path:
+    """Find project root by looking for package.json."""
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "package.json").exists():
+            return parent
+    # Fallback to relative path
+    return Path(__file__).parent.parent.parent.parent.parent.parent
+
+
+def _find_ts_cli() -> Path:
+    """Find TypeScript CLI, checking environment variable first."""
+    # Check environment variable override
+    env_path = os.environ.get("PATTERN_CLI_PATH")
+    if env_path:
+        return Path(env_path)
+
+    # Default location relative to project root
+    return _find_project_root() / "src" / "cli" / "pattern-cli.ts"
+
 
 # Path to TypeScript CLI
-TS_CLI_PATH = Path(__file__).parent.parent.parent.parent.parent.parent / "src" / "cli" / "pattern-cli.ts"
-
-
-def output(data, message: str = "") -> None:
-    """Print output in JSON or human-readable format."""
-    if _json_output:
-        click.echo(json.dumps(data, indent=2, default=str))
-    else:
-        if message:
-            click.echo(message)
-        if isinstance(data, dict):
-            _print_dict(data)
-        elif isinstance(data, list):
-            _print_list(data)
-        else:
-            click.echo(str(data))
+TS_CLI_PATH = _find_ts_cli()
+PROJECT_ROOT = _find_project_root()
 
 
 def _print_dict(d: dict, indent: int = 0) -> None:
@@ -73,6 +75,15 @@ def _print_list(items: list, indent: int = 0) -> None:
             click.echo(f"{prefix}- {item}")
 
 
+def _get_result_count(result) -> int:
+    """Get count of items in result, handling both list and dict."""
+    if isinstance(result, list):
+        return len(result)
+    elif isinstance(result, dict) and "error" not in result:
+        return 1
+    return 0
+
+
 def run_ts_cli(args: list, input_data: str = None) -> dict:
     """Run the TypeScript CLI and return parsed output.
 
@@ -83,6 +94,14 @@ def run_ts_cli(args: list, input_data: str = None) -> dict:
     Returns:
         Parsed JSON output or error dict
     """
+    # Validate bun is available
+    if not shutil.which("bun"):
+        return {"error": "'bun' is not installed. Install from https://bun.sh"}
+
+    # Validate TypeScript CLI exists
+    if not TS_CLI_PATH.exists():
+        return {"error": f"TypeScript CLI not found at {TS_CLI_PATH}. Set PATTERN_CLI_PATH env var."}
+
     cmd = ["bun", "run", str(TS_CLI_PATH)] + args
 
     try:
@@ -91,12 +110,12 @@ def run_ts_cli(args: list, input_data: str = None) -> dict:
             capture_output=True,
             text=True,
             input=input_data,
-            cwd=str(TS_CLI_PATH.parent.parent.parent.parent.parent.parent),
+            cwd=str(PROJECT_ROOT),
             timeout=30
         )
 
         if result.returncode != 0:
-            return {"error": result.stderr, "returncode": result.returncode}
+            return {"error": result.stderr.strip() or "Unknown error", "returncode": result.returncode}
 
         # Try to parse JSON output
         try:
@@ -117,16 +136,31 @@ def run_ts_cli(args: list, input_data: str = None) -> dict:
 @click.pass_context
 def cli(ctx, json_output, verbose):
     """Pattern CLI - ASCII Pattern Recognition for AI Agents"""
-    global _json_output
-    _json_output = json_output
     ctx.ensure_object(dict)
+    ctx.obj['json_output'] = json_output
     ctx.obj['verbose'] = verbose
+
+
+def output(ctx, data, message: str = "") -> None:
+    """Print output in JSON or human-readable format."""
+    if ctx.obj.get('json_output', False):
+        click.echo(json.dumps(data, indent=2, default=str))
+    else:
+        if message:
+            click.echo(message)
+        if isinstance(data, dict):
+            _print_dict(data)
+        elif isinstance(data, list):
+            _print_list(data)
+        else:
+            click.echo(str(data))
 
 
 @cli.command()
 @click.argument('file', type=click.File('r'), default='-')
 @click.option('--patterns', '-p', multiple=True, help='Filter by pattern type (button, status, container, table)')
-def parse(file, patterns):
+@click.pass_context
+def parse(ctx, file, patterns):
     """Parse ASCII file and detect patterns.
 
     FILE is the ASCII template to parse (use - for stdin)
@@ -144,7 +178,8 @@ def parse(file, patterns):
         click.echo(f"Error: {result['error']}", err=True)
         sys.exit(1)
 
-    output(result)
+    count = _get_result_count(result)
+    output(ctx, result, f"Detected {count} patterns")
 
 
 @cli.group()
@@ -155,7 +190,8 @@ def detect():
 
 @detect.command()
 @click.argument('file', type=click.File('r'))
-def buttons(file):
+@click.pass_context
+def buttons(ctx, file):
     """Detect button patterns only."""
     ascii_content = file.read()
     args = ["--format", "json", "--patterns", "button"]
@@ -165,12 +201,14 @@ def buttons(file):
         click.echo(f"Error: {result['error']}", err=True)
         sys.exit(1)
 
-    output(result, f"Found {len(result)} buttons")
+    count = _get_result_count(result)
+    output(ctx, result, f"Found {count} buttons")
 
 
 @detect.command()
 @click.argument('file', type=click.File('r'))
-def status(file):
+@click.pass_context
+def status(ctx, file):
     """Detect status indicators only."""
     ascii_content = file.read()
     args = ["--format", "json", "--patterns", "status-indicator"]
@@ -180,12 +218,14 @@ def status(file):
         click.echo(f"Error: {result['error']}", err=True)
         sys.exit(1)
 
-    output(result, f"Found {len(result)} status indicators")
+    count = _get_result_count(result)
+    output(ctx, result, f"Found {count} status indicators")
 
 
 @detect.command()
 @click.argument('file', type=click.File('r'))
-def containers(file):
+@click.pass_context
+def containers(ctx, file):
     """Detect container patterns only."""
     ascii_content = file.read()
     args = ["--format", "json", "--patterns", "container"]
@@ -195,12 +235,14 @@ def containers(file):
         click.echo(f"Error: {result['error']}", err=True)
         sys.exit(1)
 
-    output(result, f"Found {len(result)} containers")
+    count = _get_result_count(result)
+    output(ctx, result, f"Found {count} containers")
 
 
 @detect.command()
 @click.argument('file', type=click.File('r'))
-def tables(file):
+@click.pass_context
+def tables(ctx, file):
     """Detect table patterns only."""
     ascii_content = file.read()
     args = ["--format", "json", "--patterns", "table"]
@@ -210,7 +252,8 @@ def tables(file):
         click.echo(f"Error: {result['error']}", err=True)
         sys.exit(1)
 
-    output(result, f"Found {len(result)} tables")
+    count = _get_result_count(result)
+    output(ctx, result, f"Found {count} tables")
 
 
 if __name__ == '__main__':

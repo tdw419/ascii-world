@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeosASCII Viewer - GPU Cartridge Player</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button, .file-input-label {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #00ff88;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        button:hover, .file-input-label:hover {
+            background: #252540;
+            border-color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        #canvas-container {
+            position: relative;
+            border: 2px solid #333;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+        
+        #viewport {
+            display: block;
+            image-rendering: pixelated;
+            cursor: crosshair;
+        }
+        
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            font-size: 10px;
+        }
+        
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #111118;
+            border: 1px solid #333;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .info-panel h3 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #222;
+            font-size: 13px;
+        }
+        
+        .info-label { color: #666; }
+        .info-value { color: #00ff88; }
+        
+        #console {
+            margin-top: 20px;
+            padding: 15px;
+            background: #0d0d12;
+            border: 1px solid #222;
+            max-width: 800px;
+            width: 100%;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .console-line { margin: 2px 0; }
+        .console-info { color: #666; }
+        .console-action { color: #ffaa00; }
+        .console-error { color: #ff4444; }
+        .console-success { color: #00ff88; }
+        
+        .drop-zone {
+            border: 2px dashed #333;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+        
+        .drop-zone.dragover {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .drop-zone p { color: #666; }
+    </style>
+</head>
+<body>
+    <h1>⟁ GeosASCII Viewer</h1>
+    <p class="subtitle">GPU Cartridge Player - Pixels Move Pixels</p>
+    
+    <div class="controls">
+        <label class="file-input-label">
+            📂 Load Cartridge
+            <input type="file" id="fileInput" accept=".rts.png">
+        </label>
+        <button id="loadExample">Load Example</button>
+        <button id="clearState">Clear State</button>
+    </div>
+    
+    <div class="drop-zone" id="dropZone">
+        <p>Drop .rts.png file here or use controls above</p>
+    </div>
+    
+    <div id="canvas-container">
+        <canvas id="viewport" width="640" height="192"></canvas>
+    </div>
+    
+    <div class="info-panel">
+        <h3>▸ Cartridge Info</h3>
+        <div class="info-row">
+            <span class="info-label">Name:</span>
+            <span class="info-value" id="cartridgeName">-</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Version:</span>
+            <span class="info-value" id="cartridgeVersion">-</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Patterns:</span>
+            <span class="info-value" id="patternCount">-</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Click:</span>
+            <span class="info-value" id="lastClick">-</span>
+        </div>
+    </div>
+    
+    <div id="console"></div>
+
+    <script>
+const WIDTH = 80;
+const HEIGHT = 24;
+const CELL_WIDTH = 8;
+const CELL_HEIGHT = 8;
+const SCALE = 8;
+
+const OPCODES = {
+    0: 'NOP',
+    1: 'JUMP',
+    2: 'CALL',
+    3: 'TOGGLE',
+    4: 'INPUT',
+    5: 'OUTPUT',
+    255: 'EXIT'
+};
+
+const FONT = [];
+const FONT_CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+
+function createFont() {
+    const charWidth = 5;
+    const charHeight = 7;
+    
+    for (let i = 0; i < 128; i++) {
+        const canvas = document.createElement('canvas');
+        canvas.width = charWidth;
+        canvas.height = charHeight;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, charWidth, charHeight);
+        
+        ctx.fillStyle = '#00ff88';
+        ctx.font = '7px monospace';
+        ctx.textBaseline = 'top';
+        
+        const char = String.fromCharCode(i);
+        ctx.fillText(char, 0, 0);
+        
+        FONT[i] = ctx.getImageData(0, 0, charWidth, charHeight);
+    }
+}
+
+class GeosViewer {
+    constructor() {
+        this.canvas = document.getElementById('viewport');
+        this.ctx = this.canvas.getContext('2d');
+        this.cartridge = null;
+        this.state = new Uint8Array(1024 * 4);
+        
+        this.canvas.addEventListener('click', (e) => this.handleClick(e));
+        
+        createFont();
+        this.log('GeosASCII Viewer initialized', 'info');
+    }
+    
+    async loadCartridge(data) {
+        const img = new Image();
+        img.src = URL.createObjectURL(data);
+        
+        await new Promise(resolve => img.onload = resolve);
+        
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = img.width;
+        tempCanvas.height = img.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(img, 0, 0);
+        
+        const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+        const pixels = imageData.data;
+        
+        this.glyphGrid = new Uint8Array(WIDTH * HEIGHT * 4);
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                const srcIdx = (y * WIDTH + x) * 4;
+                const dstIdx = (y * WIDTH + x) * 4;
+                this.glyphGrid[dstIdx] = pixels[srcIdx];
+                this.glyphGrid[dstIdx + 1] = pixels[srcIdx + 1];
+                this.glyphGrid[dstIdx + 2] = pixels[srcIdx + 2];
+                this.glyphGrid[dstIdx + 3] = pixels[srcIdx + 3];
+            }
+        }
+        
+        const sitOffset = HEIGHT * WIDTH * 4;
+        this.sit = new Uint8Array(256 * 4);
+        for (let i = 0; i < 256 * 4; i++) {
+            this.sit[i] = pixels[sitOffset + i];
+        }
+        
+        const stateOffset = (HEIGHT + 256) * WIDTH * 4;
+        for (let i = 0; i < 1024 * 4; i++) {
+            this.state[i] = pixels[stateOffset + i];
+        }
+        
+        const bootstrapOffset = (HEIGHT + 256 + 1024) * WIDTH * 4;
+        this.bootstrap = {
+            name: '',
+            version: '1.0.0',
+            patterns: 0
+        };
+        
+        for (let i = 0; i < 16; i++) {
+            const code = pixels[bootstrapOffset + i * 4];
+            if (code > 0) this.bootstrap.name += String.fromCharCode(code);
+        }
+        
+        const v0 = pixels[bootstrapOffset + (1 * 16 + 0) * 4];
+        const v1 = pixels[bootstrapOffset + (1 * 16 + 1) * 4];
+        const v2 = pixels[bootstrapOffset + (1 * 16 + 2) * 4];
+        this.bootstrap.version = `${v0}.${v1}.${v2}`;
+        
+        const p0 = pixels[bootstrapOffset + (2 * 16 + 0) * 4];
+        const p1 = pixels[bootstrapOffset + (2 * 16 + 1) * 4];
+        this.bootstrap.patterns = p0 | (p1 << 8);
+        
+        this.cartridge = {
+            name: this.bootstrap.name,
+            version: this.bootstrap.version,
+            patterns: this.bootstrap.patterns
+        };
+        
+        this.updateInfo();
+        this.render();
+        
+        this.log(`Loaded: ${this.bootstrap.name} v${this.bootstrap.version}`, 'success');
+        this.log(`Patterns: ${this.bootstrap.patterns}`, 'info');
+    }
+    
+    updateInfo() {
+        document.getElementById('cartridgeName').textContent = this.cartridge?.name || '-';
+        document.getElementById('cartridgeVersion').textContent = this.cartridge?.version || '-';
+        document.getElementById('patternCount').textContent = this.cartridge?.patterns || '-';
+    }
+    
+    render() {
+        this.ctx.fillStyle = '#0a0a0f';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        if (!this.glyphGrid) return;
+        
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                const idx = (y * WIDTH + x) * 4;
+                const charCode = this.glyphGrid[idx];
+                
+                if (charCode > 0 && FONT[charCode]) {
+                    this.ctx.putImageData(
+                        FONT[charCode],
+                        x * CELL_WIDTH + 1,
+                        y * CELL_HEIGHT + 1
+                    );
+                }
+            }
+        }
+        
+        this.ctx.strokeStyle = '#00ff8833';
+        this.ctx.lineWidth = 1;
+        for (let y = 0; y <= HEIGHT; y++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y * CELL_HEIGHT);
+            this.ctx.lineTo(this.canvas.width, y * CELL_HEIGHT);
+            this.ctx.stroke();
+        }
+        for (let x = 0; x <= WIDTH; x++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x * CELL_WIDTH, 0);
+            this.ctx.lineTo(x * CELL_WIDTH, this.canvas.height);
+            this.ctx.stroke();
+        }
+    }
+    
+    handleClick(e) {
+        if (!this.cartridge) {
+            this.log('No cartridge loaded', 'error');
+            return;
+        }
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = Math.floor((e.clientX - rect.left) / CELL_WIDTH);
+        const y = Math.floor((e.clientY - rect.top) / CELL_HEIGHT);
+        
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
+        
+        const idx = y * WIDTH + x;
+        const sitIdx = idx * 4;
+        
+        const opcode = this.sit[sitIdx];
+        const targetLow = this.sit[sitIdx + 1];
+        const targetMid = this.sit[sitIdx + 2];
+        const targetHigh = this.sit[sitIdx + 3];
+        
+        const targetInt = targetLow | (targetMid << 8);
+        const target = String.fromCharCode(targetLow, targetMid & 0x7F);
+        
+        document.getElementById('lastClick').textContent = `(${x}, ${y}) → ${OPCODES[opcode] || '?'} ${target}`;
+        
+        if (opcode === 0) {
+            this.log(`Click at (${x}, ${y}): NOP`, 'info');
+        } else if (opcode === 255) {
+            this.log(`Click at (${x}, ${y}): EXIT`, 'action');
+        } else {
+            this.log(`Click at (${x}, ${y}): ${OPCODES[opcode] || opcode} → "${target}"`, 'action');
+        }
+        
+        this.highlightCell(x, y);
+    }
+    
+    highlightCell(x, y) {
+        this.render();
+        
+        this.ctx.strokeStyle = '#ffaa00';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(
+            x * CELL_WIDTH + 1,
+            y * CELL_HEIGHT + 1,
+            CELL_WIDTH - 2,
+            CELL_HEIGHT - 2
+        );
+    }
+    
+    clearState() {
+        this.state.fill(0);
+        this.log('State cleared', 'info');
+    }
+    
+    log(message, type = 'info') {
+        const consoleEl = document.getElementById('console');
+        const line = document.createElement('div');
+        line.className = `console-line console-${type}`;
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        consoleEl.appendChild(line);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+}
+
+const viewer = new GeosViewer();
+
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        await viewer.loadCartridge(file);
+    }
+});
+
+document.getElementById('loadExample').addEventListener('click', async () => {
+    const example = `┌──────────────────────────────────────────────────────────────┐
+│                    GEOSASCII DEMO                            │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   Welcome to the Pixels Move Pixels demo!                   │
+│                                                              │
+│   [A] Run    [B] Stop    [C] Reset                          │
+│                                                              │
+│   [D] Menu   [E] Config  [F] Help                          │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│   Status: Ready                    │ Actions: 6 detected    │
+└──────────────────────────────────────────────────────────────┘`;
+
+    const blob = new Blob([example], { type: 'text/plain' });
+    const response = await fetch('compiler/geos_ascii_compiler.py');
+    const compilerCode = await response.text();
+    
+    const tempLink = document.createElement('a');
+    tempLink.download = 'demo.ascii';
+    tempLink.href = URL.createObjectURL(blob);
+    tempLink.click();
+    
+    viewer.log('Example ASCII downloaded - run compiler to generate cartridge', 'info');
+    viewer.log('Or load the dashboard.rts.png from examples/', 'info');
+});
+
+document.getElementById('clearState').addEventListener('click', () => {
+    viewer.clearState();
+});
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.rts.png')) {
+        await viewer.loadCartridge(file);
+    } else {
+        viewer.log('Please drop a .rts.png file', 'error');
+    }
+});
+    </script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 # Register the Session Analyzer app with the ASCII Interface Manager
 
 set -e
+set -o pipefail
 
 MANAGER_URL="http://localhost:3422"
 PROJECT_PATH="/home/jericho/zion/projects/ai_auto_development/ai_auto_development/apps/session-analyzer-app"
@@ -10,14 +11,14 @@ PROJECT_PORT=3421
 echo "Registering Session Analyzer with Manager..."
 
 # Check if manager is running
-if ! curl -s "$MANAGER_URL/health" > /dev/null 2>&1; then
+if ! curl -s --connect-timeout 5 --max-time 10 "$MANAGER_URL/health" > /dev/null 2>&1; then
     echo "Error: Manager not running at $MANAGER_URL"
     echo "Start it with: bun run src/manager/manager-server.ts"
     exit 1
 fi
 
 # Register the project
-RESPONSE=$(curl -s -X POST "$MANAGER_URL/projects" \
+RESPONSE=$(curl -s -f --connect-timeout 5 --max-time 10 -X POST "$MANAGER_URL/projects" \
     -H "Content-Type: application/json" \
     -d "{\"path\": \"$PROJECT_PATH\", \"port\": $PROJECT_PORT}")
 

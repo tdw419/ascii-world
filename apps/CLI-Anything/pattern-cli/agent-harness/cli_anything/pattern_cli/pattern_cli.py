@@ -113,12 +113,14 @@ def run_ts_cli(args: list, input_data: str = None) -> dict:
 @click.group()
 @click.version_option('1.0.0')
 @click.option('--json', 'json_output', is_flag=True, help='Output in JSON format')
+@click.option('--verbose', '-v', is_flag=True, default=False, help='Enable verbose output')
 @click.pass_context
-def cli(ctx, json_output):
+def cli(ctx, json_output, verbose):
     """Pattern CLI - ASCII Pattern Recognition for AI Agents"""
     global _json_output
     _json_output = json_output
     ctx.ensure_object(dict)
+    ctx.obj['verbose'] = verbose
 
 
 @cli.command()

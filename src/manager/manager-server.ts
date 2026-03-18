@@ -376,9 +376,14 @@ export class ManagerServer {
     /**
      * GET /view - Render ASCII view of current state
      */
-    private handleView(): Response {
+    private async handleView(): Promise<Response> {
         const context = this.stateManager.getData();
         const state = context.state.toLowerCase();
+
+        // Handle PROJECT_VIEW state specially - fetch from managed project
+        if (context.state === 'PROJECT_VIEW' && context.selectedProjectId) {
+            return this.handleProjectViewRender(context.selectedProjectId);
+        }
 
         // Build template data based on current state
         const templateData = this.buildTemplateData(context);
@@ -395,6 +400,113 @@ export class ManagerServer {
                 unsavedChanges: context.unsavedChanges
             }
         });
+    }
+
+    /**
+     * Handle rendering of PROJECT_VIEW state
+     * Fetches content from the managed project's /view endpoint
+     */
+    private async handleProjectViewRender(projectId: string): Promise<Response> {
+        const project = this.registry.getProject(projectId);
+
+        if (!project) {
+            // Project not found, return to PROJECTS state
+            this.stateManager.setState('PROJECTS');
+            return this.jsonResponse({
+                state: 'PROJECTS',
+                view: this.asciiGenerator.render('projects', this.buildTemplateData(this.stateManager.getData())),
+                error: `Project ${projectId} not found`,
+                context: {
+                    selectedProjectId: null,
+                    editMode: false,
+                    unsavedChanges: false
+                }
+            });
+        }
+
+        // Check if project is running
+        if (project.status !== 'running') {
+            // Project not running, render with error message
+            const templateData = {
+                ...this.buildTemplateData(this.stateManager.getData()),
+                project_name: project.name,
+                port: project.port,
+                proxied_view: `ERROR: Project is not running (status: ${project.status})`
+            };
+            const rendered = this.asciiGenerator.render('project-view', templateData);
+            return this.jsonResponse({
+                state: 'PROJECT_VIEW',
+                view: rendered,
+                context: {
+                    selectedProjectId: projectId,
+                    editMode: false,
+                    unsavedChanges: false
+                }
+            });
+        }
+
+        // Fetch view from managed project
+        try {
+            const response = await fetch(`http://localhost:${project.port}/view`);
+
+            if (!response.ok) {
+                const templateData = {
+                    ...this.buildTemplateData(this.stateManager.getData()),
+                    project_name: project.name,
+                    port: project.port,
+                    proxied_view: `ERROR: Failed to fetch view (HTTP ${response.status})`
+                };
+                const rendered = this.asciiGenerator.render('project-view', templateData);
+                return this.jsonResponse({
+                    state: 'PROJECT_VIEW',
+                    view: rendered,
+                    context: {
+                        selectedProjectId: projectId,
+                        editMode: false,
+                        unsavedChanges: false
+                    }
+                });
+            }
+
+            const data = await response.json() as { view?: string };
+            const proxiedView = data.view || '(No view content available)';
+
+            const templateData = {
+                ...this.buildTemplateData(this.stateManager.getData()),
+                project_name: project.name,
+                port: project.port,
+                proxied_view: proxiedView
+            };
+            const rendered = this.asciiGenerator.render('project-view', templateData);
+
+            return this.jsonResponse({
+                state: 'PROJECT_VIEW',
+                view: rendered,
+                context: {
+                    selectedProjectId: projectId,
+                    editMode: false,
+                    unsavedChanges: false
+                }
+            });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const templateData = {
+                ...this.buildTemplateData(this.stateManager.getData()),
+                project_name: project.name,
+                port: project.port,
+                proxied_view: `ERROR: Connection failed - ${errorMessage}`
+            };
+            const rendered = this.asciiGenerator.render('project-view', templateData);
+            return this.jsonResponse({
+                state: 'PROJECT_VIEW',
+                view: rendered,
+                context: {
+                    selectedProjectId: projectId,
+                    editMode: false,
+                    unsavedChanges: false
+                }
+            });
+        }
     }
 
     /**
@@ -432,6 +544,40 @@ export class ManagerServer {
             return this.jsonResponse({ error: 'Invalid label format. Must be a single letter or digit.' }, 400);
         }
 
+        const currentState = this.stateManager.getState();
+        const context = this.stateManager.getData();
+
+        // Handle 'V' action - Enter project view mode
+        if (validatedLabel === 'V' && currentState === 'PROJECTS') {
+            if (!context.selectedProjectId) {
+                return this.jsonResponse({ error: 'No project selected. Select a project first.' }, 400);
+            }
+
+            const project = this.registry.getProject(context.selectedProjectId);
+            if (!project) {
+                return this.jsonResponse({ error: `Project not found: ${context.selectedProjectId}` }, 404);
+            }
+
+            if (project.status !== 'running') {
+                return this.jsonResponse({
+                    error: `Project ${project.name} is not running. Start it first.`
+                }, 400);
+            }
+
+            this.stateManager.enterProjectView(context.selectedProjectId);
+            return this.jsonResponse({
+                success: true,
+                action: 'enter_project_view',
+                projectId: context.selectedProjectId,
+                newState: this.stateManager.getState()
+            });
+        }
+
+        // Handle PROJECT_VIEW state control
+        if (currentState === 'PROJECT_VIEW') {
+            return this.handleProjectViewControl(validatedLabel);
+        }
+
         const result = this.stateManager.handleAction(validatedLabel);
 
         if (!result.success) {
@@ -454,6 +600,83 @@ export class ManagerServer {
             action: result.action,
             newState: this.stateManager.getState()
         });
+    }
+
+    /**
+     * Handle control actions when in PROJECT_VIEW state
+     * - A or X: Return to PROJECTS state
+     * - Other labels: Forward to managed project's /control endpoint
+     */
+    private async handleProjectViewControl(label: string): Promise<Response> {
+        // A or X returns to PROJECTS state
+        if (label === 'A' || label === 'X') {
+            const result = this.stateManager.handleAction(label);
+            return this.jsonResponse({
+                success: true,
+                action: result.action,
+                newState: this.stateManager.getState(),
+                message: 'Returned to projects list'
+            });
+        }
+
+        // Forward other labels to the managed project
+        const context = this.stateManager.getData();
+        if (!context.selectedProjectId) {
+            this.stateManager.setState('PROJECTS');
+            return this.jsonResponse({
+                error: 'No project selected, returning to projects list',
+                newState: 'PROJECTS'
+            }, 400);
+        }
+
+        const project = this.registry.getProject(context.selectedProjectId);
+        if (!project) {
+            this.stateManager.setState('PROJECTS');
+            return this.jsonResponse({
+                error: `Project ${context.selectedProjectId} not found, returning to projects list`,
+                newState: 'PROJECTS'
+            }, 404);
+        }
+
+        if (project.status !== 'running') {
+            return this.jsonResponse({
+                error: `Project ${project.name} is not running. Cannot forward control.`,
+                state: 'PROJECT_VIEW'
+            }, 503);
+        }
+
+        // Forward control to managed project
+        try {
+            const response = await fetch(`http://localhost:${project.port}/control`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ label })
+            });
+
+            if (!response.ok) {
+                return this.jsonResponse({
+                    error: `Failed to forward control to project ${project.name}`,
+                    status: response.status,
+                    state: 'PROJECT_VIEW'
+                }, 502);
+            }
+
+            const data = await response.json();
+            return this.jsonResponse({
+                ...data,
+                forwarded: true,
+                projectId: project.id,
+                state: 'PROJECT_VIEW'
+            });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return this.jsonResponse({
+                error: `Failed to connect to project ${project.name}: ${errorMessage}`,
+                state: 'PROJECT_VIEW'
+            }, 502);
+        }
     }
 
     /**
@@ -973,6 +1196,19 @@ export class ManagerServer {
                         lastCommit: context.gitStatus.lastCommit
                     } : null,
                     has_status: context.gitStatus !== null
+                };
+
+            case 'PROJECT_VIEW':
+                // PROJECT_VIEW uses its own rendering method (handleProjectViewRender)
+                // This case is here for completeness but the view data is built separately
+                const selectedProject = context.selectedProjectId
+                    ? this.registry.getProject(context.selectedProjectId)
+                    : null;
+                return {
+                    ...baseData,
+                    project_name: selectedProject?.name || 'Unknown',
+                    port: selectedProject?.port || 0,
+                    proxied_view: '' // Will be populated in handleProjectViewRender
                 };
 
             default:

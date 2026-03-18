@@ -11,7 +11,9 @@ Usage:
 
 import asyncio
 import json
+import logging
 import os
+import re
 from typing import Any
 
 import httpx
@@ -19,58 +21,110 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
+# Configure logging
+logger = logging.getLogger("mcp_manager_bridge")
+
 # Configuration
 MANAGER_API_URL = os.environ.get("MANAGER_API_URL", "http://localhost:3422")
+
+# Tool name constants
+TOOL_MANAGER_VIEW = "manager_view"
+TOOL_MANAGER_CONTROL = "manager_control"
+TOOL_MANAGER_LIST_PROJECTS = "manager_list_projects"
+TOOL_MANAGER_REGISTER_PROJECT = "manager_register_project"
+TOOL_MANAGER_METRICS = "manager_metrics"
+TOOL_MANAGER_START_PROJECT = "manager_start_project"
+TOOL_MANAGER_STOP_PROJECT = "manager_stop_project"
+
+# Validation constants
+LABEL_PATTERN = re.compile(r"^[A-Z1-9]$")
+
+# Shared HTTP client (lazily initialized)
+_http_client: httpx.AsyncClient | None = None
+
+
+async def get_http_client() -> httpx.AsyncClient:
+    """Get or create the shared HTTP client."""
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient()
+        logger.debug("Created shared HTTP client")
+    return _http_client
+
+
+async def close_http_client() -> None:
+    """Close the shared HTTP client."""
+    global _http_client
+    if _http_client is not None:
+        await _http_client.aclose()
+        _http_client = None
+        logger.debug("Closed shared HTTP client")
+
 
 app = Server("mcp-manager-bridge")
 
 
 async def fetch_view() -> str:
     """Fetch current ASCII view from manager."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{MANAGER_API_URL}/view", timeout=5.0)
-        response.raise_for_status()
-        return response.text
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/view"
+    logger.debug(f"GET {url}")
+    response = await client.get(url, timeout=5.0)
+    response.raise_for_status()
+    logger.debug(f"GET {url} -> {response.status_code}")
+    return response.text
 
 
 async def send_control(label: str) -> dict[str, Any]:
     """Send control command to manager."""
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{MANAGER_API_URL}/control",
-            json={"label": label},
-            timeout=5.0,
-        )
-        response.raise_for_status()
-        return response.json()
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/control"
+    logger.debug(f"POST {url} with label={label}")
+    response = await client.post(
+        url,
+        json={"label": label},
+        timeout=5.0,
+    )
+    response.raise_for_status()
+    logger.debug(f"POST {url} -> {response.status_code}")
+    return response.json()
 
 
 async def get_projects() -> list[dict[str, Any]]:
     """Get list of registered ASCII projects."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{MANAGER_API_URL}/projects", timeout=5.0)
-        response.raise_for_status()
-        return response.json()
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/projects"
+    logger.debug(f"GET {url}")
+    response = await client.get(url, timeout=5.0)
+    response.raise_for_status()
+    logger.debug(f"GET {url} -> {response.status_code}")
+    return response.json()
 
 
 async def register_project(path: str, port: int | None = None) -> dict[str, Any]:
     """Register a new ASCII project."""
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{MANAGER_API_URL}/projects",
-            json={"path": path, "port": port},
-            timeout=5.0,
-        )
-        response.raise_for_status()
-        return response.json()
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/projects"
+    logger.debug(f"POST {url} with path={path}, port={port}")
+    response = await client.post(
+        url,
+        json={"path": path, "port": port},
+        timeout=5.0,
+    )
+    response.raise_for_status()
+    logger.debug(f"POST {url} -> {response.status_code}")
+    return response.json()
 
 
 async def get_metrics() -> dict[str, Any]:
     """Get manager performance metrics."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{MANAGER_API_URL}/metrics", timeout=5.0)
-        response.raise_for_status()
-        return response.json()
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/metrics"
+    logger.debug(f"GET {url}")
+    response = await client.get(url, timeout=5.0)
+    response.raise_for_status()
+    logger.debug(f"GET {url} -> {response.status_code}")
+    return response.json()
 
 
 @app.list_tools()
@@ -78,7 +132,7 @@ async def list_tools():
     """Define all MCP tools exposed by this server."""
     return [
         Tool(
-            name="manager_view",
+            name=TOOL_MANAGER_VIEW,
             description=(
                 "Get the current ASCII view of the Interface Manager. "
                 "Shows all registered projects, templates, bindings, test results, or git status. "
@@ -90,7 +144,7 @@ async def list_tools():
             },
         ),
         Tool(
-            name="manager_control",
+            name=TOOL_MANAGER_CONTROL,
             description=(
                 "Execute an action in the Interface Manager by label. "
                 "Navigation: A=Projects, B=Templates, C=Bindings, D=Test, E=Git, X=Quit. "
@@ -111,7 +165,7 @@ async def list_tools():
             },
         ),
         Tool(
-            name="manager_list_projects",
+            name=TOOL_MANAGER_LIST_PROJECTS,
             description=(
                 "Get a list of all registered ASCII-wrapped projects. "
                 "Returns project details including name, path, port, and status."
@@ -122,7 +176,7 @@ async def list_tools():
             },
         ),
         Tool(
-            name="manager_register_project",
+            name=TOOL_MANAGER_REGISTER_PROJECT,
             description=(
                 "Register a new ASCII-wrapped project with the manager. "
                 "Provide the path to the project directory. "
@@ -144,7 +198,7 @@ async def list_tools():
             },
         ),
         Tool(
-            name="manager_metrics",
+            name=TOOL_MANAGER_METRICS,
             description=(
                 "Get performance metrics for the Interface Manager API. "
                 "Returns request count, latency statistics, and last action info."
@@ -155,7 +209,7 @@ async def list_tools():
             },
         ),
         Tool(
-            name="manager_start_project",
+            name=TOOL_MANAGER_START_PROJECT,
             description=(
                 "Start a registered ASCII project. "
                 "First select the project (use manager_control with 1-9), then start it."
@@ -166,7 +220,7 @@ async def list_tools():
             },
         ),
         Tool(
-            name="manager_stop_project",
+            name=TOOL_MANAGER_STOP_PROJECT,
             description=(
                 "Stop a running ASCII project. "
                 "First select the project (use manager_control with 1-9), then stop it."
@@ -183,23 +237,24 @@ async def list_tools():
 async def call_tool(name: str, arguments: dict):
     """Handle tool invocations."""
     try:
-        if name == "manager_view":
+        if name == TOOL_MANAGER_VIEW:
             view = await fetch_view()
             return [TextContent(type="text", text=view)]
 
-        if name == "manager_control":
+        if name == TOOL_MANAGER_CONTROL:
             label = arguments.get("label", "").upper()
-            if not label or len(label) != 1:
+            # Server-side validation: must match ^[A-Z1-9]$ pattern
+            if not LABEL_PATTERN.match(label):
                 return [TextContent(type="text", text="Error: label must be a single character (A-Z or 1-9)")]
 
             result = await send_control(label)
             return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
-        if name == "manager_list_projects":
+        if name == TOOL_MANAGER_LIST_PROJECTS:
             projects = await get_projects()
             return [TextContent(type="text", text=json.dumps(projects, indent=2))]
 
-        if name == "manager_register_project":
+        if name == TOOL_MANAGER_REGISTER_PROJECT:
             path = arguments.get("path")
             if not path:
                 return [TextContent(type="text", text="Error: path is required")]
@@ -207,15 +262,15 @@ async def call_tool(name: str, arguments: dict):
             result = await register_project(path, arguments.get("port"))
             return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
-        if name == "manager_metrics":
+        if name == TOOL_MANAGER_METRICS:
             metrics = await get_metrics()
             return [TextContent(type="text", text=json.dumps(metrics, indent=2))]
 
-        if name == "manager_start_project":
+        if name == TOOL_MANAGER_START_PROJECT:
             result = await send_control("S")
             return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
-        if name == "manager_stop_project":
+        if name == TOOL_MANAGER_STOP_PROJECT:
             result = await send_control("T")
             return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
@@ -231,8 +286,12 @@ async def call_tool(name: str, arguments: dict):
 
 async def main():
     """Run the MCP server over stdio."""
-    async with stdio_server() as (read, write):
-        await app.run(read, write, app.create_initialization_options())
+    try:
+        async with stdio_server() as (read, write):
+            await app.run(read, write, app.create_initialization_options())
+    finally:
+        # Clean up HTTP client on shutdown
+        await close_http_client()
 
 
 if __name__ == "__main__":

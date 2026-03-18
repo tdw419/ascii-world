@@ -1,0 +1,40 @@
+# OpenSpec Change: Barnes-Hut Scaling
+
+change:
+  name: barnes-hut-scaling
+  title: Barnes-Hut Quadtree Acceleration - O(N log N) Scaling
+  status: proposed
+  created: 2026-03-09
+
+  scope:
+    - systems/infinite_map/quadtree.py
+    - systems/infinite_map/gravity_engine.py
+    - tests/test_quadtree.py
+    - tests/test_gravity_engine_quadtree.py
+    - tests/test_glass_box_lod.py
+
+  references:
+    plan: docs/plans/2026-03-09-barnes-hut-scaling.md
+    team: teams/barnes-hut-team.yaml
+    proposal: changes/barnes-hut-scaling/proposal.md
+
+  milestones:
+    - id: M1
+      name: Quadtree Data Structure
+      tasks: [task-1.1]
+      status: pending
+
+    - id: M2
+      name: GravityEngine Integration
+      tasks: [task-2.1]
+      status: pending
+
+    - id: M3
+      name: LOD Rendering
+      tasks: [task-3.1]
+      status: pending
+
+  metrics:
+    test_count: 19
+    coverage_target: 90
+    estimated_hours: 4

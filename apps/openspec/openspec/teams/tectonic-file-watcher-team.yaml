@@ -1,0 +1,171 @@
+# Tectonic File Watcher Team
+# Implements real-time file access → semantic gravity updates
+
+team:
+  name: tectonic-file-watcher-team
+  description: |
+    Connects real-time file system events to the Tectonic Gravity Engine.
+    Files drift toward you as you use them - the map becomes "alive".
+
+    Pipeline: FileWatcher (inotify) → MassIntegrator → GravityEngine → Glass Box
+
+    This implements the "Semantic Gravity" concept from Geometry OS v1.2:
+    - High-activity files become "hot" and drift toward the center
+    - Mass decays over time for inactive files
+    - The Tectonic map responds to real developer behavior
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: file-watcher-engineer
+      role: Implements FileWatcher with watchdog/inotify
+      focus:
+        - Create FileWatcher class with start/stop lifecycle
+        - Use watchdog library for cross-platform file monitoring
+        - Emit FileEvent objects via callback
+        - Support context manager pattern
+      files:
+        - systems/infinite_map/file_watcher.py
+        - tests/test_file_watcher.py
+
+    - name: mass-integrator-engineer
+      role: Converts file events to semantic mass deltas
+      focus:
+        - Create MassIntegrator class
+        - Map event types to mass weights (modify=0.25, create=0.5, etc.)
+        - Track accumulated mass per file
+        - Implement periodic decay for inactive files
+      files:
+        - systems/infinite_map/mass_integrator.py
+        - tests/test_mass_integrator.py
+
+    - name: gravity-engine-updater
+      role: Adds real-time mass updates to GravityEngine
+      focus:
+        - Add update_mass() method for incremental changes
+        - Add set_mass() for direct mass setting
+        - Add get_mass() for querying
+        - Ensure mass never goes below minimum (0.1)
+      files:
+        - systems/infinite_map/gravity_engine.py
+        - tests/test_gravity_engine_realtime.py
+
+    - name: tectonic-integration-engineer
+      role: Creates TectonicUpdater integration component
+      focus:
+        - Wire FileWatcher → MassIntegrator → GravityEngine
+        - Implement decay loop in background thread
+        - Sync masses between integrator and gravity engine
+        - Context manager for clean start/stop
+      files:
+        - systems/infinite_map/tectonic_updater.py
+        - tests/test_tectonic_updater.py
+
+    - name: daemon-tectonic-engineer
+      role: Integrates TectonicUpdater with Sisyphus Daemon
+      focus:
+        - Add enable_tectonic parameter to daemon
+        - Initialize TectonicUpdater with project directory
+        - Start/stop with daemon lifecycle
+        - Wire to existing gravity engine
+      files:
+        - systems/sisyphus/daemon.py
+        - tests/test_daemon_tectonic.py
+
+  tasks:
+    - id: task-1.1
+      title: Create FileWatcher module
+      assignee: file-watcher-engineer
+      dependencies: []
+      description: |
+        Create systems/infinite_map/file_watcher.py with:
+        - FileEvent dataclass (file_path, event_type)
+        - FileWatcher class using watchdog.Observer
+        - set_callback() for event routing
+        - start() and stop() lifecycle methods
+        - Context manager support
+      acceptance_criteria:
+        - test_file_watcher_creation passes
+        - test_file_watcher_start_stop passes
+        - test_file_event_captured_on_modify passes
+        - test_file_event_has_path_and_type passes
+
+    - id: task-1.2
+      title: Create MassIntegrator module
+      assignee: mass-integrator-engineer
+      dependencies: []
+      description: |
+        Create systems/infinite_map/mass_integrator.py with:
+        - MassDelta dataclass (file_path, delta_mass, event_type)
+        - MassIntegrator with configurable event weights
+        - process_event() converting FileEvent → MassDelta
+        - get_file_mass() for accumulated mass
+        - apply_decay() for periodic mass reduction
+      acceptance_criteria:
+        - test_modified_event_increases_mass passes
+        - test_created_event_increases_mass passes
+        - test_deleted_event_decreases_mass passes
+        - test_repeated_accesses_accumulate passes
+        - test_decay_reduces_old_mass passes
+
+    - id: task-2.1
+      title: Add mass update methods to GravityEngine
+      assignee: gravity-engine-updater
+      dependencies: []
+      description: |
+        Modify systems/infinite_map/gravity_engine.py:
+        - Add update_mass(file_path, delta) method
+        - Add set_mass(file_path, mass) method
+        - Add get_mass(file_path) method
+        - Ensure minimum mass of 0.1
+      acceptance_criteria:
+        - test_update_mass_increases_mass passes
+        - test_update_mass_nonexistent_orb_ignored passes
+        - test_set_mass_overrides_mass passes
+        - test_set_mass_nonexistent_ignored passes
+
+    - id: task-3.1
+      title: Create TectonicUpdater integration component
+      assignee: tectonic-integration-engineer
+      dependencies: [task-1.1, task-1.2, task-2.1]
+      description: |
+        Create systems/infinite_map/tectonic_updater.py with:
+        - TectonicUpdater(gravity_engine, watch_path)
+        - Wire FileWatcher callback to MassIntegrator
+        - Background decay loop with configurable interval
+        - Sync masses to GravityEngine
+        - Context manager pattern
+      acceptance_criteria:
+        - test_file_modification_increases_mass passes
+        - test_tectonic_updater_context_manager passes
+        - test_decay_applied_periodically passes
+
+    - id: task-4.1
+      title: Integrate TectonicUpdater into daemon
+      assignee: daemon-tectonic-engineer
+      dependencies: [task-3.1]
+      description: |
+        Modify systems/sisyphus/daemon.py:
+        - Add enable_tectonic parameter to __init__
+        - Create TectonicUpdater with project_dir
+        - Start in run() after gravity thread
+        - Stop in finally block
+      acceptance_criteria:
+        - test_daemon_has_tectonic_updater_when_enabled passes
+        - test_daemon_no_tectonic_when_disabled passes
+        - test_daemon_tectonic_uses_gravity_engine passes
+
+  success_criteria:
+    - FileWatcher captures file modification events
+    - MassIntegrator converts events to mass deltas
+    - GravityEngine accepts real-time mass updates
+    - TectonicUpdater wires all components together
+    - Daemon can enable/disable tectonic mode
+    - Files drift toward center as they are used
+    - Mass decays for inactive files
+    - 20+ tests passing
+
+  reference_docs:
+    - docs/plans/2026-03-09-inotify-gravity-integration.md
+    - systems/infinite_map/gravity_engine.py
+    - systems/sisyphus/daemon.py

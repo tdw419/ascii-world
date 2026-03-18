@@ -1,0 +1,164 @@
+# GeoASM ↔ PixelRTS Containerization Team
+# Packages neural assembly programs into visual cartridges
+
+team:
+  name: geoasm-pixelrts-team
+  description: |
+    Implements GeoASM to PixelRTS v2 containerization, enabling neural assembly
+    programs to be packaged as .rts.png visual cartridges where each 4-byte
+    instruction maps to one RGBA pixel with semantic coloring.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: semantic-encoder
+      role: Creates GeoASM instruction to RGBA pixel encoder
+      focus:
+        - Heat-intensity opcode mapping (ATTEND brightest, LAYER dimmest)
+        - Register to green/blue channel mapping
+        - Immediate value to alpha channel
+        - Lossless mode for exact roundtrip
+      files:
+        - systems/pixel_compiler/geoasm_encoder.py
+        - tests/test_geoasm_encoder.py
+
+    - name: cartridge-writer
+      role: Creates .rts.png cartridge writer
+      focus:
+        - Package GeoASM source into PNG with Hilbert-ordered pixels
+        - Generate sidecar .meta.json with executor info
+        - Auto grid size calculation
+      files:
+        - systems/pixel_compiler/geoasm_cartridge.py
+        - tests/test_geoasm_cartridge.py
+
+    - name: cartridge-reader
+      role: Creates cartridge reader for program extraction
+      focus:
+        - Read .rts.png and decode pixels to instructions
+        - Load metadata from sidecar JSON
+        - Hash verification
+      files:
+        - systems/pixel_compiler/geoasm_cartridge_reader.py
+        - tests/test_geoasm_cartridge_reader.py
+
+    - name: cli-integrator
+      role: Adds --mode geoasm to PixelRTS converter
+      focus:
+        - Modify pixelrts_v2_converter.py to accept .geoasm files
+        - Integrate with GeoASMCartridgeWriter
+        - CLI help and error handling
+      files:
+        - systems/pixel_compiler/pixelrts_v2_converter.py
+        - tests/test_pixelrts_geoasm_mode.py
+
+    - name: demo-engineer
+      role: Creates end-to-end demonstration
+      focus:
+        - Full encode → decode → verify pipeline
+        - Visual analysis explanation
+        - Cleanup and reporting
+      files:
+        - scripts/geoasm_cartridge_demo.py
+
+  tasks:
+    - id: task-1.1
+      title: Create GeoASM Semantic Encoder
+      assignee: semantic-encoder
+      dependencies: []
+      description: |
+        Create systems/pixel_compiler/geoasm_encoder.py:
+        - opcode_to_red() with heat intensity mapping
+        - register_to_green/blue() for R0-R7
+        - encode_instruction() returns RGBA tuple
+        - encode_program() returns numpy array
+        - decode_instruction() for roundtrip
+      acceptance_criteria:
+        - ATTEND (0xD1) has highest red value
+        - LAYER (0xD4) has lowest red value
+        - Tests pass: pytest tests/test_geoasm_encoder.py -v
+
+    - id: task-1.2
+      title: Add Lossless Encoding Mode
+      assignee: semantic-encoder
+      dependencies: [task-1.1]
+      description: |
+        Add lossless mode to geoasm_encoder.py:
+        - Direct byte mapping: R=opcode, G=rs, B=rd, A=imm
+        - Exact roundtrip without loss
+        - Toggle via lossless=True parameter
+      acceptance_criteria:
+        - Full program roundtrip with zero errors
+        - Tests pass
+
+    - id: task-2.1
+      title: Create Cartridge Writer
+      assignee: cartridge-writer
+      dependencies: [task-1.2]
+      description: |
+        Create systems/pixel_compiler/geoasm_cartridge.py:
+        - create_cartridge(source, output_path) → metadata
+        - calculate_grid_size() for auto sizing
+        - Save PNG with Hilbert-ordered pixels
+        - Generate .meta.json with executor='geoasm'
+      acceptance_criteria:
+        - PNG file created and valid
+        - Metadata includes instruction_count, grid_size, sha256
+        - Tests pass: pytest tests/test_geoasm_cartridge.py -v
+
+    - id: task-2.2
+      title: Create Cartridge Reader
+      assignee: cartridge-reader
+      dependencies: [task-2.1]
+      description: |
+        Create systems/pixel_compiler/geoasm_cartridge_reader.py:
+        - read_cartridge(path) → List[Instruction]
+        - read_metadata(path) → dict
+        - verify_hash(path) → bool
+      acceptance_criteria:
+        - Roundtrip writer → reader matches
+        - Hash verification works
+        - Tests pass: pytest tests/test_geoasm_cartridge_reader.py -v
+
+    - id: task-3.1
+      title: Add --mode geoasm to Converter
+      assignee: cli-integrator
+      dependencies: [task-2.1]
+      description: |
+        Modify systems/pixel_compiler/pixelrts_v2_converter.py:
+        - Add 'geoasm' to --mode choices
+        - Detect .geoasm extension
+        - Call GeoASMCartridgeWriter for assembly
+      acceptance_criteria:
+        - CLI accepts --mode geoasm
+        - Converts .geoasm files to .rts.png
+        - Tests pass: pytest tests/test_pixelrts_geoasm_mode.py -v
+
+    - id: task-4.1
+      title: Create Demo Script
+      assignee: demo-engineer
+      dependencies: [task-3.1]
+      description: |
+        Create scripts/geoasm_cartridge_demo.py:
+        - Assemble 8-layer transformer program
+        - Create cartridge
+        - Read and verify roundtrip
+        - Explain visual patterns
+      acceptance_criteria:
+        - Demo runs successfully
+        - Roundtrip verified
+        - Cleanup performed
+
+  success_criteria:
+    - Each instruction encodes to exactly 4 bytes (1 pixel)
+    - Heat intensity mapping distinguishes compute patterns
+    - Lossless roundtrip with zero errors
+    - Cartridge metadata includes all required fields
+    - CLI --mode geoasm works
+    - Demo shows full pipeline
+    - 20+ tests passing
+
+  reference_docs:
+    - docs/plans/2026-03-09-geoasm-pixelrts-containerization.md
+    - systems/visual_shell/geoasm/instruction.py
+    - systems/pixel_compiler/pixelrts_v2_core.py

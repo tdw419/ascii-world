@@ -1,0 +1,62 @@
+{
+  "version": "1.0.0",
+  "description": "Label to action mapping for the ASCII reference application",
+  "bindings": [
+    {
+      "label": "A",
+      "action": "goto_tasks",
+      "target": "TASKS",
+      "description": "Navigate to the task list"
+    },
+    {
+      "label": "B",
+      "action": "goto_settings",
+      "target": "SETTINGS",
+      "description": "Open the settings panel"
+    },
+    {
+      "label": "C",
+      "action": "back_home",
+      "target": "HOME",
+      "description": "Return to main menu"
+    }
+  ],
+  "stateTransitions": {
+    "HOME": {
+      "A": "TASKS",
+      "B": "SETTINGS",
+      "C": "HOME"
+    },
+    "TASKS": {
+      "A": "filter_all",
+      "B": "back_home",
+      "C": "filter_completed",
+      "D": "delete_task",
+      "E": "edit_task",
+      "N": "new_task",
+      "T": "toggle_task"
+    },
+    "SETTINGS": {
+      "E": "toggle_auto_save",
+      "F": "toggle_current_theme",
+      "G": "toggle_current_language",
+      "H": "edit_api_endpoint",
+      "I": "edit_model_id",
+      "J": "edit_max_tokens",
+      "K": "save_settings",
+      "L": "reset_defaults",
+      "M": "export_config",
+      "B": "back_home"
+    }
+  },
+  "metadata": {
+    "appName": "ascii-ref-app",
+    "version": "1.0.0",
+    "gridSize": {
+      "width": 80,
+      "height": 24
+    },
+    "labelFormat": "[X]",
+    "encoding": "UTF-8"
+  }
+}

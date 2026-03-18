@@ -1,0 +1,62 @@
+# OpenSpec Change: PixelBrain Evolution Hooks
+
+change:
+  name: pixel-brain-evolution-hooks
+  title: PixelBrain Evolution Daemon Integration
+  status: complete
+  created: 2026-03-09
+  completed: 2026-03-09
+
+  scope:
+    - systems/evolution_daemon/evolution_daemon.py
+    - systems/evolution_daemon/evolution_hooks/brain_evolution_hook.py
+    - systems/evolution_daemon/evolution_hooks/__init__.py
+    - systems/evolution_daemon/brain_mutations.py
+    - systems/evolution_daemon/brain_benchmarks.py
+    - systems/pixel_compiler/pixelrts_cli.py
+    - tests/test_brain_evolution_daemon.py
+    - tests/test_brain_evolution_visual.py
+    - tests/test_brain_evolution_cli.py
+    - tests/test_brain_benchmarks.py
+    - tests/test_brain_mutations.py
+
+  references:
+    plan: docs/plans/2026-03-09-pixel-brain-evolution-hooks.md
+    team: teams/pixel-brain-team.yaml
+    architecture: docs/META_PROMPTER_ARCHITECTURE.md
+
+  milestones:
+    - id: M1
+      name: Daemon Integration
+      tasks: [task-1, task-2]
+      status: complete
+      description: Wire brain hook to daemon main loop
+
+    - id: M2
+      name: Visual Feedback
+      tasks: [task-3]
+      status: complete
+      description: Emit visual events on brain mutation
+
+    - id: M3
+      name: CLI Commands
+      tasks: [task-4]
+      status: complete
+      description: Add brain status/evolve CLI commands
+
+    - id: M4
+      name: Fitness Benchmarks
+      tasks: [task-5, task-6]
+      status: complete
+      description: Create meaningful fitness evaluation
+
+  metrics:
+    test_count: 41
+    coverage_target: 90
+    estimated_hours: 2
+
+  evolution_philosophy:
+    - Mutations are fitness-tested before being kept
+    - Visual feedback shows mutation in real-time
+    - CLI allows manual trigger and status check
+    - Benchmarks ensure meaningful quality evaluation

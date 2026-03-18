@@ -1,0 +1,61 @@
+# OpenSpec Change: Self-Rewriting Kernel
+
+change:
+  name: self-rewriting-kernel
+  title: Self-Rewriting Kernel - Active Weight Reshaping
+  status: proposed
+  created: 2026-03-08
+
+  scope:
+    - systems/sisyphus/performance_monitor.py
+    - systems/sisyphus/kernel_rewriter.py
+    - systems/sisyphus/hot_swap_manager.py
+    - systems/sisyphus/native_hilbert.py
+    - systems/sisyphus/daemon.py
+    - systems/hypervisor/src/glyph_renderer.wgsl
+    - systems/visual_shell/web/glass_box_demo.html
+    - tests/test_performance_monitor.py
+    - tests/test_kernel_rewriter.py
+    - tests/test_hot_swap_manager.py
+    - tests/test_self_rewriting_e2e.py
+
+  references:
+    plan: docs/plans/2026-03-08-self-rewriting-kernel.md
+    team: teams/self-rewriting-kernel-team.yaml
+    proposal: changes/self-rewriting-kernel/proposal.md
+
+  milestones:
+    - id: M1
+      name: Performance Detection
+      tasks: [task-1.1, task-1.2]
+      status: pending
+
+    - id: M2
+      name: Code Generation
+      tasks: [task-2.1, task-2.2]
+      status: pending
+
+    - id: M3
+      name: Hot-Swap System
+      tasks: [task-3.1]
+      status: pending
+
+    - id: M4
+      name: Daemon Integration
+      tasks: [task-4.1]
+      status: pending
+
+    - id: M5
+      name: Glass Box Viz
+      tasks: [task-5.1, task-5.2]
+      status: pending
+
+    - id: M6
+      name: E2E Validation
+      tasks: [task-6.1]
+      status: pending
+
+  metrics:
+    test_count: 16
+    coverage_target: 90
+    estimated_hours: 3

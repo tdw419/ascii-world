@@ -1,0 +1,60 @@
+# Sisyphus Brain Glyph - OpenSpec Change Definition
+# Connects gpu_dev_daemon to LM Studio via glyph-native cognitive agent
+
+change:
+  title: Sisyphus Brain Glyph
+  status: proposed
+  created: 2026-03-15
+  priority: high
+
+  summary: |
+    Creates a glyph-native Sisyphus Brain that lives on the GPU substrate,
+    enabling autonomous cognitive loops for self-analysis and optimization.
+    The brain perceives its own memory state, queries LM Studio for guidance,
+    and executes returned commands.
+
+  motivation: |
+    Geometry OS needs a self-aware cognitive agent that operates natively
+    on the GPU substrate. By encoding the cognitive loop as a glyph program,
+    we achieve:
+
+    1. Zero abstraction - the AI's output IS the machine state
+    2. Spatial coherence - programs visible as 2D structures
+    3. Evolutionary readiness - mutations are pixel-level operations
+
+  scope:
+    - Rust brain_bridge.rs module for MMIO communication
+    - sisyphus_brain.glyph cognitive agent program
+    - gpu_dev_daemon integration with /brain/* endpoints
+    - Python test suite for validation
+    - Memory documentation
+
+  out_of_scope:
+    - Full neural inference (uses LM Studio as brain)
+    - Visual feedback rendering (separate phase)
+    - Swarm agent migration (separate change)
+
+  dependencies:
+    - compile_glyph.py (existing glyph compiler)
+    - gpu_dev_daemon.rs (existing Ouroboros daemon)
+    - CognitiveDaemonBridge (existing LM Studio client)
+
+  risks:
+    - Glyph opcodes limited - may need compiler extensions
+    - HTTP request building complex in assembly
+    - Performance of byte-by-byte GPU reads
+
+  success_criteria:
+    - brain_bridge.rs compiles and runs
+    - sisyphus_brain.glyph compiles to texture
+    - /brain/health returns LM Studio status
+    - /brain/state returns cognitive state
+    - POST /brain/inject writes to glyph memory
+    - All tests passing
+
+  team: sisyphus-brain-glyph-team
+
+  reference_docs:
+    - docs/superpowers/plans/2026-03-15-sisyphus-brain-glyph.md
+    - docs/GLYPH_PROGRAMMING_GUIDE.md
+    - systems/infinite_map_rs/src/synapse/daemon_bridge.rs

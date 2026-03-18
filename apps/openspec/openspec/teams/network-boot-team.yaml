@@ -1,0 +1,141 @@
+# Network Boot Team
+# Implements Phase 8: Network Boot for v1.2 Milestone
+
+team:
+  name: network-boot-team
+  description: |
+    Implements the Network Boot pipeline for Geometry OS v1.2.
+
+    Pipeline: 3D VRAM → Flatten → WebSocket Stream → Reconstruct → Execute
+
+    This proves the core thesis: "The Screen is the Hard Drive" - the entire OS
+    can be transmitted as a live video stream and executed remotely.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: boot-protocol-engineer
+      role: Implements Boot Bridge Protocol with SHA256 integrity
+      focus:
+        - Create BootFrame dataclass with checksum validation
+        - Implement stream_boot_texture async generator
+        - Add chunked streaming with configurable size
+        - Support end-of-stream marker
+      files:
+        - systems/visual_shell/api/boot_bridge.py
+        - tests/test_boot_bridge.py
+
+    - name: flatten-shader-engineer
+      role: Implements 3D-to-2D coordinate folding
+      focus:
+        - Create flatten_coordinate with Z-order curve
+        - Implement unflatten_coordinate for inverse
+        - Add flatten_texture for full texture processing
+        - Ensure bijective mapping (no data loss)
+      files:
+        - systems/hypervisor/holographic_flatten.py
+        - tests/test_holographic_flatten.py
+
+    - name: rust-loader-engineer
+      role: Implements Rust net_loader for remote boot
+      focus:
+        - Create BootFrame struct with SHA256 validation
+        - Implement NetLoader with WebSocket client
+        - Add memory reconstruction from frames
+        - Support out-of-order frame handling
+      files:
+        - systems/hypervisor/src/boot_frame.rs
+        - systems/hypervisor/src/net_loader.rs
+        - tests/test_net_loader.py
+
+    - name: e2e-integration-engineer
+      role: Validates complete boot pipeline
+      focus:
+        - Test server-to-client boot flow
+        - Verify frame ordering independence
+        - Test flatten/unflatten roundtrip
+        - Measure performance benchmarks
+      files:
+        - tests/test_network_boot_e2e.py
+
+  tasks:
+    - id: task-1
+      title: Create Boot Bridge Protocol
+      assignee: boot-protocol-engineer
+      dependencies: []
+      description: |
+        Create systems/visual_shell/api/boot_bridge.py with:
+        - BootFrame dataclass (sequence, chunk_offset, chunk_data, checksum)
+        - validate_checksum() method using SHA256
+        - to_bytes() / from_bytes() serialization
+        - stream_boot_texture() async generator
+      acceptance_criteria:
+        - test_boot_bridge_module_exists passes
+        - test_boot_bridge_has_stream_function passes
+        - test_boot_frame_structure passes
+        - test_chunk_data_checksum_validation passes
+        - test_boot_stream_yields_frames passes
+        - All 6 tests passing
+
+    - id: task-2
+      title: Create Holographic Flattening
+      assignee: flatten-shader-engineer
+      dependencies: []
+      description: |
+        Create systems/hypervisor/holographic_flatten.py with:
+        - flatten_coordinate(x, y, z, order) -> (x2d, y2d)
+        - unflatten_coordinate(x2d, y2d, order) -> (x, y, z)
+        - calculate_output_size(order) -> (width, height)
+        - flatten_texture(texture_3d) -> texture_2d
+      acceptance_criteria:
+        - test_flatten_module_exists passes
+        - test_flatten_3d_to_2d_basic passes
+        - test_flatten_is_bijective passes
+        - test_flatten_output_size passes
+        - test_flatten_256_cube_under_16ms passes
+        - All 6 tests passing
+
+    - id: task-3
+      title: Create Rust Net Loader
+      assignee: rust-loader-engineer
+      dependencies: []
+      description: |
+        Create systems/hypervisor/src/boot_frame.rs and net_loader.rs with:
+        - BootFrame struct with validation
+        - NetLoader with WebSocket client
+        - Frame deserialization
+        - Memory reconstruction
+      acceptance_criteria:
+        - test_net_loader_crate_exists passes
+        - test_net_loader_compiles passes
+        - test_boot_frame_module_exists passes
+        - test_boot_frame_has_struct passes
+        - test_net_loader_module_exists passes
+        - test_net_loader_has_connect_function passes
+        - All 8 tests passing
+
+    - id: task-4
+      title: E2E Integration Tests
+      assignee: e2e-integration-engineer
+      dependencies: [task-1, task-2, task-3]
+      description: |
+        Create tests/test_network_boot_e2e.py with:
+        - Complete pipeline test (server -> client)
+        - Frame ordering independence test
+        - Flatten/unflatten roundtrip test
+      acceptance_criteria:
+        - test_boot_pipeline_complete passes
+        - test_boot_frame_ordering passes
+        - test_flatten_unflatten_roundtrip_e2e passes
+        - All 3 tests passing
+
+  success_criteria:
+    - Live 3D substrate flattens in <16ms
+    - WebSocket maintains 100MB/s throughput
+    - Remote client reconstructs memory correctly
+    - All 23 tests passing
+    - System boots via network stream
+
+  reference_docs:
+    - docs/plans/2026-03-09-phase-8-network-boot.md
+    - docs/ASCII_EXPOSED_COMPUTING_MANIFESTO.md

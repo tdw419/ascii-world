@@ -1,0 +1,219 @@
+# WASM Block Stack Implementation Team
+# Enables structured control flow in the WASM interpreter
+
+team:
+  name: wasm-block-stack-team
+  description: |
+    Implements block stack for wasm_interpreter.glyph to enable structured
+    control flow (block/loop/if/br/br_if/end). This unlocks if/else/while
+    patterns in WASM programs.
+
+    Once complete, the WASM interpreter can run programs with loops and
+    conditionals, enabling practical use of 20+ languages that compile to WASM.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: wasm-memory-architect
+      role: Defines block stack memory layout and constants
+      focus:
+        - Block stack memory region (0x31000+)
+        - Block entry structure (type, addr, stack_height)
+        - Constants for block types (BLOCK, LOOP, IF)
+        - Integration with existing WASM memory map
+      files:
+        - systems/glyph_stratum/programs/wasm_interpreter.glyph
+
+    - name: wasm-stack-engineer
+      role: Implements block stack push/pop helpers
+      focus:
+        - block_push: add block with type and start address
+        - block_pop: remove block, restore stack height
+        - Error handling for underflow
+        - Register allocation for helper routines
+      files:
+        - systems/glyph_stratum/programs/wasm_interpreter.glyph
+
+    - name: wasm-control-flow-engineer
+      role: Implements control flow opcodes
+      focus:
+        - OP_BLOCK (0x02): push block, continue
+        - OP_LOOP (0x03): push loop block for back-edge
+        - OP_IF (0x04): conditional block entry
+        - OP_ELSE (0x05): branch to else clause
+        - OP_END (0x0B): pop block, continue
+        - OP_BR (0x0C): unconditional branch
+        - OP_BR_IF (0x0D): conditional branch
+      files:
+        - systems/glyph_stratum/programs/wasm_interpreter.glyph
+
+    - name: wasm-test-author
+      role: Creates WASM test programs
+      focus:
+        - simple_loop.wat: test block/loop/br
+        - conditional.wat: test if/else/br_if
+        - Makefile for wat2wasm compilation
+        - Expected output documentation
+      files:
+        - systems/glyph_stratum/tests/wasm/
+
+  tasks:
+    - id: task-1
+      title: Add block stack constants and memory layout
+      assignee: wasm-memory-architect
+      dependencies: []
+      description: |
+        Modify systems/glyph_stratum/programs/wasm_interpreter.glyph:
+        - Add BLOCK_STACK_BASE, BLOCK_STACK_COUNT, BLOCK_STACK_DATA constants
+        - Add BLOCK_TYPE_BLOCK, BLOCK_TYPE_LOOP, BLOCK_TYPE_IF constants
+        - Add BLOCK_ENTRY_SIZE = 12
+        - Initialize block count to 0 in boot sequence
+      acceptance_criteria:
+        - Constants defined after existing .equ statements
+        - Boot sequence initializes BLOCK_STACK_COUNT to 0
+        - File compiles without errors
+
+    - id: task-2
+      title: Implement block_push helper
+      assignee: wasm-stack-engineer
+      dependencies: [task-1]
+      description: |
+        Add :block_push routine to wasm_interpreter.glyph:
+        - Input: r4 = block_type, r5 = start_addr
+        - Calculate entry address from count
+        - Store type, addr, current SP
+        - Increment count
+        - Return
+      acceptance_criteria:
+        - Routine follows existing stack_pop pattern
+        - Uses available registers (r1, r2, r3, r6, r10, r12)
+        - Handles multiply-by-12 for entry offset
+
+    - id: task-3
+      title: Implement block_pop helper
+      assignee: wasm-stack-engineer
+      dependencies: [task-2]
+      description: |
+        Add :block_pop routine to wasm_interpreter.glyph:
+        - Output: r4 = block_type, r5 = start_addr, r6 = stack_height
+        - Check for underflow (count == 0)
+        - Load values from last entry
+        - Decrement count
+        - Return
+      acceptance_criteria:
+        - Returns all three block fields
+        - Jumps to :block_pop_error on underflow
+        - Error sets STATUS_ERROR and halts
+
+    - id: task-4
+      title: Implement OP_BLOCK (0x02)
+      assignee: wasm-control-flow-engineer
+      dependencies: [task-2]
+      description: |
+        Add wasm_op_block to wasm_interpreter.glyph:
+        - Skip blocktype byte
+        - Push BLOCK block with current IP
+        - Continue to fetch
+      acceptance_criteria:
+        - Added to dispatch table
+        - Calls block_push with correct type
+        - Continues execution
+
+    - id: task-5
+      title: Implement OP_LOOP (0x03)
+      assignee: wasm-control-flow-engineer
+      dependencies: [task-2]
+      description: |
+        Add wasm_op_loop to wasm_interpreter.glyph:
+        - Skip blocktype byte
+        - Push LOOP block with current IP (for br back-edge)
+        - Continue to fetch
+      acceptance_criteria:
+        - Added to dispatch table
+        - Stores loop start address for br targeting
+        - Continues execution
+
+    - id: task-6
+      title: Update OP_END (0x0B) to pop block
+      assignee: wasm-control-flow-engineer
+      dependencies: [task-3]
+      description: |
+        Modify wasm_op_end in wasm_interpreter.glyph:
+        - Check if block stack is empty
+        - If empty, halt (end of function)
+        - If not empty, pop block and continue
+      acceptance_criteria:
+        - Distinguishes function end from block end
+        - Calls block_pop correctly
+        - Continues after block close
+
+    - id: task-7
+      title: Implement OP_BR (0x0C)
+      assignee: wasm-control-flow-engineer
+      dependencies: [task-3]
+      description: |
+        Add wasm_op_br to wasm_interpreter.glyph:
+        - Read LEB128 label index
+        - Pop blocks until reaching target
+        - For LOOP: jump to start address
+        - For BLOCK: continue after END (MVP: halt)
+      acceptance_criteria:
+        - Reads label index via LEB128
+        - Restores stack height
+        - Re-pushes loop block for iteration
+
+    - id: task-8
+      title: Implement OP_BR_IF (0x0D)
+      assignee: wasm-control-flow-engineer
+      dependencies: [task-7]
+      description: |
+        Add wasm_op_br_if to wasm_interpreter.glyph:
+        - Read LEB128 label index
+        - Pop condition from stack
+        - If non-zero, perform branch (same as br)
+        - If zero, continue
+      acceptance_criteria:
+        - Correctly handles true/false conditions
+        - Same branch logic as OP_BR
+
+    - id: task-9
+      title: Implement OP_IF (0x04) and OP_ELSE (0x05)
+      assignee: wasm-control-flow-engineer
+      dependencies: [task-2]
+      description: |
+        Add wasm_op_if and wasm_op_else to wasm_interpreter.glyph:
+        - IF: pop condition, push IF block, skip to ELSE/END if false
+        - ELSE: skip to END if came from true branch (MVP: continue)
+      acceptance_criteria:
+        - IF pushes block regardless of condition
+        - IF skips body when condition is 0
+        - ELSE stub implemented
+
+    - id: task-10
+      title: Create simple_loop.wat test
+      assignee: wasm-test-author
+      dependencies: [task-6, task-7, task-8]
+      description: |
+        Create systems/glyph_stratum/tests/wasm/simple_loop.wat:
+        - Loop from 0 to 10
+        - Store counter at memory[0]
+        - Uses block, loop, local ops, br, br_if
+        - Create Makefile for wat2wasm
+      acceptance_criteria:
+        - WAT file is valid WASM text format
+        - Makefile compiles to .wasm
+        - Program exercises block/loop/br
+
+  success_criteria:
+    - Block stack constants and memory layout defined
+    - block_push and block_pop helpers working
+    - OP_BLOCK, OP_LOOP, OP_END implemented
+    - OP_BR, OP_BR_IF implemented
+    - OP_IF, OP_ELSE stub implemented
+    - simple_loop.wat test compiles
+
+  reference_docs:
+    - docs/plans/2026-03-15-wasm-block-stack.md
+    - docs/plans/2026-03-15-wasm-subset-design.md
+    - systems/glyph_stratum/programs/wasm_interpreter.glyph
+    - https://webassembly.github.io/spec/core/appendix/index-instructions.html

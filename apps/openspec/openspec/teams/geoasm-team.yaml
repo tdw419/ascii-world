@@ -1,0 +1,193 @@
+# GeoASM Instruction Set Team
+# Implements neural assembly language for PixelBrain inference control
+
+team:
+  name: geoasm-team
+  description: |
+    Implements GeoASM - a register-based neural assembly language with 7 opcodes
+    (0xD0-0xD6) for fine-grained control over PixelBrain inference stages.
+    Enables neural programs, context switching, and visual introspection.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: register-architect
+      role: Designs and implements GPU-compatible register file
+      focus:
+        - 8 registers (R0-R7)
+        - R2 holds token ID, R2-R4 hold 64-dim hidden vectors
+        - R5-R7 hold scalars/control values
+        - GPU buffer export/import for zero-copy execution
+      files:
+        - systems/visual_shell/geoasm/register_file.py
+        - tests/test_geoasm_register_file.py
+
+    - name: instruction-encoder
+      role: Implements instruction encoding/decoding
+      focus:
+        - Opcode enum (0xD0-0xD6)
+        - 4-byte instruction format [opcode, rs, rd, imm]
+        - Builder functions: EMBED, ATTEND, PROJECT, SAMPLE, LAYER, KV_APPEND, THOUGHT_PULSE
+      files:
+        - systems/visual_shell/geoasm/instruction.py
+        - tests/test_geoasm_instruction.py
+
+    - name: assembler-engineer
+      role: Creates text-to-binary assembler
+      focus:
+        - Parse all 7 opcodes with register/immediate operands
+        - Support comments (;) and labels
+        - Assemble to bytes and disassemble back
+      files:
+        - systems/visual_shell/geoasm/assembler.py
+        - tests/test_geoasm_assembler.py
+
+    - name: executor-engineer
+      role: Implements instruction dispatch to WGSL shaders
+      focus:
+        - Execute all 7 opcodes against PixelBrainPipeline
+        - Pre/post instruction hooks for introspection
+        - Program runner with stats
+      files:
+        - systems/visual_shell/geoasm/executor.py
+        - tests/test_geoasm_executor.py
+        - tests/test_geoasm_pipeline_integration.py
+
+    - name: visual-bridge-engineer
+      role: Creates visual feedback for neural execution
+      focus:
+        - Thought pulse events with token semantic colors
+        - Atlas glow for weight access visualization
+        - Attention update events for heatmap rendering
+        - Event buffering and callback system
+      files:
+        - systems/visual_shell/geoasm/visual_bridge.py
+        - tests/test_geoasm_visual_bridge.py
+
+    - name: integration-engineer
+      role: E2E validation and demo
+      focus:
+        - Integration tests with real PixelBrainPipeline
+        - Demo script showing full assembly → execution → visualization
+        - Verify all opcodes work end-to-end
+      files:
+        - scripts/geoasm_demo.py
+        - tests/test_geoasm_pipeline_integration.py
+
+  tasks:
+    - id: task-1.1
+      title: Create RegisterFile for neural state
+      assignee: register-architect
+      dependencies: []
+      description: |
+        Create systems/visual_shell/geoasm/register_file.py:
+        - 8 registers (R0-R7)
+        - R2-R4 are 64-dim vectors, others are scalars
+        - to_buffer() / from_buffer() for GPU transfer
+      acceptance_criteria:
+        - All 8 registers accessible
+        - Vector registers hold 64-dim arrays
+        - GPU buffer export works
+        - Tests pass: pytest tests/test_geoasm_register_file.py -v
+
+    - id: task-2.2
+      title: Define instruction encoding
+      assignee: instruction-encoder
+      dependencies: []
+      description: |
+        Create systems/visual_shell/geoasm/instruction.py:
+        - Opcode enum with 0xD0-0xD6
+        - Instruction dataclass with to_bytes()/from_bytes()
+        - Builder functions: EMBED(), ATTEND(), PROJECT(), SAMPLE(), LAYER(), KV_APPEND(), THOUGHT_PULSE()
+      acceptance_criteria:
+        - All 7 opcodes defined
+        - 4-byte encoding works
+        - Tests pass: pytest tests/test_geoasm_instruction.py -v
+
+    - id: task-1.7
+      title: Create text assembler
+      assignee: assembler-engineer
+      dependencies: [task-1.6]
+      description: |
+        Create systems/visual_shell/geoasm/assembler.py:
+        - assemble(source) → List[Instruction]
+        - assemble_to_bytes(source) → bytes
+        - Support comments (;) and labels
+        - disassemble(instructions) → source
+      acceptance_criteria:
+        - Can assemble 8-layer inference program
+        - Comments and labels work
+        - Tests pass: pytest tests/test_geoasm_assembler.py -v
+
+    - id: task-1.8
+      title: Implement instruction executor
+      assignee: executor-engineer
+      dependencies: [task-1.1, task-1.7]
+      description: |
+        Create systems/visual_shell/geoasm/executor.py:
+        - execute(instruction) dispatches to pipeline
+        - run(program) executes instruction list
+        - Pre/post hooks for introspection
+        - Layer state tracking
+      acceptance_criteria:
+        - All 7 opcodes dispatch correctly
+        - Program runner returns stats
+        - Tests pass: pytest tests/test_geoasm_executor.py -v
+
+    - id: task-1.9
+      title: Integrate with PixelBrainPipeline
+      assignee: executor-engineer
+      dependencies: [task-1.8]
+      description: |
+        Wire executor to real pipeline:
+        - EMBED calls pipeline.embed_token()
+        - SAMPLE produces valid token
+        - Full inference program works
+      acceptance_criteria:
+        - EMBED produces 64-dim hidden vector
+        - Full inference returns token
+        - Tests pass: pytest tests/test_geoasm_pipeline_integration.py -v
+
+    - id: task-1.10
+      title: Create visual bridge
+      assignee: visual-bridge-engineer
+      dependencies: []
+      description: |
+        Create systems/visual_shell/geoasm/visual_bridge.py:
+        - emit_thought_pulse(token, position, layer)
+        - emit_atlas_glow(indices, intensity)
+        - Event buffering and callbacks
+        - Token semantic color mapping
+      acceptance_criteria:
+        - Thought pulse creates visual event
+        - Atlas glow highlights indices
+        - Tests pass: pytest tests/test_geoasm_visual_bridge.py -v
+
+    - id: task-1.11
+      title: E2E demo and validation
+      assignee: integration-engineer
+      dependencies: [task-1.9, task-1.10]
+      description: |
+        Create scripts/geoasm_demo.py:
+        - Load PixelBrain
+        - Assemble 8-layer inference program
+        - Execute and show visual events
+        - Print results
+      acceptance_criteria:
+        - Demo runs successfully
+        - Shows assembled instructions
+        - Shows visual events
+        - All tests pass: pytest tests/test_geoasm*.py -v
+
+  success_criteria:
+    - RegisterFile exports GPU-compatible buffer
+    - All 7 opcodes encode/decode correctly
+    - Assembler handles comments and labels
+    - Executor dispatches to WGSL shaders
+    - Visual bridge emits thought pulses
+    - Full inference program executes
+    - 25+ tests passing
+    - Demo script runs end-to-end
+
+  reference_docs:
+    - docs/plans/2026-03-09-geoasm-instruction-set.md

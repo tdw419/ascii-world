@@ -1,0 +1,262 @@
+# Language Execution Strategy Team
+# Enables running existing programming languages on GPU Dev Daemon
+
+team:
+  name: language-execution-team
+  description: |
+    Implements a two-tier language execution strategy for Geometry OS:
+    1. RISC-V compilation path (C/Rust/Go → RISC-V → riscv_emulator.glyph)
+    2. WASM interpretation path (Python/JS/etc → WASM → wasm_interpreter.glyph)
+
+    This enables existing programming languages to run on the GPU substrate
+    without rewriting them in Glyph assembly.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: riscv-emulator-auditor
+      role: Documents and validates existing RISC-V emulator coverage
+      focus:
+        - Audit implemented RV32I opcodes
+        - Document RV32C compressed instruction support
+        - Identify gaps and missing instructions
+        - Create coverage matrix for regression testing
+      files:
+        - systems/glyph_stratum/programs/riscv_emulator.glyph
+        - systems/glyph_stratum/docs/riscv_emulator_coverage.md
+
+    - name: daemon-api-engineer
+      role: Extends GPU daemon HTTP API for binary loading and control
+      focus:
+        - Add /status endpoint for health checks
+        - Add /poke endpoint for memory writes
+        - Add /read endpoint for memory reads (UART output)
+        - Ensure binary loading works at offset 0x8000
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+
+    - name: toolchain-documenter
+      role: Creates documentation and templates for language compilation
+      focus:
+        - Write RISC-V toolchain guide (gcc, rustc)
+        - Create C compilation examples
+        - Create Rust compilation template (no_std)
+        - Document memory map and UART interface
+      files:
+        - docs/RISCV_TOOLCHAIN_GUIDE.md
+        - templates/riscv-rust/
+
+    - name: cli-tooling-engineer
+      role: Creates CLI tools for loading and running binaries
+      focus:
+        - geos-riscv-load.sh script for ELF loading
+        - Integration with daemon HTTP API
+        - Entry point configuration
+        - Error handling and status reporting
+      files:
+        - systems/glyph_stratum/bin/geos-riscv-load.sh
+
+    - name: test-binary-author
+      role: Creates test binaries for validation
+      focus:
+        - hello_geos.c - minimal UART output test
+        - Linker script for bare-metal RISC-V
+        - Makefile for cross-compilation
+        - More complex test programs as needed
+      files:
+        - systems/glyph_stratum/tests/riscv/
+
+    - name: wasm-interpreter-architect
+      role: Designs and implements WASM interpreter skeleton
+      focus:
+        - Define WASM MVP subset (i32 only, basic instructions)
+        - Memory map for WASM linear memory in Hilbert space
+        - Fetch-decode-execute loop structure
+        - Stack operations and local variables
+      files:
+        - systems/glyph_stratum/programs/wasm_interpreter.glyph
+        - docs/plans/2026-03-15-wasm-subset-design.md
+
+    - name: e2e-test-engineer
+      role: Creates end-to-end test suite for language execution
+      focus:
+        - Python test harness for daemon interaction
+        - RISC-V binary execution tests
+        - WASM execution tests (when interpreter complete)
+        - CI integration
+      files:
+        - systems/glyph_stratum/tests/e2e/test_language_execution.py
+
+  tasks:
+    - id: task-1.1
+      title: Document RISC-V emulator opcode coverage
+      assignee: riscv-emulator-auditor
+      dependencies: []
+      description: |
+        Create systems/glyph_stratum/docs/riscv_emulator_coverage.md:
+        - Read riscv_emulator.glyph and audit all implemented opcodes
+        - Create coverage matrix for RV32I base instructions
+        - Document RV32C compressed instruction support
+        - List known gaps and missing instructions
+        - Note any TODOs or workarounds
+      acceptance_criteria:
+        - Coverage matrix shows all RV32I instructions with status
+        - RV32C compressed instructions documented
+        - Gaps clearly identified for future work
+
+    - id: task-1.2
+      title: Add /status and /poke endpoints to daemon
+      assignee: daemon-api-engineer
+      dependencies: []
+      description: |
+        Modify systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs:
+        - Add GET /status endpoint returning JSON {"status":"running","vms":N}
+        - Add GET /poke?addr=0xXXXX&value=0xYYYY endpoint
+        - Add GET /read?addr=0xXXXX&len=N endpoint for memory reads
+        - Handle in handle_raw_request function
+      acceptance_criteria:
+        - curl http://127.0.0.1:8769/status returns valid JSON
+        - curl "http://127.0.0.1:8769/poke?addr=0x14000&value=0x8000" works
+        - curl "http://127.0.0.1:8769/read?addr=0x0200&len=16" returns bytes
+
+    - id: task-1.3
+      title: Create RISC-V binary loader CLI
+      assignee: cli-tooling-engineer
+      dependencies: [task-1.2]
+      description: |
+        Create systems/glyph_stratum/bin/geos-riscv-load.sh:
+        - Accept ELF binary path and optional entry point
+        - Extract .text section using objcopy
+        - Load riscv_emulator.rts.png first
+        - Inject raw binary at offset 0x8000
+        - Set entry point via /poke endpoint
+        - Report success/failure
+      acceptance_criteria:
+        - Script executes without errors
+        - Proper error handling for missing daemon
+        - Logs each step of loading process
+
+    - id: task-1.4
+      title: Create hello_geos test binary
+      assignee: test-binary-author
+      dependencies: []
+      description: |
+        Create systems/glyph_stratum/tests/riscv/:
+        - hello_geos.c: outputs "GEOS\n" to UART at 0x1000
+        - link.ld: linker script with ORIGIN=0x8000
+        - Makefile: cross-compile targets for rv32i
+      acceptance_criteria:
+        - make produces hello_geos.elf and hello_geos.bin
+        - Binary size is reasonable (<1KB for hello world)
+        - objdump shows correct memory layout
+
+    - id: task-2.1
+      title: Write RISC-V toolchain guide
+      assignee: toolchain-documenter
+      dependencies: []
+      description: |
+        Create docs/RISCV_TOOLCHAIN_GUIDE.md:
+        - Toolchain installation instructions (Ubuntu, macOS, source)
+        - C compilation example with flags
+        - Rust compilation example (no_std)
+        - Memory map documentation
+        - UART interface documentation
+        - Loading and running instructions
+      acceptance_criteria:
+        - Guide covers gcc and rustc
+        - Memory map is accurate
+        - Examples are copy-pasteable
+
+    - id: task-2.2
+      title: Create Rust RISC-V template
+      assignee: toolchain-documenter
+      dependencies: []
+      description: |
+        Create templates/riscv-rust/:
+        - Cargo.toml with no_std configuration
+        - src/main.rs with _start, UART output, panic handler
+        - memory.x linker script
+        - .cargo/config.toml with riscv32i target
+      acceptance_criteria:
+        - cargo build --target riscv32i-unknown-none-elf works
+        - Resulting binary is loadable
+
+    - id: task-3.1
+      title: Design WASM MVP subset
+      assignee: wasm-interpreter-architect
+      dependencies: []
+      description: |
+        Create docs/plans/2026-03-15-wasm-subset-design.md:
+        - Define supported value types (i32 only)
+        - List supported instructions (control, memory, numeric, comparison)
+        - Define memory map for WASM linear memory
+        - Estimate implementation complexity
+        - Identify host function interface needs
+      acceptance_criteria:
+        - Subset is implementable in ~500-800 Glyph instructions
+        - Memory map fits in Hilbert space
+        - Clear instruction list with opcodes
+
+    - id: task-3.2
+      title: Create WASM interpreter skeleton
+      assignee: wasm-interpreter-architect
+      dependencies: [task-3.1]
+      description: |
+        Create systems/glyph_stratum/programs/wasm_interpreter.glyph:
+        - Memory layout constants (WASM_MEM_BASE, SP, IP, BP, STATUS)
+        - Boot sequence initializing IP from entry point
+        - Fetch-decode-execute loop structure
+        - Opcode dispatch table (end, i32.const, i32.add at minimum)
+        - Skeleton implementations for each opcode
+      acceptance_criteria:
+        - Glyph assembles without errors
+        - Fetch-decode loop structure is correct
+        - At least 3 opcodes have skeleton implementations
+
+    - id: task-4.1
+      title: Create E2E test suite
+      assignee: e2e-test-engineer
+      dependencies: [task-1.2, task-1.3, task-1.4]
+      description: |
+        Create systems/glyph_stratum/tests/e2e/test_language_execution.py:
+        - pytest fixture for daemon availability check
+        - TestRISCVExecution class with test_hello_geos
+        - TestWASMExecution class (skipped for now)
+        - HTTP client for daemon interaction
+        - Assertion helpers for UART output
+      acceptance_criteria:
+        - pytest discovers and runs tests
+        - RISC-V test executes hello_geos.elf
+        - Proper skip when daemon not running
+
+    - id: task-4.2
+      title: Manual verification - full pipeline
+      assignee: e2e-test-engineer
+      dependencies: [task-1.3, task-1.4, task-4.1]
+      description: |
+        Execute full pipeline manually:
+        1. Start daemon: cargo run --release --bin gpu_dev_daemon
+        2. Build test: cd systems/glyph_stratum/tests/riscv && make
+        3. Load binary: ../../bin/geos-riscv-load.sh hello_geos.elf
+        4. Verify output via /read endpoint at UART address 0x0200
+        5. Run pytest to verify automated test
+      acceptance_criteria:
+        - Binary loads without errors
+        - UART output shows "GEOS\n"
+        - pytest test passes
+
+  success_criteria:
+    - RISC-V emulator coverage documented with opcode matrix
+    - /status, /poke, /read endpoints working
+    - geos-riscv-load.sh successfully loads binaries
+    - hello_geos.elf compiles and runs on daemon
+    - RISC-V toolchain guide complete
+    - Rust template compiles to loadable binary
+    - WASM interpreter skeleton created
+    - E2E tests pass
+
+  reference_docs:
+    - docs/plans/2026-03-15-language-execution-strategy.md
+    - docs/GLYPH_PROGRAMMING_GUIDE.md
+    - systems/glyph_stratum/programs/riscv_emulator.glyph
+    - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs

@@ -1,0 +1,50 @@
+# OpenSpec Change: Tectonic File Watcher
+
+change:
+  name: tectonic-file-watcher
+  title: Tectonic File Watcher - Real-time Semantic Gravity
+  status: proposed
+  created: 2026-03-09
+
+  scope:
+    - systems/infinite_map/file_watcher.py
+    - systems/infinite_map/mass_integrator.py
+    - systems/infinite_map/tectonic_updater.py
+    - systems/infinite_map/gravity_engine.py
+    - systems/sisyphus/daemon.py
+    - tests/test_file_watcher.py
+    - tests/test_mass_integrator.py
+    - tests/test_gravity_engine_realtime.py
+    - tests/test_tectonic_updater.py
+    - tests/test_daemon_tectonic.py
+
+  references:
+    plan: docs/plans/2026-03-09-inotify-gravity-integration.md
+    team: teams/tectonic-file-watcher-team.yaml
+    proposal: changes/tectonic-file-watcher/proposal.md
+
+  milestones:
+    - id: M1
+      name: File Watching
+      tasks: [task-1.1]
+      status: pending
+
+    - id: M2
+      name: Mass Integration
+      tasks: [task-1.2, task-2.1]
+      status: pending
+
+    - id: M3
+      name: Tectonic Updater
+      tasks: [task-3.1]
+      status: pending
+
+    - id: M4
+      name: Daemon Integration
+      tasks: [task-4.1]
+      status: pending
+
+  metrics:
+    test_count: 20
+    coverage_target: 90
+    estimated_hours: 3

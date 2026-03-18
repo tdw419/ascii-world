@@ -1,0 +1,233 @@
+# Meta-Circular Glyph Scheduler Team
+# Phase: Self-Hosting - Daemon becomes native glyph program
+
+team:
+  name: meta-circular-scheduler-team
+  description: |
+    Migrates the GPU dev daemon from Rust to a native glyph program (scheduler.glyph)
+    that runs as VM 0 on the substrate. This enables self-hosting and self-modification.
+
+    Architecture: Rust shim handles GPU init + trap callbacks. Glyph scheduler runs
+    as VM 0, scheduling VMs 1-255 via round-robin. Communication via memory-mapped
+    trap interface at 0xFF00_0000.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: trap-interface-architect
+      role: Designs and implements the trap interface for glyph↔Rust communication
+      focus:
+        - TrapRegs struct with op_type, args, result, status fields
+        - Memory layout at 0xFF00_0000
+        - Protocol: glyph writes request, shim polls and executes
+        - Trap operations: READ_BUFFER, WRITE_BUFFER, SPAWN_VM, KILL_VM, PEEK, POKE
+      files:
+        - systems/infinite_map_rs/src/trap_interface.rs
+        - systems/infinite_map_rs/src/lib.rs
+
+    - name: shim-reduction-engineer
+      role: Reduces gpu_dev_daemon.rs to minimal shim with trap handler
+      focus:
+        - Extract GlyphVmScheduler logic into glyph
+        - Implement TrapHandler struct with poll_and_execute()
+        - Integrate trap polling into main loop
+        - Keep GPU init and HTTP/Unix API in shim
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+        - systems/infinite_map_rs/src/glyph_vm_scheduler.rs
+
+    - name: glyph-scheduler-author
+      role: Creates scheduler.glyph - the meta-circular VM 0 scheduler
+      focus:
+        - Round-robin scheduling of VMs 1-255
+        - 64 cycles per VM per frame
+        - Use trap interface for VM spawn/kill
+        - Frame pacing for ~60fps target
+      files:
+        - systems/glyph_stratum/programs/scheduler.glyph
+        - systems/glyph_stratum/programs/test_trap.glyph
+
+    - name: substrate-access-engineer
+      role: Implements substrate peek/poke for trap operations
+      focus:
+        - peek_substrate() for reading trap registers
+        - write_trap_regs() for returning results
+        - spawn_vm_from_trap() for glyph-initiated VM creation
+        - Integration with existing texture read/write
+      files:
+        - systems/infinite_map_rs/src/glyph_vm_scheduler.rs
+
+    - name: boot-integration-engineer
+      role: Integrates scheduler.glyph into daemon boot sequence
+      focus:
+        - Load scheduler.glyph into VM 0 on daemon start
+        - Verify glyph loads correctly
+        - Handle missing glyph gracefully
+        - Log boot status for debugging
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+
+    - name: integration-test-engineer
+      role: Creates integration tests for trap interface and scheduler
+      focus:
+        - Test trap register sizes and offsets
+        - Test trap protocol constants
+        - Test glyph trap operations
+        - E2E verification of scheduler boot
+      files:
+        - systems/infinite_map_rs/src/tests/trap_test.rs
+        - systems/infinite_map_rs/src/tests/mod.rs
+
+  tasks:
+    - id: task-1.1
+      title: Create trap_interface.rs with types and constants
+      assignee: trap-interface-architect
+      dependencies: []
+      description: |
+        Create systems/infinite_map_rs/src/trap_interface.rs:
+        - TRAP_BASE constant (0xFF00_0000)
+        - op_type module with READ_BUFFER, WRITE_BUFFER, SPAWN_VM, KILL_VM, PEEK, POKE
+        - status module with IDLE, PENDING, COMPLETE
+        - TrapRegs struct with bytemuck Pod/Zeroable derives
+        - Default impl for TrapRegs
+
+        Add to lib.rs: pub mod trap_interface;
+      acceptance_criteria:
+        - cargo check --package infinite_map_rs passes
+        - TrapRegs is 24 bytes (6 x u32)
+
+    - id: task-1.2
+      title: Create TrapHandler in shim
+      assignee: shim-reduction-engineer
+      dependencies: [task-1.1]
+      description: |
+        Modify systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs:
+        - Add use infinite_map_rs::trap_interface::*;
+        - Create TrapHandler struct with regs: TrapRegs field
+        - Implement poll_and_execute() method
+        - Handle SPAWN_VM, KILL_VM, PEEK_SUBSTRATE, POKE_SUBSTRATE ops
+      acceptance_criteria:
+        - TrapHandler compiles
+        - poll_and_execute() handles all op types
+
+    - id: task-1.3
+      title: Add helper methods to GlyphVmScheduler
+      assignee: substrate-access-engineer
+      dependencies: [task-1.1]
+      description: |
+        Modify systems/infinite_map_rs/src/glyph_vm_scheduler.rs:
+        - Add peek_substrate(base, count) -> [u8; 24]
+        - Add write_trap_regs(regs: &TrapRegs)
+        - Add spawn_vm_from_trap(entry, config) -> u8
+        - Add kill_vm(vm_id) -> u8
+        - Add peek_substrate_single(addr) -> u32
+        - Add poke_substrate_single(addr, val)
+      acceptance_criteria:
+        - All methods compile (skeleton OK for now)
+        - spawn_vm_from_trap calls existing spawn_vm
+
+    - id: task-1.4
+      title: Integrate trap polling into main loop
+      assignee: shim-reduction-engineer
+      dependencies: [task-1.2, task-1.3]
+      description: |
+        Modify systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs:
+        - Create TrapHandler in main() wrapped in Arc<Mutex>
+        - Add trap polling after execute_frame() in main loop
+        - Log trap handler initialization
+      acceptance_criteria:
+        - Daemon compiles with trap integration
+        - Main loop includes trap polling
+
+    - id: task-2.1
+      title: Create test_trap.glyph
+      assignee: glyph-scheduler-author
+      dependencies: [task-1.1]
+      description: |
+        Create systems/glyph_stratum/programs/test_trap.glyph:
+        - Define TRAP_BASE, op constants, status constants
+        - Write test pattern to substrate (0xDEADBEEF at 0x0100)
+        - Request PEEK via trap interface
+        - Wait for STATUS_COMPLETE
+        - Store result at visible location (0x0200)
+        - HALT
+      acceptance_criteria:
+        - Glyph assembles without errors
+        - Uses correct trap memory layout
+
+    - id: task-2.2
+      title: Create scheduler.glyph
+      assignee: glyph-scheduler-author
+      dependencies: [task-2.1]
+      description: |
+        Create systems/glyph_stratum/programs/scheduler.glyph:
+        - Mark self as running (VM 0)
+        - Initialize frame counter
+        - Round-robin loop through VMs 1-255
+        - Write heartbeat to visible location
+        - Yield to shim for trap processing
+        - Infinite loop (never HALT)
+      acceptance_criteria:
+        - Glyph assembles without errors
+        - Implements round-robin structure
+
+    - id: task-3.1
+      title: Load scheduler.glyph on boot
+      assignee: boot-integration-engineer
+      dependencies: [task-2.2]
+      description: |
+        Modify systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs:
+        - After scheduler creation, load scheduler.glyph
+        - Use VmConfig with entry_point: 0
+        - Log success/failure
+        - Handle missing file gracefully
+      acceptance_criteria:
+        - Daemon attempts to load scheduler.glyph
+        - Logs indicate load status
+
+    - id: task-4.1
+      title: Create trap integration tests
+      assignee: integration-test-engineer
+      dependencies: [task-1.1]
+      description: |
+        Create systems/infinite_map_rs/src/tests/trap_test.rs:
+        - test_trap_regs_size: assert size is 24 bytes
+        - test_trap_base_address: assert 0xFF000000
+        - test_op_types: verify SPAWN_VM=3, KILL_VM=4, etc.
+        - test_status_values: verify IDLE=0, PENDING=1, COMPLETE=2
+        - test_trap_regs_default: verify default values
+
+        Add to tests/mod.rs: pub mod trap_test;
+      acceptance_criteria:
+        - cargo test --package infinite_map_rs trap passes
+        - All 5 tests pass
+
+    - id: task-4.2
+      title: Manual verification - daemon boot
+      assignee: integration-test-engineer
+      dependencies: [task-3.1, task-4.1]
+      description: |
+        Build and run daemon:
+        - cargo build --release --bin gpu_dev_daemon
+        - Run daemon and verify output shows:
+          - "[BOOT] Loading scheduler.glyph into VM 0..."
+          - "[TRAP] Handler initialized"
+        - Use daemon-status MCP tool to verify running
+      acceptance_criteria:
+        - Daemon builds successfully
+        - Boot logs show scheduler load attempt
+        - MCP tools still work
+
+  success_criteria:
+    - Trap interface types compile (TrapRegs 24 bytes)
+    - TrapHandler polls and executes operations
+    - scheduler.glyph loads as VM 0 on boot
+    - Integration tests pass (5+ tests)
+    - Daemon boots with trap handler active
+    - MCP tools still function
+
+  reference_docs:
+    - docs/plans/2026-03-15-meta-circular-scheduler-design.md
+    - docs/plans/2026-03-15-meta-circular-scheduler-impl.md
+    - systems/infinite_map_rs/src/glyph_vm_scheduler.rs
+    - systems/glyph_stratum/programs/daemon.glyph

@@ -1,0 +1,14 @@
+{
+  "source": "plan",
+  "name": "wp-mission-control-health",
+  "basePath": "./apps/openspec/openspec/specs/wp-mission-control-health",
+  "phase": "complete",
+  "taskIndex": 7,
+  "totalTasks": 7,
+  "taskIteration": 1,
+  "maxTaskIterations": 5,
+  "globalIteration": 1,
+  "maxGlobalIterations": 100,
+  "commitSpec": false,
+  "completedAt": "2026-02-21T00:00:00Z"
+}

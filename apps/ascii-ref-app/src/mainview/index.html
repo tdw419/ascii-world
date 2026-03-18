@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Reference App GUI</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div id="container">
+        <header>
+            <div class="header-left">
+                <h1>ASCII-REF-APP</h1>
+                <span class="version">v0.1.0</span>
+            </div>
+            <div id="state-badge">STATE: <span id="current-state">HOME</span></div>
+        </header>
+        
+        <main>
+            <section id="gui-pane">
+                <div id="view-content">
+                    <!-- Dynamic GUI content injected here -->
+                    <div id="home-view" class="view">
+                        <h2>Main Dashboard</h2>
+                        <p>Welcome to the ASCII Reference Application. Use the buttons below or send ASCII labels via API.</p>
+                        
+                        <div class="card-grid">
+                            <div class="card" onclick="sendControl('A')">
+                                <span class="label-tag">[A]</span>
+                                <h3>View Tasks</h3>
+                                <p>Manage your task list</p>
+                            </div>
+                            <div class="card" onclick="sendControl('B')">
+                                <span class="label-tag">[B]</span>
+                                <h3>Settings</h3>
+                                <p>App configuration</p>
+                            </div>
+                            <div class="card" onclick="sendControl('C')">
+                                <span class="label-tag">[C]</span>
+                                <h3>About</h3>
+                                <p>Information</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-actions">
+                            <h3>Quick Actions</h3>
+                            <button onclick="sendControl('D')"><span class="label-tag">[D]</span> Run Analysis</button>
+                            <button onclick="sendControl('E')"><span class="label-tag">[E]</span> Export State</button>
+                            <button onclick="sendControl('F')"><span class="label-tag">[F]</span> Reset</button>
+                        </div>
+                    </div>
+
+                    <div id="tasks-view" class="view" style="display:none">
+                        <div class="view-header">
+                            <h2>Task Management</h2>
+                            <button class="back-btn" onclick="sendControl('B')"><span class="label-tag">[B]</span> Back</button>
+                        </div>
+                        <div id="task-list">
+                            <!-- Tasks injected here -->
+                        </div>
+                        <div class="view-actions">
+                            <button onclick="sendControl('N')"><span class="label-tag">[N]</span> New Task</button>
+                        </div>
+                    </div>
+
+                    <div id="settings-view" class="view" style="display:none">
+                        <div class="view-header">
+                            <h2>Settings</h2>
+                            <button class="back-btn" onclick="sendControl('B')"><span class="label-tag">[B]</span> Back</button>
+                        </div>
+                        <div class="settings-form">
+                            <div class="setting-item" onclick="sendControl('E')">
+                                <label>Auto-save</label>
+                                <span id="gui-auto-save" class="toggle-val">...</span>
+                                <span class="label-tag">[E]</span>
+                            </div>
+                            <div class="setting-item" onclick="sendControl('F')">
+                                <label>Theme</label>
+                                <span id="gui-theme" class="toggle-val">...</span>
+                                <span class="label-tag">[F]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <aside id="ascii-pane">
+                <div class="pane-header">
+                    <h3>ASCII SOURCE OF TRUTH (80x24)</h3>
+                </div>
+                <pre id="ascii-content"></pre>
+            </aside>
+        </main>
+        
+        <footer>
+            <div class="api-info">API: <code>http://localhost:3421/control</code></div>
+            <div id="uptime-display">Uptime: 0s</div>
+        </footer>
+    </div>
+    <script src="index.js"></script>
+</body>
+</html>

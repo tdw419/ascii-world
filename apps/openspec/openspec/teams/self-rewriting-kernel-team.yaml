@@ -1,0 +1,239 @@
+# Self-Rewriting Kernel Team
+# Implements active weight reshaping - the daemon rewrites its own native kernels
+
+team:
+  name: self-rewriting-kernel-team
+  description: |
+    Implements the Self-Rewriting Kernel architecture where the Sisyphus Daemon
+    detects performance hot spots in native Rust kernels and generates optimized
+    replacements using LM Studio. This is "Active Weight Reshaping" - the system
+    rewrites its own code in real-time.
+
+    Pipeline: Performance Monitor → Hot Spot Detection → LLM Code Generation → Hot-Swap → Glass Box Viz
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: performance-monitor-engineer
+      role: Implements performance hot-spot detection for native kernels
+      focus:
+        - Create PerformanceMonitor class with call tracking
+        - Detect hot spots based on call frequency and duration
+        - Register source locations for functions
+        - Integrate with existing FFI bridge
+      files:
+        - systems/sisyphus/performance_monitor.py
+        - tests/test_performance_monitor.py
+
+    - name: ffi-instrumentation-engineer
+      role: Instruments native Hilbert calls for performance tracking
+      focus:
+        - Add performance_monitor parameter to NativeHilbertLUT
+        - Record timing for d2xy and xy2d calls
+        - Maintain backward compatibility (monitor optional)
+      files:
+        - systems/sisyphus/native_hilbert.py
+        - tests/test_native_hilbert_instrumented.py
+
+    - name: kernel-rewriter-engineer
+      role: Creates LLM-powered kernel optimization generator
+      focus:
+        - Generate optimization prompts from hot spots
+        - Integrate with LM Studio API for code generation
+        - Parse and validate generated Rust code
+        - Create RewriteProposal objects
+      files:
+        - systems/sisyphus/kernel_rewriter.py
+        - tests/test_kernel_rewriter.py
+
+    - name: hot-swap-engineer
+      role: Implements safe kernel replacement with rollback
+      focus:
+        - Create backups before applying rewrites
+        - Atomic file updates with validation
+        - Rollback capability for failed rewrites
+        - History tracking for all applied changes
+      files:
+        - systems/sisyphus/hot_swap_manager.py
+        - tests/test_hot_swap_manager.py
+
+    - name: daemon-integration-engineer
+      role: Integrates self-rewriting into the Sisyphus Daemon
+      focus:
+        - Add enable_self_rewriting flag to daemon
+        - Detect kernel hot spots during evolution cycles
+        - Create optimization tasks from hot spots
+        - Wire performance monitor to native components
+      files:
+        - systems/sisyphus/daemon.py
+        - tests/test_daemon_self_rewriting.py
+
+    - name: glass-box-viz-engineer
+      role: Visualizes kernel rewrites in the Glass Box
+      focus:
+        - Add KERNEL_REWRITE opcode (0xCF) to WGSL
+        - Visualize rewrite events as pulsing glyphs
+        - Add rewrite legend to demo page
+        - Stream rewrite events via WebSocket
+      files:
+        - systems/hypervisor/src/glyph_renderer.wgsl
+        - systems/visual_shell/web/glass_box_demo.html
+
+    - name: e2e-validation-engineer
+      role: Validates complete self-rewriting pipeline
+      focus:
+        - Test full hot-spot → rewrite → apply flow
+        - Test backup and rollback mechanisms
+        - Test Glass Box visualization of rewrites
+        - Performance benchmarks before/after
+      files:
+        - tests/test_self_rewriting_e2e.py
+
+  tasks:
+    - id: task-1.1
+      title: Create PerformanceMonitor module
+      assignee: performance-monitor-engineer
+      dependencies: []
+      description: |
+        Create systems/sisyphus/performance_monitor.py with:
+        - PerformanceMonitor class with thread-safe call tracking
+        - HotSpot dataclass with source location
+        - detect_hot_spots() method with configurable thresholds
+        - register_function() for source location mapping
+      acceptance_criteria:
+        - test_record_call passes
+        - test_hot_spot_detection passes
+        - test_hot_spot_has_location passes
+
+    - id: task-1.2
+      title: Instrument NativeHilbertLUT for performance tracking
+      assignee: ffi-instrumentation-engineer
+      dependencies: [task-1.1]
+      description: |
+        Modify systems/sisyphus/native_hilbert.py:
+        - Add optional performance_monitor parameter to __init__
+        - Add _record_call() helper method
+        - Wrap d2xy() and xy2d() with timing instrumentation
+        - Maintain backward compatibility (monitor=None works)
+      acceptance_criteria:
+        - test_performance_monitoring_enabled passes
+        - test_hot_spot_detection_after_usage passes
+        - Existing tests still pass
+
+    - id: task-2.1
+      title: Create KernelRewriter with prompt generation
+      assignee: kernel-rewriter-engineer
+      dependencies: []
+      description: |
+        Create systems/sisyphus/kernel_rewriter.py with:
+        - KernelRewriter class
+        - generate_optimization_prompt() from HotSpot
+        - extract_code_block() for parsing LLM output
+        - validate_syntax() for basic Rust checking
+        - RewriteProposal dataclass
+      acceptance_criteria:
+        - test_generate_optimization_prompt passes
+        - test_parse_generated_code passes
+        - test_validate_rust_syntax passes
+
+    - id: task-2.2
+      title: Integrate LM Studio for code generation
+      assignee: kernel-rewriter-engineer
+      dependencies: [task-2.1]
+      description: |
+        Add generate_optimized_code() method to KernelRewriter:
+        - POST to LM Studio /v1/completions endpoint
+        - Use low temperature (0.3) for code generation
+        - Handle connection errors gracefully
+        - Extract code block from response
+      acceptance_criteria:
+        - test_generate_with_lm_studio passes
+        - Mock tests verify API format
+        - Real LM Studio integration works (when available)
+
+    - id: task-3.1
+      title: Create HotSwapManager with backup/rollback
+      assignee: hot-swap-engineer
+      dependencies: []
+      description: |
+        Create systems/sisyphus/hot_swap_manager.py with:
+        - HotSwapManager class with backup directory
+        - create_backup() for timestamped backups
+        - apply_rewrite() for atomic file updates
+        - rollback() for restoring from backup
+        - AppliedRewrite dataclass for history
+      acceptance_criteria:
+        - test_create_backup passes
+        - test_apply_rewrite passes
+        - test_rollback passes
+
+    - id: task-4.1
+      title: Integrate self-rewriting into daemon
+      assignee: daemon-integration-engineer
+      dependencies: [task-1.2, task-2.2, task-3.1]
+      description: |
+        Modify systems/sisyphus/daemon.py:
+        - Add enable_self_rewriting parameter
+        - Initialize PerformanceMonitor, KernelRewriter, HotSwapManager
+        - Add detect_kernel_hot_spots() method
+        - Add propose_kernel_rewrite() method for task creation
+      acceptance_criteria:
+        - test_daemon_has_performance_monitor passes
+        - test_daemon_detects_hot_spots passes
+        - test_daemon_creates_rewrite_task passes
+
+    - id: task-5.1
+      title: Add KERNEL_REWRITE opcode to WGSL
+      assignee: glass-box-viz-engineer
+      dependencies: []
+      description: |
+        Modify systems/hypervisor/src/glyph_renderer.wgsl:
+        - Add GLYPH_KERNEL_REWRITE constant (0xCF)
+        - Add case 0xCFu in main switch
+        - Render with pulsing orange/red color
+        - Use Hilbert index from glyph coordinates
+      acceptance_criteria:
+        - Shader compiles without errors
+        - Visual test shows rewrite glyphs
+
+    - id: task-5.2
+      title: Add rewrite visualization to Glass Box demo
+      assignee: glass-box-viz-engineer
+      dependencies: [task-5.1]
+      description: |
+        Modify systems/visual_shell/web/glass_box_demo.html:
+        - Add "Kernel Rewrite" to color legend (orange)
+        - Add rewrite event handling in JavaScript
+        - Display rewrite count in stats
+      acceptance_criteria:
+        - Demo page loads without errors
+        - Legend shows rewrite color
+
+    - id: task-6.1
+      title: Create E2E self-rewriting test
+      assignee: e2e-validation-engineer
+      dependencies: [task-1.2, task-2.2, task-3.1]
+      description: |
+        Create tests/test_self_rewriting_e2e.py:
+        - test_full_pipeline: hot spot → generate → apply → verify
+        - Test backup creation
+        - Test rollback functionality
+        - Test syntax validation catches errors
+      acceptance_criteria:
+        - test_full_pipeline passes
+        - All pipeline components verified
+
+  success_criteria:
+    - Performance hot spots detected from native kernel calls
+    - LM Studio generates valid Rust optimization code
+    - Hot-swap applies changes with automatic backup
+    - Rollback restores original code
+    - Glass Box visualizes rewrite events (opcode 0xCF)
+    - 16+ tests passing
+    - Daemon can propose kernel rewrite tasks
+
+  reference_docs:
+    - docs/plans/2026-03-08-self-rewriting-kernel.md
+    - systems/sisyphus/daemon.py
+    - systems/sisyphus/native_hilbert.py
+    - systems/hypervisor/src/glyph_renderer.wgsl

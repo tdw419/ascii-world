@@ -1,0 +1,163 @@
+# Tectonic Negotiation Team
+# Implements Phase 48: Multi-Agent Spatial Negotiation
+
+team:
+  name: tectonic-negotiation-team
+  description: |
+    Implements multi-agent tectonic negotiation system enabling autonomous
+    agents to claim, bid, and settle spatial resources on the Infinite Map
+    through GeoASM-mediated proposals and force-directed physics.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: claim-architect
+      role: Creates TectonicClaim and related data structures
+      focus:
+        - TectonicClaim dataclass with tile, purpose, bid, agent_id
+        - TectonicSettlement with winner, force_result, program
+        - TectonicBid for counter-proposals
+        - ClaimStatus enum (PENDING, APPROVED, REJECTED, ESCALATED)
+      files:
+        - systems/tectonic/claim.py
+        - tests/test_tectonic_claim.py
+
+    - name: negotiator-engineer
+      role: Creates 3-phase auction negotiation engine
+      focus:
+        - TectonicNegotiator with claim(), bid(), settle() methods
+        - Integration with TectonicEngine for force calculations
+        - GeoASM program generation for winning claims
+        - 500ms bid window with asyncio coordination
+      files:
+        - systems/tectonic/negotiator.py
+        - tests/test_tectonic_negotiator.py
+
+    - name: agent-integrator
+      role: Creates TectonicAgent base class
+      focus:
+        - Extend LLMAgent with spatial_budget and tectonic capabilities
+        - submit_claim(), counter_bid(), handle_settlement() methods
+        - Integration with existing swarm infrastructure
+        - Native PixelBrain LLM support
+      files:
+        - systems/tectonic/agent.py
+        - tests/test_tectonic_agent.py
+
+    - name: bridge-builder
+      role: Creates WebMCP bridge for tectonic operations
+      focus:
+        - TectonicBridge WebSocket handler
+        - JSON-RPC style protocol for claims/bids
+        - Integration with WebMCP server
+        - Real-time settlement notifications
+      files:
+        - systems/visual_shell/web/tectonic_bridge.py
+        - tests/test_tectonic_bridge.py
+
+    - name: e2e-validator
+      role: Creates end-to-end test scenarios
+      focus:
+        - Multi-agent negotiation scenarios
+        - Conflict resolution verification
+        - GeoASM program execution after settlement
+        - Performance benchmarks
+      files:
+        - tests/test_tectonic_e2e.py
+
+  tasks:
+    - id: task-1.1
+      title: Create TectonicClaim Data Structures
+      assignee: claim-architect
+      dependencies: []
+      description: |
+        Create systems/tectonic/claim.py:
+        - ClaimStatus enum (PENDING, APPROVED, REJECTED, ESCALATED)
+        - TectonicClaim(tile: Tuple[int,int], purpose: str, bid: float, agent_id: str)
+        - TectonicBid(claim_id: str, amount: float, agent_id: str)
+        - TectonicSettlement(claim: TectonicClaim, winner: str, force: float, program: bytes)
+        - to_geoasm() method on TectonicSettlement
+      acceptance_criteria:
+        - All dataclasses serialize to JSON
+        - Tests pass: pytest tests/test_tectonic_claim.py -v
+
+    - id: task-2.1
+      title: Create TectonicNegotiator Engine
+      assignee: negotiator-engineer
+      dependencies: [task-1.1]
+      description: |
+        Create systems/tectonic/negotiator.py:
+        - TectonicNegotiator(tectonic_engine) class
+        - submit_claim(claim) -> claim_id
+        - submit_bid(bid) -> bool (within window)
+        - settle(claim_id) -> TectonicSettlement
+        - _calculate_force(claim) using TectonicEngine physics
+        - _generate_geoasm_program(settlement) -> bytes
+      acceptance_criteria:
+        - 3-phase auction works with asyncio
+        - Force calculation matches TectonicEngine
+        - Tests pass: pytest tests/test_tectonic_negotiator.py -v
+
+    - id: task-3.1
+      title: Create TectonicAgent Base Class
+      assignee: agent-integrator
+      dependencies: [task-2.1]
+      description: |
+        Create systems/tectonic/agent.py:
+        - TectonicAgent extends LLMAgent
+        - spatial_budget: float (how much force agent can apply)
+        - submit_claim(tile, purpose, bid) method
+        - handle_counter_bid(claim_id, amount) method
+        - handle_settlement(settlement) callback
+        - Integration with existing swarm/llm_agent.py
+      acceptance_criteria:
+        - Can submit claims through negotiator
+        - Handles settlements asynchronously
+        - Tests pass: pytest tests/test_tectonic_agent.py -v
+
+    - id: task-4.1
+      title: Create WebMCP Tectonic Bridge
+      assignee: bridge-builder
+      dependencies: [task-2.1]
+      description: |
+        Create systems/visual_shell/web/tectonic_bridge.py:
+        - TectonicBridge class with WebSocket handlers
+        - handle_claim(data) -> claim_id
+        - handle_bid(data) -> success
+        - handle_settle(data) -> TectonicSettlement
+        - Subscribe to settlement notifications
+        - Integration with existing webmcp_server.py
+      acceptance_criteria:
+        - WebSocket protocol works
+        - JSON serialization correct
+        - Tests pass: pytest tests/test_tectonic_bridge.py -v
+
+    - id: task-5.1
+      title: Create E2E Tests
+      assignee: e2e-validator
+      dependencies: [task-3.1, task-4.1]
+      description: |
+        Create tests/test_tectonic_e2e.py:
+        - test_two_agent_negotiation() - simple claim/counter/settle
+        - test_multi_agent_conflict() - 3+ agents competing
+        - test_force_resolution() - verify physics integration
+        - test_geoasm_execution() - settlement program runs
+        - test_timeout_behavior() - bid window expiration
+      acceptance_criteria:
+        - All scenarios pass
+        - Performance under 100ms per negotiation
+        - Tests pass: pytest tests/test_tectonic_e2e.py -v
+
+  success_criteria:
+    - 3-phase auction protocol works correctly
+    - Force-directed resolution matches TectonicEngine
+    - GeoASM programs generated for winning claims
+    - WebSocket bridge handles all operations
+    - Multi-agent scenarios pass
+    - 40+ tests passing
+
+  reference_docs:
+    - docs/plans/2026-03-09-phase-48-multi-agent-tectonic-negotiation.md
+    - systems/evolution_daemon/tectonic_engine.py
+    - systems/swarm/llm_agent.py
+    - systems/visual_shell/geoasm/instruction.py

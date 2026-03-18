@@ -1,0 +1,16 @@
+{
+  "name": "ascii-ref-app",
+  "version": "0.1.0",
+  "description": "A reference application demonstrating ASCII-first design for AI control.",
+  "main": "src/bun/index.ts",
+  "keywords": [
+    "typescript"
+  ],
+  "scripts": {
+    "dev": "bun run dev",
+    "build": "bun run build"
+  },
+  "dependencies": {
+    "electrobun": "^0.1.0"
+  }
+}

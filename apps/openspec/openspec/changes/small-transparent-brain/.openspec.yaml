@@ -1,0 +1,11 @@
+schema: spec-driven
+change: small-transparent-brain
+status: proposed
+created: 2026-03-10
+priority: high
+tags:
+  - pixel-brain
+  - quantization
+  - glass-box
+  - evolution
+  - wgpu

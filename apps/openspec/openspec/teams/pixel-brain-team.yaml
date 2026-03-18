@@ -1,0 +1,508 @@
+# PixelBrain Inference Team
+# Implements native Geometry OS LLM inference - the model lives as a visual RTS.PNG artifact
+
+team:
+  name: pixel-brain-team
+  description: |
+    Implements the PixelBrain inference pipeline - a hybrid GeoASM/WGSL architecture
+    where LLM weights are Hilbert-folded into RTS.PNG atlases for visual inference.
+    The "screen is the hard drive" - the model IS the visual desktop.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: weight-encoding-engineer
+      role: Fixes weight encoding from uint8 visualization to float16 inference
+      focus:
+        - Modify pixel_brain_converter.py for float16 storage
+        - Implement fold_weights_float16() method
+        - Implement create_brain_atlas_float16() method
+        - Use imageio/EXR for float16 PNG output
+      files:
+        - pixel_brain_converter.py
+        - tests/test_pixel_brain_converter.py
+
+    - name: geoasm-extension-engineer
+      role: Adds neural extension opcodes to GeoASM
+      focus:
+        - Add opcodes 0xD0 (EMBED), 0xD1 (ATTEND), 0xD2 (PROJECT), 0xD3 (SAMPLE)
+        - Add opcode 0xD5 (KV_APPEND), 0xD6 (THOUGHT_PULSE)
+        - Update geoasm_executor.wgsl to dispatch neural shaders
+        - Ensure backward compatibility with existing opcodes
+      files:
+        - geoasm-cli/geoasm_lib.py
+        - systems/hypervisor/src/geoasm_executor.wgsl
+        - tests/test_geoasm_neural_opcodes.py
+
+    - name: pipeline-orchestrator-engineer
+      role: Creates the inference pipeline that wires all WGSL shaders
+      focus:
+        - Create PixelBrainPipeline class
+        - Implement embed_token() using pixel_brain_embed.wgsl
+        - Implement forward() through all layers
+        - Implement generate() for autoregressive generation
+        - CPU fallback when WebGPU unavailable
+      files:
+        - systems/visual_shell/wgsl/pixel_brain_pipeline.py
+        - systems/visual_shell/wgsl/pixel_brain_embed.wgsl
+        - systems/visual_shell/wgsl/pixel_brain_attention.wgsl
+        - systems/visual_shell/wgsl/pixel_brain_project.wgsl
+        - systems/visual_shell/wgsl/pixel_brain_sample.wgsl
+        - tests/test_pixel_brain_pipeline.py
+
+    - name: visual-feedback-engineer
+      role: Wires THOUGHT_PULSE to Visual Shell for visible inference
+      focus:
+        - Add emit_thought_pulse() to VisualBridge
+        - Emit 0xCE glyphs for each generated token
+        - Track active glyphs for visualization
+        - Integrate with NeuralCityEngine for pixel glow
+      files:
+        - systems/visual_shell/api/visual_bridge.py
+        - tests/test_thought_pulse.py
+
+    - name: e2e-integration-engineer
+      role: Validates complete inference loop
+      focus:
+        - Test token through full pipeline
+        - Test generation produces valid tokens
+        - Test visual feedback on generation
+        - Verify atlas loads correctly
+      files:
+        - tests/test_pixel_brain_e2e.py
+
+  tasks:
+    - id: task-1.1
+      title: Add float16 weight encoding to converter
+      assignee: weight-encoding-engineer
+      dependencies: []
+      description: |
+        Modify pixel_brain_converter.py to support float16 weight storage:
+        - Add fold_weights_float16() method
+        - Add create_brain_atlas_float16() method
+        - Add _pack_to_atlas_float16() method
+        - Update convert() to use float16 when flag set
+      acceptance_criteria:
+        - fold_weights_float16() returns np.float16 array
+        - Atlas stores actual weight values, not normalized 0-255
+        - Tests pass: pytest tests/test_pixel_brain_converter.py -v
+
+    - id: task-1.2
+      title: Re-generate brain atlas with float16
+      assignee: weight-encoding-engineer
+      dependencies: [task-1.1]
+      description: |
+        Run converter with float16 encoding:
+        - python3 pixel_brain_converter.py roneneldan/TinyStories-1M tinystories_brain_f16.rts.png
+        - Verify output file exists
+        - Verify metadata shows encoding: float16
+      acceptance_criteria:
+        - tinystories_brain_f16.rts.png exists
+        - File is larger than uint8 version (float16 = 2x size)
+        - meta.json shows correct config
+
+    - id: task-2.1
+      title: Add neural opcodes to GeoASM library
+      assignee: geoasm-extension-engineer
+      dependencies: []
+      description: |
+        Add neural extension opcodes to geoasm_lib.py:
+        - 0xD0: EMBED (2 args) - token → hidden
+        - 0xD1: ATTEND (2 args) - self-attention
+        - 0xD2: PROJECT (2 args) - FFN
+        - 0xD3: SAMPLE (2 args) - hidden → token
+        - 0xD5: KV_APPEND (1 arg) - append to KV-cache
+        - 0xD6: THOUGHT_PULSE (1 arg) - visual glyph
+      acceptance_criteria:
+        - All 6 opcodes defined in OPCODES dict
+        - OPCODE_NAMES reverse lookup works
+        - Tests pass: pytest tests/test_geoasm_neural_opcodes.py -v
+
+    - id: task-2.2
+      title: Update GeoASM executor for neural dispatch
+      assignee: geoasm-extension-engineer
+      dependencies: [task-2.1]
+      description: |
+        Update geoasm_executor.wgsl to handle neural opcodes:
+        - Add case 0xD0: dispatch embed shader
+        - Add case 0xD1: dispatch attention shader
+        - Add case 0xD2: dispatch project shader
+        - Add case 0xD3: dispatch sample shader
+      acceptance_criteria:
+        - Executor recognizes neural opcodes
+        - Correct shader dispatch for each opcode
+
+    - id: task-3.1
+      title: Create PixelBrainPipeline class
+      assignee: pipeline-orchestrator-engineer
+      dependencies: [task-1.2]
+      description: |
+        Create systems/visual_shell/wgsl/pixel_brain_pipeline.py:
+        - Load brain atlas and metadata
+        - Implement embed_token() with Hilbert lookup
+        - Implement CPU fallback for testing
+      acceptance_criteria:
+        - Pipeline loads tinystories_brain.rts.png
+        - embed_token(0) returns 64-dim vector
+        - Tests pass: pytest tests/test_pixel_brain_pipeline.py -v
+
+    - id: task-3.2
+      title: Implement forward pass through network
+      assignee: pipeline-orchestrator-engineer
+      dependencies: [task-3.1]
+      description: |
+        Implement forward() method:
+        - Loop through transformer layers
+        - Call _attention_layer() per layer
+        - Call _ffn_layer() per layer
+        - Apply LM head for logits
+      acceptance_criteria:
+        - forward(0) returns 50257-dim logits
+        - Output shape matches vocab size
+
+    - id: task-3.3
+      title: Implement autoregressive generation
+      assignee: pipeline-orchestrator-engineer
+      dependencies: [task-3.2]
+      description: |
+        Implement generate() method:
+        - Take prompt tokens as input
+        - Generate max_tokens autoregressively
+        - Use greedy sampling (argmax)
+        - Return generated token list
+      acceptance_criteria:
+        - generate([0], max_tokens=5) returns 5 tokens
+        - All tokens are valid (0 <= token < vocab_size)
+
+    - id: task-4.1
+      title: Add THOUGHT_PULSE to VisualBridge
+      assignee: visual-feedback-engineer
+      dependencies: []
+      description: |
+        Extend visual_bridge.py:
+        - Add emit_thought_pulse(token_id, position, intensity)
+        - Add has_active_glyphs() method
+        - Add get_active_glyphs() method
+        - Create 0xCE glyph for each pulse
+      acceptance_criteria:
+        - emit_thought_pulse() returns True on success
+        - Glyphs tracked in _active_glyphs list
+        - Tests pass: pytest tests/test_thought_pulse.py -v
+
+    - id: task-4.2
+      title: Wire generation to visual feedback
+      assignee: visual-feedback-engineer
+      dependencies: [task-3.3, task-4.1]
+      description: |
+        Connect pipeline generation to visual output:
+        - For each generated token, emit THOUGHT_PULSE
+        - Position glyphs sequentially
+        - Trigger render update
+      acceptance_criteria:
+        - Generation produces visible glyphs
+        - 3 tokens = 3 glyphs
+
+    - id: task-5.1
+      title: Create E2E integration tests
+      assignee: e2e-integration-engineer
+      dependencies: [task-3.3, task-4.1]
+      description: |
+        Create tests/test_pixel_brain_e2e.py:
+        - test_token_through_pipeline
+        - test_generate_sequence
+        - test_visual_feedback_on_generation
+      acceptance_criteria:
+        - All E2E tests pass (or skip gracefully if brain unavailable)
+
+    - id: task-5.2
+      title: Full system verification
+      assignee: e2e-integration-engineer
+      dependencies: [task-5.1]
+      description: |
+        Run complete verification:
+        - pytest tests/test_pixel_brain*.py -v
+        - pytest tests/test_geoasm_neural_opcodes.py -v
+        - pytest tests/test_thought_pulse.py -v
+        - Verify all tests pass
+      acceptance_criteria:
+        - 15+ tests passing
+        - No regressions in existing tests
+
+    # ============================================================
+    # PHASE 2: Visual Shell Integration
+    # ============================================================
+
+    - id: task-6.1
+      title: Add THOUGHT_PULSE WebSocket broadcast
+      assignee: visual-feedback-engineer
+      dependencies: [task-4.1]
+      description: |
+        Modify emit_thought_pulse() to broadcast to all WebSocket clients:
+        - Add async _broadcast() helper
+        - Schedule broadcast on event loop
+        - Clean up dead connections
+      acceptance_criteria:
+        - emit_thought_pulse() broadcasts to all connected clients
+        - Tests pass: pytest tests/test_thought_pulse.py::TestThoughtPulseBroadcast -v
+
+    - id: task-6.2
+      title: Create ThoughtVisualizer JavaScript class
+      assignee: frontend-visualizer-engineer
+      dependencies: []
+      description: |
+        Create systems/visual_shell/web/ThoughtVisualizer.js:
+        - PixiJS graphics for THOUGHT_PULSE glyphs
+        - Fade animation over 3 seconds
+        - Opcode color mapping (0xCE = cyan)
+        - Auto-cleanup of faded glyphs
+      acceptance_criteria:
+        - emitThoughtPulse() creates visible glyph
+        - Glyphs fade over time
+        - Tests pass: npx vitest run tests/test_thought_visualizer.js
+
+    - id: task-6.3
+      title: Wire ThoughtVisualizer to NeuralCityEngine
+      assignee: frontend-visualizer-engineer
+      dependencies: [task-6.2]
+      description: |
+        Integrate ThoughtVisualizer with NeuralCityEngine:
+        - Add import and instantiation in constructor
+        - Add _handleThoughtPulse() message handler
+        - Route WebSocket THOUGHT_PULSE messages to visualizer
+      acceptance_criteria:
+        - NeuralCityEngine.thoughtVisualizer exists
+        - WebSocket THOUGHT_PULSE routed to visualizer
+        - Tests pass: npx vitest run tests/test_neural_city_thought_pulse.js
+
+    - id: task-6.4
+      title: Add ATLAS_GLOW visualization
+      assignee: frontend-visualizer-engineer
+      dependencies: [task-6.3]
+      description: |
+        Create AtlasGlowOverlay.js and emit_atlas_glow():
+        - Show which weight pixels were accessed
+        - Heatmap overlay on brain atlas
+        - Track accessed indices in pipeline
+      acceptance_criteria:
+        - emit_atlas_glow() broadcasts to clients
+        - AtlasGlowOverlay renders glow points
+        - Weight access visible during inference
+
+    - id: task-6.5
+      title: Visual Shell E2E test
+      assignee: e2e-integration-engineer
+      dependencies: [task-6.1, task-6.3]
+      description: |
+        Create tests/test_pixel_brain_visual_e2e.py:
+        - test_generation_triggers_thought_pulse
+        - test_thought_pulse_message_format
+        - test_atlas_glow_message_format
+      acceptance_criteria:
+        - All E2E tests pass (or skip gracefully)
+        - WebSocket receives THOUGHT_PULSE broadcasts
+        - Message format correct
+
+  agents:
+    - name: frontend-visualizer-engineer
+      role: Creates PixiJS visualization components for thought glyphs
+      focus:
+        - Create ThoughtVisualizer.js for glyph rendering
+        - Create AtlasGlowOverlay.js for weight visualization
+        - Wire to NeuralCityEngine WebSocket handlers
+        - Implement fade animations and cleanup
+      files:
+        - systems/visual_shell/web/ThoughtVisualizer.js
+        - systems/visual_shell/web/AtlasGlowOverlay.js
+        - systems/visual_shell/web/js/NeuralCityEngine.js
+        - systems/visual_shell/web/tests/test_thought_visualizer.js
+        - systems/visual_shell/web/tests/test_neural_city_thought_pulse.js
+
+    # ============================================================
+    # PHASE 3: Cognitive Core Integration
+    # ============================================================
+
+    - id: task-7.1
+      title: Create PixelBrain universal cognitive service
+      assignee: cognitive-bus-engineer
+      dependencies: [task-6.5]
+      description: |
+        Create systems/visual_shell/api/pixel_brain_service.py:
+        - Singleton service wrapping PixelBrainPipeline
+        - tokenize() and detokenize() methods
+        - async generate() with visual feedback
+        - Integration with VisualBridge for THOUGHT_PULSE
+      acceptance_criteria:
+        - Service initializes pipeline on creation
+        - generate() returns tokens and visual_feedback
+        - Tests pass: pytest tests/test_pixel_brain_service.py -v
+
+    - id: task-7.2
+      title: Wire WebMCP send_llm_prompt to PixelBrain
+      assignee: cognitive-bus-engineer
+      dependencies: [task-7.1]
+      description: |
+        Modify webmcp_bridge.js to route send_llm_prompt through PixelBrain:
+        - Add PIXEL_BRAIN_GENERATE WebSocket message type
+        - Fallback to LM Studio if PixelBrain unavailable
+        - Return visual_feedback in response
+      acceptance_criteria:
+        - send_llm_prompt uses pixel-brain model by default
+        - Visual feedback included in response
+
+    - id: task-8.1
+      title: Create SwarmLLMBackend
+      assignee: swarm-integration-engineer
+      dependencies: [task-7.1]
+      description: |
+        Create systems/swarm/llm_backend.py:
+        - SwarmLLMBackend class using PixelBrainService
+        - generate(), generate_code(), analyze() methods
+        - Singleton accessor get_swarm_llm_backend()
+      acceptance_criteria:
+        - Backend connects to PixelBrainService
+        - generate() returns text from native inference
+        - Tests pass: pytest tests/test_swarm_llm_backend.py -v
+
+    - id: task-8.2
+      title: Migrate Swarm agents to native LLM
+      assignee: swarm-integration-engineer
+      dependencies: [task-8.1]
+      description: |
+        Update EngineerAgent, ArchitectAgent, ReviewerAgent:
+        - Import SwarmLLMBackend
+        - Replace external API calls with backend.generate()
+        - Preserve existing agent interfaces
+      acceptance_criteria:
+        - Agents use native PixelBrain inference
+        - No external API dependencies
+        - Tests pass: pytest tests/test_swarm_agents_native.py -v
+
+    - id: task-9.1
+      title: Create AttentionVisualizer for Glass Box
+      assignee: glass-box-engineer
+      dependencies: []
+      description: |
+        Create systems/visual_shell/web/AttentionVisualizer.js:
+        - Render attention heatmaps per layer/head
+        - Show probability distributions
+        - Emit ATTENTION_UPDATE events
+      acceptance_criteria:
+        - Visualizer renders attention patterns
+        - Tests pass: npx vitest run tests/test_attention_visualizer.js
+
+    - id: task-9.2
+      title: Wire attention data to visualizer
+      assignee: glass-box-engineer
+      dependencies: [task-9.1]
+      description: |
+        Modify pipeline to output attention weights:
+        - Add attention_output buffer to WGSL
+        - Python reads and emits via WebSocket
+        - Frontend renders in real-time
+      acceptance_criteria:
+        - Attention patterns visible during inference
+
+    - id: task-10.1
+      title: Create brain mutation targets
+      assignee: recursive-evolution-engineer
+      dependencies: []
+      description: |
+        Create systems/evolution_daemon/brain_mutations.py:
+        - mutate_weight_sector() for atlas mutations
+        - mutate_shader() for WGSL evolution
+        - evaluate_brain_fitness() for selection
+      acceptance_criteria:
+        - Mutations apply to weight atlas
+        - Fitness evaluation returns 0-1 score
+        - Tests pass: pytest tests/test_brain_mutations.py -v
+
+    - id: task-10.2
+      title: Wire brain evolution to daemon
+      assignee: recursive-evolution-engineer
+      dependencies: [task-10.1]
+      description: |
+        Create brain_evolution_hook.py:
+        - Register with EvolutionDaemon
+        - on_evolution_cycle() triggers mutations
+        - Keep/revert based on fitness
+      acceptance_criteria:
+        - Evolution daemon can mutate brain
+        - Mutations kept if fitness improves
+
+  agents:
+    - name: cognitive-bus-engineer
+      role: Creates universal cognitive bus for LLM routing
+      focus:
+        - PixelBrainService singleton module
+        - WebMCP send_llm_prompt integration
+        - WebSocket message routing
+        - Visual feedback integration
+      files:
+        - systems/visual_shell/api/pixel_brain_service.py
+        - systems/visual_shell/web/webmcp_bridge.js
+        - tests/test_pixel_brain_service.py
+
+    - name: swarm-integration-engineer
+      role: Migrates swarm agents to native LLM backend
+      focus:
+        - SwarmLLMBackend module
+        - EngineerAgent/ArchitectAgent/ReviewerAgent updates
+        - Remove external API dependencies
+      files:
+        - systems/swarm/llm_backend.py
+        - systems/swarm/guilds/engineer.py
+        - systems/swarm/guilds/architect.py
+        - tests/test_swarm_llm_backend.py
+
+    - name: glass-box-engineer
+      role: Creates glass box dashboard for model introspection
+      focus:
+        - AttentionVisualizer.js
+        - Attention weight output from WGSL
+        - Probability distribution visualization
+        - Real-time rendering during inference
+      files:
+        - systems/visual_shell/web/AttentionVisualizer.js
+        - systems/visual_shell/wgsl/pixel_brain_attention.wgsl
+        - systems/visual_shell/wgsl/pixel_brain_pipeline.py
+
+    - name: recursive-evolution-engineer
+      role: Enables evolution daemon to mutate the brain
+      focus:
+        - Weight sector mutations
+        - Shader code evolution
+        - Brain fitness evaluation
+        - Evolution hook registration
+      files:
+        - systems/evolution_daemon/brain_mutations.py
+        - systems/evolution_daemon/hooks/brain_evolution_hook.py
+        - tests/test_brain_mutations.py
+
+  success_criteria:
+    # Phase 1-2 (Inference + Visual)
+    - tinystories_brain_f16.rts.png loads correctly
+    - embed_token() returns valid 64-dim vectors
+    - forward() produces 50257-dim logits
+    - generate() produces valid token sequences
+    - THOUGHT_PULSE emits visible 0xCE glyphs
+    - THOUGHT_PULSE broadcasts to WebSocket clients
+    - ThoughtVisualizer renders glyphs in browser
+    - AtlasGlowOverlay shows weight access patterns
+    # Phase 3 (Cognitive Core)
+    - send_llm_prompt routes through PixelBrain
+    - Swarm agents use native LLM backend
+    - Attention patterns visible in dashboard
+    - Evolution daemon can mutate brain weights
+    - Full offline operation (no external APIs)
+    - All 30+ tests passing
+
+    - docs/plans/2026-03-09-pixel-brain-inference.md
+    - docs/plans/2026-03-08-pixel-brain-visual-shell.md
+    - docs/plans/2026-03-09-pixel-brain-cognitive-core.md
+    - docs/plans/2026-03-09-geoasm-instruction-set.md    - docs/plans/2026-03-08-pixel-brain-inference.md
+    - docs/plans/2026-03-08-pixel-brain-visual-shell.md
+    - docs/plans/2026-03-09-pixel-brain-cognitive-core.md
+    - systems/visual_shell/wgsl/pixel_brain_embed.wgsl
+    - systems/visual_shell/wgsl/pixel_brain_attention.wgsl
+    - systems/visual_shell/wgsl/pixel_brain_project.wgsl
+    - systems/visual_shell/wgsl/pixel_brain_sample.wgsl

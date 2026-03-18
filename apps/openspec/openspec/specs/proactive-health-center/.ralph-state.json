@@ -1,0 +1,13 @@
+{
+  "source": "plan",
+  "name": "proactive-health-center",
+  "basePath": "./apps/openspec/openspec/specs/proactive-health-center",
+  "phase": "complete",
+  "taskIndex": 7,
+  "totalTasks": 7,
+  "taskIteration": 1,
+  "maxTaskIterations": 5,
+  "globalIteration": 1,
+  "maxGlobalIterations": 100,
+  "commitSpec": false
+}

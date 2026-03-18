@@ -1,0 +1,147 @@
+# Visual Extraction Pipeline Team
+# Implements the GUI-to-ASCII extraction pipeline for "Screen is the Hard Drive" bidirectional capability
+
+team:
+  name: visual-extraction-team
+  description: |
+    Enhances the Visual Extraction Pipeline with semantic clustering, widget recognition,
+    and bidirectional sync. Enables Geometry OS to "read" any GUI and reconstruct it
+    as an ASCII Scene Graph.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: semantic-engineer
+      role: Creates semantic clustering for OCR elements
+      focus:
+        - Group OCR elements by spatial proximity
+        - Infer cluster labels (menu_bar, button, content)
+        - Integrate clustering with gui_structure_analyzer
+      files:
+        - conductor/tracks/shotcut-on-the-map/semantic_clusterer.py
+        - conductor/tracks/shotcut-on-the-map/gui_structure_analyzer.py
+
+    - name: widget-engineer
+      role: Implements widget detection and classification
+      focus:
+        - Detect buttons, inputs, menus by patterns/keywords
+        - Classify widgets with confidence scores
+        - Generate action metadata for clickables
+      files:
+        - conductor/tracks/shotcut-on-the-map/widget_detector.py
+
+    - name: sync-engineer
+      role: Creates bidirectional state synchronization
+      focus:
+        - Poll-based change detection
+        - WebSocket state streaming
+        - Scene graph persistence
+      files:
+        - conductor/tracks/shotcut-on-the-map/scene_sync.py
+        - systems/visual_shell/ascii_scene/scene_graph.py
+
+    - name: integration-engineer
+      role: Unifies all components into extraction pipeline
+      focus:
+        - Create unified ExtractionPipeline API
+        - Error handling and recovery
+        - Integration testing with real screenshots
+      files:
+        - conductor/tracks/shotcut-on-the-map/extraction_pipeline.py
+        - conductor/tracks/shotcut-on-the-map/tests/
+
+  tasks:
+    - id: task-1.1
+      title: Create SemanticClusterer Module
+      assignee: semantic-engineer
+      dependencies: []
+      description: |
+        Create semantic_clusterer.py with OCRElement, UICluster, and SemanticClusterer.
+        Implement clustering algorithm that groups adjacent elements by spatial proximity.
+        Follow TDD: write tests first, then implement.
+      acceptance_criteria:
+        - OCRElement dataclass with position/dimensions
+        - UICluster dataclass with label and elements
+        - SemanticClusterer.cluster() groups adjacent elements
+        - Tests pass: pytest tests/test_semantic_clusterer.py -v
+
+    - id: task-1.2
+      title: Integrate Clustering with Analyzer
+      assignee: semantic-engineer
+      dependencies: [task-1.1]
+      description: |
+        Extend gui_structure_analyzer.py to use SemanticClusterer.
+        Add clusters field to AnalysisResult.
+        Populate clusters in analyze_screenshot().
+      acceptance_criteria:
+        - AnalysisResult includes clusters field
+        - analyze_screenshot() populates clusters
+        - Tests pass: pytest tests/test_gui_structure_analyzer.py -v
+
+    - id: task-2.1
+      title: Create WidgetDetector Module
+      assignee: widget-engineer
+      dependencies: []
+      description: |
+        Create widget_detector.py with Widget, WidgetType, and WidgetDetector.
+        Implement classification rules for buttons, inputs, menus.
+        Generate action metadata for clickables.
+      acceptance_criteria:
+        - Widget dataclass with type, text, bounds, action
+        - WidgetType enum with all widget types
+        - WidgetDetector.detect() classifies elements
+        - Tests pass: pytest tests/test_widget_detector.py -v
+
+    - id: task-3.1
+      title: Create SceneSyncService
+      assignee: sync-engineer
+      dependencies: [task-1.2]
+      description: |
+        Create scene_sync.py with SyncState and SceneSyncService.
+        Implement polling loop for change detection.
+        Add WebSocket state streaming capability.
+      acceptance_criteria:
+        - SyncState dataclass with current_view, hash, changes
+        - SceneSyncService.start() begins polling loop
+        - SceneSyncService.force_sync() triggers immediate sync
+        - Tests pass: pytest tests/test_scene_sync.py -v
+
+    - id: task-4.1
+      title: Create Unified ExtractionPipeline
+      assignee: integration-engineer
+      dependencies: [task-1.2, task-2.1, task-3.1]
+      description: |
+        Create extraction_pipeline.py with ExtractionResult and ExtractionPipeline.
+        Chain all components: OCR → clustering → widget detection → scene graph.
+        Implement comprehensive error handling.
+      acceptance_criteria:
+        - ExtractionResult dataclass with all outputs
+        - ExtractionPipeline.extract() runs full pipeline
+        - ASCII view includes [CLICKABLE] metadata
+        - Tests pass: pytest tests/test_extraction_pipeline.py -v
+
+    - id: task-4.2
+      title: Integration Testing
+      assignee: integration-engineer
+      dependencies: [task-4.1]
+      description: |
+        Test full pipeline with real screenshots from Shotcut VM.
+        Verify scene graph loads and AI context generation works.
+        Run all tests to ensure no regressions.
+      acceptance_criteria:
+        - Full pipeline works with real screenshots
+        - Scene graph loads in AsciiSceneGraph.load()
+        - AI context generation works: graph.get_ai_context()
+        - All tests pass: pytest conductor/tracks/shotcut-on-the-map/tests/ -v
+
+  success_criteria:
+    - Semantic clustering accuracy >90%
+    - Widget detection accuracy >85%
+    - Sync latency <100ms
+    - Full pipeline execution <2s
+    - All tests passing
+
+  reference_docs:
+    - docs/plans/2026-02-19-visual-extraction-pipeline-design.md
+    - docs/plans/2026-02-19-visual-extraction-enhancements.md
+    - conductor/tracks/shotcut-on-the-map/VISUAL_EXTRACTION_README.md

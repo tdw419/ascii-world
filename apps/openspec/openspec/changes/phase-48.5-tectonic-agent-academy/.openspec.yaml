@@ -1,0 +1,78 @@
+# OpenSpec Change: Phase 48.5 - Tectonic Agent Academy
+
+change:
+  name: phase-48.5-tectonic-agent-academy
+  title: Tectonic Agent Strategy Training System
+  status: completed
+  created: 2026-03-09
+
+  scope:
+    - systems/tectonic/strategy.py
+    - systems/tectonic/arena.py
+    - systems/tectonic/learner.py
+    - systems/tectonic/agent.py
+    - scripts/train_tectonic_agents.py
+    - tests/test_tectonic_strategy.py
+    - tests/test_tectonic_arena.py
+    - tests/test_tectonic_learner.py
+    - tests/test_tectonic_training.py
+
+  references:
+    plan: docs/plans/2026-03-09-phase-48.5-tectonic-agent-academy.md
+    team: teams/tectonic-agent-academy-team.yaml
+    parent_phase: changes/phase-48-tectonic-negotiation/.openspec.yaml
+
+  milestones:
+    - id: M1
+      name: Strategy Profile
+      tasks: [task-1.1]
+      status: pending
+      description: StrategyProfile dataclass with bid calculation
+
+    - id: M2
+      name: Simulation Arena
+      tasks: [task-2.1]
+      status: pending
+      description: Arena for running mock negotiations
+
+    - id: M3
+      name: Strategy Learner
+      tasks: [task-3.1]
+      status: pending
+      description: Learn optimal parameters from outcomes
+
+    - id: M4
+      name: Agent Integration
+      tasks: [task-4.1]
+      status: pending
+      description: TectonicAgent with StrategyProfile
+
+    - id: M5
+      name: Training CLI
+      tasks: [task-5.1]
+      status: pending
+      description: train_tectonic_agents.py script
+
+    - id: M6
+      name: E2E Validation
+      tasks: [task-6.1]
+      status: pending
+      description: Full training pipeline tests
+
+  metrics:
+    test_count: 91
+    coverage_target: 90
+    estimated_hours: 2.0
+    actual_hours: 1.0
+
+  strategy_types:
+    RANDOM: "Baseline random bidding"
+    AGGRESSIVE: "High bids, frequent counters"
+    CONSERVATIVE: "Low bids, rare counters"
+    DISTANCE_AWARE: "Bids inversely to distance"
+    ADAPTIVE: "Adjusts based on outcomes"
+
+  learning_formula:
+    base_bid: "budget * base_bid_fraction"
+    distance_factor: "1 / (1 + distance * distance_weight)"
+    final_bid: "base * distance_factor * aggression_modifier"

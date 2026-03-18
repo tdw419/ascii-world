@@ -1,0 +1,205 @@
+# Tectonic Agent Academy Team
+# Phase 48.5: Strategy Training System
+
+team:
+  name: tectonic-agent-academy-team
+  description: |
+    Implements the Tectonic Agent Academy - a training system that runs
+    thousands of simulated negotiations between agents with different strategies,
+    analyzes outcomes, and derives optimal bidding parameters.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: strategy-architect
+      role: Creates StrategyProfile data structure
+      focus:
+        - StrategyProfile dataclass with bid calculation formulas
+        - StrategyType enum for preset strategies
+        - calculate_optimal_bid() with distance weighting
+        - should_counter_bid() decision logic
+        - Serialization to/from JSON
+      files:
+        - systems/tectonic/strategy.py
+        - tests/test_tectonic_strategy.py
+
+    - name: arena-engineer
+      role: Creates SimulationArena for mock negotiations
+      focus:
+        - AgentConfig for configuring simulated agents
+        - SimulationResult tracking wins/losses
+        - SimulatedAgent that uses StrategyProfile
+        - run_round() and run_rounds() methods
+        - Async batch execution
+        - Statistics collection
+      files:
+        - systems/tectonic/arena.py
+        - tests/test_tectonic_arena.py
+
+    - name: learner-scientist
+      role: Creates StrategyLearner for parameter derivation
+      focus:
+        - LearningConfig for tuning learning rate
+        - Sample collection from arena results
+        - derive_strategy() producing optimal StrategyProfile
+        - Distance correlation analysis
+        - Bid efficiency analysis
+        - Profile save/load to JSON
+      files:
+        - systems/tectonic/learner.py
+        - tests/test_tectonic_learner.py
+
+    - name: agent-integrator
+      role: Integrates StrategyProfile into TectonicAgent
+      focus:
+        - Add strategy parameter to TectonicAgent.__init__
+        - calculate_bid() using strategy
+        - submit_claim_with_strategy() method
+        - should_counter_bid() decision
+        - Backward compatibility with existing code
+      files:
+        - systems/tectonic/agent.py
+        - tests/test_tectonic_agent.py
+
+    - name: cli-developer
+      role: Creates training CLI script
+      focus:
+        - train_tectonic_agents.py with argparse
+        - Multi-strategy tournament simulation
+        - Learning output display
+        - JSON profile export
+        - Verbose logging option
+      files:
+        - scripts/train_tectonic_agents.py
+
+    - name: e2e-validator
+      role: Creates end-to-end training tests
+      focus:
+        - Full training pipeline test
+        - Trained vs random agent comparison
+        - Strategy persistence test
+        - Agent with learned strategy test
+        - Multi-strategy tournament test
+      files:
+        - tests/test_tectonic_training.py
+
+  tasks:
+    - id: task-1.1
+      title: Create StrategyProfile Data Structure
+      assignee: strategy-architect
+      dependencies: []
+      description: |
+        Create systems/tectonic/strategy.py:
+        - StrategyType enum (RANDOM, AGGRESSIVE, CONSERVATIVE, DISTANCE_AWARE, ADAPTIVE)
+        - StrategyProfile dataclass with 9 parameters
+        - calculate_optimal_bid(tile, purpose, budget) method
+        - should_counter_bid(original_bid, budget) method
+        - calculate_counter_bid(original_bid) method
+        - to_dict() and from_dict() serialization
+        - get_preset(strategy_type) classmethod
+      acceptance_criteria:
+        - All 5 strategy types produce different bids
+        - Distance affects bid calculation correctly
+        - Tests pass: pytest tests/test_tectonic_strategy.py -v
+
+    - id: task-2.1
+      title: Create SimulationArena
+      assignee: arena-engineer
+      dependencies: [task-1.1]
+      description: |
+        Create systems/tectonic/arena.py:
+        - AgentConfig(agent_id, budget, strategy_type)
+        - SimulationResult(round_id, winner, tile, winning_bid, participants, forces)
+        - SimulatedAgent using StrategyProfile
+        - SimulationArena with agent_configs
+        - run_round(tile=None) -> SimulationResult
+        - run_rounds(count) -> List[SimulationResult]
+        - run_rounds_async(count, batch_size) for parallel execution
+        - get_statistics() with win_rates
+        - export_results() for analysis
+      acceptance_criteria:
+        - Multiple agents compete correctly
+        - Statistics track win rates per agent
+        - Tests pass: pytest tests/test_tectonic_arena.py -v
+
+    - id: task-3.1
+      title: Create StrategyLearner
+      assignee: learner-scientist
+      dependencies: [task-2.1]
+      description: |
+        Create systems/tectonic/learner.py:
+        - LearningConfig(learning_rate, min_samples)
+        - StrategyLearner with samples list
+        - add_sample(result) method
+        - learn_from_arena(arena) method
+        - derive_strategy() -> StrategyProfile
+        - analyze_distance_correlation() -> dict
+        - analyze_bid_efficiency() -> dict
+        - export_learned_params() -> dict
+        - save_profile() and load_profile() for JSON
+      acceptance_criteria:
+        - Learns from arena results
+        - Derives reasonable strategy parameters
+        - Tests pass: pytest tests/test_tectonic_learner.py -v
+
+    - id: task-4.1
+      title: Integrate Strategy into TectonicAgent
+      assignee: agent-integrator
+      dependencies: [task-1.1]
+      description: |
+        Modify systems/tectonic/agent.py:
+        - Add strategy: Optional[StrategyProfile] to __init__
+        - Add calculate_bid(tile, purpose) using strategy
+        - Add submit_claim_with_strategy(tile, purpose) method
+        - Add should_counter_bid(original_bid) using strategy
+        - Default to StrategyProfile() if not provided
+        - Maintain backward compatibility
+      acceptance_criteria:
+        - Agent with strategy makes autonomous bids
+        - Far tiles get lower bids than near tiles
+        - Tests pass: pytest tests/test_tectonic_agent.py -v
+
+    - id: task-5.1
+      title: Create Training CLI Script
+      assignee: cli-developer
+      dependencies: [task-3.1]
+      description: |
+        Create scripts/train_tectonic_agents.py:
+        - argparse with --rounds, --output, --verbose
+        - Create arena with 8 agents (2 random, 2 aggressive, 2 conservative, 1 distance_aware, 1 adaptive)
+        - Run specified number of rounds
+        - Learn strategy from results
+        - Display win rates and learned parameters
+        - Save profile to JSON
+      acceptance_criteria:
+        - Script runs without errors
+        - Outputs learned strategy JSON
+        - Displays statistics
+
+    - id: task-6.1
+      title: Create E2E Training Tests
+      assignee: e2e-validator
+      dependencies: [task-4.1, task-5.1]
+      description: |
+        Create tests/test_tectonic_training.py:
+        - test_full_training_pipeline() - arena -> learn -> profile
+        - test_trained_agent_performs_better() - vs random
+        - test_strategy_persistence() - save/load
+        - test_agent_with_learned_strategy() - real usage
+        - test_multi_strategy_tournament() - all types compete
+      acceptance_criteria:
+        - All 5 E2E tests pass
+        - Tests pass: pytest tests/test_tectonic_training.py -v
+
+  success_criteria:
+    - StrategyProfile calculates bids based on distance and aggression
+    - SimulationArena runs 1000+ rounds efficiently
+    - StrategyLearner derives meaningful parameters
+    - TectonicAgent uses strategy autonomously
+    - Training script produces learnable output
+    - 46+ tests passing
+
+  reference_docs:
+    - docs/plans/2026-03-09-phase-48.5-tectonic-agent-academy.md
+    - systems/tectonic/agent.py
+    - systems/tectonic/negotiator.py

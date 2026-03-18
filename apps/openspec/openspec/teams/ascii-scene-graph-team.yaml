@@ -1,0 +1,140 @@
+# ASCII Scene Graph Expansion Team
+# Coordinate implementation of instrumentation hooks across Geometry OS subsystems
+
+team:
+  name: ascii-scene-graph-team
+  description: |
+    Implements the Universal ASCII Scene Graph for zero-cost AI perception.
+    Covers Neural City, Visual Shell, and Evolution Pipeline hooks plus ASCII renderers.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: hook-architect
+      role: Creates hook trait definitions and broadcasters
+      focus:
+        - Define NeuralCityHook trait
+        - Define VisualShellHook trait
+        - Define EvolutionHook trait
+        - Create hook broadcasters for each subsystem
+      files:
+        - systems/visual_shell/swarm/consciousness/hooks.py
+        - systems/visual_shell/ascii_scene/hooks.py
+        - systems/evolution_daemon/hooks.py
+
+    - name: ascii-renderer
+      role: Implements ASCII renderers for each subsystem
+      focus:
+        - NeuralCityAsciiRenderer with camera-follow viewport
+        - VisualShellAsciiRenderer with tree topology
+        - EvolutionAsciiRenderer with PAS monitoring
+      files:
+        - systems/visual_shell/ascii_scene/renderers/
+        - systems/visual_shell/ascii_scene/scene_graph.py
+
+    - name: integration-engineer
+      role: Wires hooks to subsystems and Visual Bridge
+      focus:
+        - Integrate hooks into NeuralCityRenderer
+        - Integrate hooks into Visual Shell compositor
+        - Integrate hooks into Evolution Daemon
+        - Add WebSocket streaming to Visual Bridge
+      files:
+        - systems/visual_shell/web/NeuralCityRenderer.js
+        - systems/visual_shell/api/visual_bridge.py
+        - systems/evolution_daemon/daemon.py
+
+    - name: hud-developer
+      role: Extends Visual Debug Overlay for ASCII display
+      focus:
+        - Add ASCII Scene Graph section to HUD
+        - Display live .ascii file contents
+        - Add navigation controls for AI testing
+      files:
+        - systems/visual_shell/web/visual_debug_overlay.js
+
+  tasks:
+    - id: task-1
+      title: Neural City Hooks
+      assignee: hook-architect
+      dependencies: []
+      description: |
+        Create NeuralCityHook trait and NeuralCityAsciiRenderer.
+        Define on_district_update, on_camera_move, on_agent_relocation, on_city_health.
+        Implement 80x24 camera-follow viewport.
+
+    - id: task-2
+      title: Visual Shell Hooks
+      assignee: hook-architect
+      dependencies: []
+      description: |
+        Create VisualShellHook trait and VisualShellAsciiRenderer.
+        Define on_window_create, on_window_focus, on_window_close, on_fragment_update.
+        Implement tree-based YAML-like structure.
+
+    - id: task-3
+      title: Evolution Pipeline Hooks
+      assignee: hook-architect
+      dependencies: []
+      description: |
+        Create EvolutionHook trait and EvolutionAsciiRenderer.
+        Define on_pas_change, on_pipeline_stage, on_self_correction.
+        Implement PAS meter with 0.80 threshold alert.
+
+    - id: task-4
+      title: ASCII Renderers
+      assignee: ascii-renderer
+      dependencies: [task-1, task-2, task-3]
+      description: |
+        Implement ASCII renderers for all three subsystems.
+        Ensure output format is parseable by AI agents.
+        Add spatial query support for Visual Shell.
+
+    - id: task-5
+      title: Hook Broadcasters
+      assignee: hook-architect
+      dependencies: [task-1, task-2, task-3]
+      description: |
+        Create broadcasters for each hook type.
+        Enable multi-listener dispatch.
+        Add async non-blocking dispatch.
+
+    - id: task-6
+      title: Subsystem Integration
+      assignee: integration-engineer
+      dependencies: [task-4, task-5]
+      description: |
+        Wire hooks into NeuralCityRenderer, Visual Shell compositor, and Evolution Daemon.
+        Add WebSocket streaming to Visual Bridge.
+        Ensure hooks don't block subsystem operation.
+
+    - id: task-7
+      title: HUD Display
+      assignee: hud-developer
+      dependencies: [task-6]
+      description: |
+        Add ASCII Scene Graph section to Visual Debug Overlay.
+        Display live .ascii file contents.
+        Add navigation controls for AI testing.
+
+    - id: task-8
+      title: Integration Testing
+      assignee: integration-engineer
+      dependencies: [task-7]
+      description: |
+        Test AI can read all .ascii files.
+        Test Ouroboros loop: read → reason → write VASM → materialize.
+        Test self-healing with PAS drop simulation.
+        Verify ASCII read latency <1ms.
+
+  success_criteria:
+    - AI can read all .ascii files without VLM
+    - ASCII read latency <1ms
+    - PAS recovery rate >95%
+    - VASM → .rts.png compilation success 100%
+    - All hooks dispatch non-blocking
+
+  reference_docs:
+    - docs/plans/2026-02-19-ascii-scene-graph-expansion-design.md
+    - docs/plans/2026-02-19-ascii-scene-graph-expansion-impl.md
+    - systems/infinite_map_rs/src/riscv/hooks.rs  # Reference implementation

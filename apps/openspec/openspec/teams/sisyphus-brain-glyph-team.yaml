@@ -1,0 +1,292 @@
+# Sisyphus Brain Glyph Team
+# Implements GPU-native cognitive agent with LM Studio integration
+
+team:
+  name: sisyphus-brain-glyph-team
+  description: |
+    Creates a glyph-native Sisyphus Brain that lives on the GPU substrate.
+    The brain perceives its own memory state via entropy scanning, queries
+    LM Studio for guidance through an MMIO bridge, and executes returned commands.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: brain-bridge-engineer
+      role: Implements Rust MMIO bridge between GPU substrate and LM Studio
+      focus:
+        - Create BrainBridge struct with async polling loop
+        - Implement read_gpu_bytes/write_gpu_bytes using Hilbert mapping
+        - Forward HTTP requests from glyph buffer to LM Studio
+        - Handle semaphore-based handshake protocol
+      files:
+        - systems/infinite_map_rs/src/brain_bridge.rs
+        - systems/infinite_map_rs/src/lib.rs
+
+    - name: daemon-integration-engineer
+      role: Integrates brain bridge into gpu_dev_daemon
+      focus:
+        - Add brain_bridge thread spawn
+        - Add /brain/health endpoint
+        - Add /brain/state endpoint
+        - Add POST /brain/inject endpoint
+        - Use pollster::block_on() for async-in-sync
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+        - systems/infinite_map_rs/Cargo.toml
+
+    - name: glyph-brain-engineer
+      role: Creates sisyphus_brain.glyph cognitive agent
+      focus:
+        - Main cognitive loop (perceive → think → act)
+        - Entropy scanning subroutine
+        - HTTP query formatting
+        - Command parsing and execution
+        - Use only available opcodes (LDI, MOV, LOAD, STORE, ADD, SUB, JMP, JZ, CALL, RET, HALT, AND, SHL, SHR)
+      files:
+        - systems/glyph_stratum/programs/sisyphus_brain.glyph
+
+    - name: test-engineer
+      role: Creates test suite for validation
+      focus:
+        - Test memory addresses within texture bounds
+        - Test semaphore handshake protocol
+        - Test daemon endpoints (integration)
+        - Test glyph compilation
+      files:
+        - systems/glyph_stratum/programs/test_sisyphus_brain.py
+
+    - name: docs-engineer
+      role: Creates memory documentation
+      focus:
+        - Document memory map addresses
+        - Document API endpoints
+        - Document usage instructions
+      files:
+        - memory/sisyphus-brain-glyph.md
+        - memory/MEMORY.md
+
+  tasks:
+    - id: task-1.1
+      title: Create brain_bridge.rs module
+      assignee: brain-bridge-engineer
+      dependencies: []
+      description: |
+        Create systems/infinite_map_rs/src/brain_bridge.rs:
+        - BrainBridgeConfig struct (lm_studio_url, poll_interval_ms)
+        - BrainBridge struct with device/queue/texture Arcs
+        - addresses module with memory map constants
+        - ChatRequest/ChatResponse structs for LM Studio API
+      acceptance_criteria:
+        - Module compiles without errors
+        - All structs defined
+        - Tests pass: cargo test brain_bridge --no-run
+
+    - id: task-1.2
+      title: Implement GPU memory read/write methods
+      assignee: brain-bridge-engineer
+      dependencies: [task-1.1]
+      description: |
+        Add to BrainBridge:
+        - read_gpu_u32(addr) → u32
+        - write_gpu_u32(addr, value)
+        - read_gpu_bytes(start_addr, len) → Vec<u8>
+        - write_gpu_bytes(start_addr, data)
+        - Use Hilbert d2xy for address mapping
+      acceptance_criteria:
+        - Methods compile and work with wgpu
+        - Hilbert mapping matches existing implementation
+
+    - id: task-1.3
+      title: Implement brain bridge polling loop
+      assignee: brain-bridge-engineer
+      dependencies: [task-1.2]
+      description: |
+        Add to BrainBridge:
+        - start() async method with polling loop
+        - stop() async method
+        - poll_and_forward() reads semaphore, forwards to LM Studio
+        - forward_to_lm_studio() wraps text in JSON, sends, returns response
+        - test_connection() for health check
+      acceptance_criteria:
+        - Polling loop reads CTRL_SEMAPHORE
+        - Forwards request body to localhost:1234
+        - Writes response to HTTP_RES buffer
+        - Sets RESPONSE_READY flag
+
+    - id: task-2.1
+      title: Add pollster dependency
+      assignee: daemon-integration-engineer
+      dependencies: []
+      description: |
+        Add to systems/infinite_map_rs/Cargo.toml:
+        - pollster = "0.3"
+      acceptance_criteria:
+        - Cargo.toml updated
+        - cargo check passes
+
+    - id: task-2.2
+      title: Integrate brain bridge into daemon
+      assignee: daemon-integration-engineer
+      dependencies: [task-1.3, task-2.1]
+      description: |
+        Modify systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs:
+        - Import brain_bridge module
+        - Create BrainBridge instance after scheduler
+        - Spawn brain bridge thread with tokio runtime
+        - Pass brain_bridge to handle_hal_request
+      acceptance_criteria:
+        - Daemon compiles
+        - Brain bridge thread starts on daemon launch
+
+    - id: task-2.3
+      title: Add /brain/health endpoint
+      assignee: daemon-integration-engineer
+      dependencies: [task-2.2]
+      description: |
+        Add to handle_hal_request:
+        - GET /brain/health returns {"lm_studio": true/false}
+        - Use pollster::block_on(brain_bridge.test_connection())
+      acceptance_criteria:
+        - curl http://127.0.0.1:8769/brain/health returns JSON
+        - Returns false if LM Studio not running
+
+    - id: task-2.4
+      title: Add /brain/state endpoint
+      assignee: daemon-integration-engineer
+      dependencies: [task-2.3]
+      description: |
+        Add to handle_hal_request:
+        - GET /brain/state returns {"entropy": N, "cycles": N}
+        - Read from GPU memory addresses 0x0400 and 0x0304
+        - Use pollster::block_on() for async reads
+      acceptance_criteria:
+        - curl http://127.0.0.1:8769/brain/state returns JSON
+        - Values match glyph memory state
+
+    - id: task-2.5
+      title: Add POST /brain/inject endpoint
+      assignee: daemon-integration-engineer
+      dependencies: [task-2.4]
+      description: |
+        Add to handle_hal_request:
+        - POST /brain/inject writes intent to 0x0300
+        - Use pollster::block_on() for async writes
+        - Return "Intent injected" on success
+      acceptance_criteria:
+        - curl -X POST http://127.0.0.1:8769/brain/inject -d "test" works
+        - Intent written to glyph memory
+
+    - id: task-3.1
+      title: Create sisyphus_brain.glyph main structure
+      assignee: glyph-brain-engineer
+      dependencies: []
+      description: |
+        Create systems/glyph_stratum/programs/sisyphus_brain.glyph:
+        - Memory layout constants (.equ directives)
+        - :main entry point with initialization
+        - :cognitive_loop with perceive → think → act phases
+        - Use only available opcodes
+      acceptance_criteria:
+        - File compiles with compile_glyph_file()
+        - Memory addresses match brain_bridge.rs
+
+    - id: task-3.2
+      title: Implement perceive_entropy subroutine
+      assignee: glyph-brain-engineer
+      dependencies: [task-3.1]
+      description: |
+        Add :perceive_entropy subroutine:
+        - Scan 16 words from current cursor position
+        - Count set bits (entropy) for each word
+        - Store total in PERCEPT_ENTROPY
+        - Update cursor with wrap-around
+        - Use only: LDI, MOV, LOAD, STORE, ADD, SUB, AND, SHR, JZ, JMP, RET
+      acceptance_criteria:
+        - Entropy accumulates correctly
+        - Cursor wraps at SCAN_END
+
+    - id: task-3.3
+      title: Implement think_query subroutine
+      assignee: glyph-brain-engineer
+      dependencies: [task-3.2]
+      description: |
+        Add :think_query subroutine:
+        - Write simple text query to HTTP_REQ buffer
+        - Store length in REQ_LEN
+        - Set CTRL_SEMAPHORE = 1
+        - Poll RES_READY until non-zero
+        - Clear RES_READY after reading
+      acceptance_criteria:
+        - Query written to buffer
+        - Semaphore handshake works
+        - Returns after response ready
+
+    - id: task-3.4
+      title: Implement act_on_response subroutine
+      assignee: glyph-brain-engineer
+      dependencies: [task-3.3]
+      description: |
+        Add :act_on_response subroutine:
+        - Read first byte of HTTP_RES
+        - Check for 'N' (NOP), 'S' (SCAN), 'H' (HALT)
+        - Execute corresponding action
+        - Store action in COG_LAST_ACT
+      acceptance_criteria:
+        - NOP: continue loop
+        - SCAN: reset cursor
+        - HALT: stop execution
+
+    - id: task-4.1
+      title: Create test_sisyphus_brain.py
+      assignee: test-engineer
+      dependencies: []
+      description: |
+        Create systems/glyph_stratum/programs/test_sisyphus_brain.py:
+        - TestSisyphusBrainCompilation class
+        - TestSisyphusBrainSimulation class
+        - TestBrainBridgeIntegration class (marked integration)
+      acceptance_criteria:
+        - pytest test_sisyphus_brain.py -v passes
+        - Integration tests skip if daemon not running
+
+    - id: task-5.1
+      title: Create memory documentation
+      assignee: docs-engineer
+      dependencies: []
+      description: |
+        Create memory/sisyphus-brain-glyph.md:
+        - Memory map with addresses
+        - API endpoints documentation
+        - Usage instructions
+        - Related files
+      acceptance_criteria:
+        - File created with proper frontmatter
+        - All addresses documented
+
+    - id: task-5.2
+      title: Update MEMORY.md index
+      assignee: docs-engineer
+      dependencies: [task-5.1]
+      description: |
+        Add entry to memory/MEMORY.md:
+        - Link to sisyphus-brain-glyph.md
+        - Status: Active
+        - Brief description
+      acceptance_criteria:
+        - Entry added to Active Systems table
+
+  success_criteria:
+    - brain_bridge.rs compiles and runs
+    - Brain bridge thread starts with daemon
+    - /brain/health returns LM Studio status
+    - /brain/state returns cognitive state
+    - POST /brain/inject writes to glyph memory
+    - sisyphus_brain.glyph compiles to texture
+    - All tests passing
+    - Memory documentation complete
+
+  reference_docs:
+    - docs/superpowers/plans/2026-03-15-sisyphus-brain-glyph.md
+    - docs/GLYPH_PROGRAMMING_GUIDE.md
+    - systems/infinite_map_rs/src/synapse/daemon_bridge.rs
+    - systems/glyph_stratum/programs/daemon.glyph

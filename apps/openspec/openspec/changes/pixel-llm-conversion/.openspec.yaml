@@ -1,0 +1,147 @@
+# OpenSpec Change: Pixel LLM Conversion
+
+change:
+  name: pixel-llm-conversion
+  title: Pixel LLM Chat Learning Loop Implementation
+  status: in_progress
+  created: 2026-03-16
+
+  scope:
+    - systems/infinite_map_rs/src/pixel_brain/atlas.rs
+    - systems/infinite_map_rs/src/pixel_brain/mod.rs
+    - systems/infinite_map_rs/scripts/convert_safetensors.py
+    - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+    - systems/infinite_map_rs/tests/pixel_brain_integration.rs
+
+  references:
+    plan: docs/plans/2026-03-16-pixel-llm-implementation.md
+    design: docs/plans/2026-03-16-pixel-llm-conversion-design.md
+    team: teams/pixel-brain-team.yaml
+
+  milestones:
+    - id: M1
+      name: Weight Atlas Infrastructure
+      tasks: [task-1, task-2, task-3]
+      status: pending
+      description: Create weight atlas loader with Hilbert addressing and float16 encoding
+
+    - id: M2
+      name: GPU Substrate Integration
+      tasks: [task-4, task-5]
+      status: pending
+      description: Load brain atlas into GPU texture and implement real OP_GLYPH_MUTATE
+
+    - id: M3
+      name: Visual Feedback
+      tasks: [task-6]
+      status: pending
+      description: Add THOUGHT_PULSE WebSocket broadcasting
+
+    - id: M4
+      name: Real Activations
+      tasks: [task-7]
+      status: pending
+      description: Connect real activations from inference
+
+    - id: M5
+      name: Integration Testing
+      tasks: [task-8]
+      status: pending
+      description: Add end-to-end integration test
+
+  tasks:
+    - id: task-1
+      title: Create PixelBrain Weight Atlas Loader
+      assignee: weight-encoding-engineer
+      dependencies: []
+      files:
+        - systems/infinite_map_rs/src/pixel_brain/atlas.rs
+        - systems/infinite_map_rs/src/pixel_brain/mod.rs
+      acceptance_criteria:
+        - WeightAtlas::new(2048) creates valid atlas
+        - hilbert_d2xy/hilbert_xy2d roundtrip works
+        - encode_weight_f16/decode_weight_f16 roundtrip works
+        - Tests pass: cargo test pixel_brain::atlas
+
+    - id: task-2
+      title: Create Safetensors to PNG Converter
+      assignee: weight-encoding-engineer
+      dependencies: []
+      files:
+        - systems/infinite_map_rs/scripts/convert_safetensors.py
+      acceptance_criteria:
+        - Script converts .safetensors to .rts.png
+        - Hilbert addressing used for spatial locality
+        - Float16 encoding in RGBA pixels
+
+    - id: task-3
+      title: Implement GPU Texture Weight Loading
+      assignee: pipeline-orchestrator-engineer
+      dependencies: [task-1]
+      files:
+        - systems/infinite_map_rs/src/pixel_brain/atlas.rs
+      acceptance_criteria:
+        - load_from_png_bytes() returns weight vector
+        - load_from_png_file() reads from filesystem
+        - Tests pass: cargo test test_load_png_weights
+
+    - id: task-4
+      title: Connect Weight Atlas to GPU Dev Daemon
+      assignee: pipeline-orchestrator-engineer
+      dependencies: [task-3]
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+      acceptance_criteria:
+        - Brain atlas loaded on daemon startup
+        - GEOS_BRAIN_ATLAS env var respected
+        - Weight atlas uploaded to GPU texture
+
+    - id: task-5
+      title: Implement Real OP_GLYPH_MUTATE
+      assignee: geoasm-extension-engineer
+      dependencies: [task-4]
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+      acceptance_criteria:
+        - Hebbian updates write to GPU texture
+        - read_texture_pixel() reads current weight
+        - write_texture_pixel() applies delta
+        - /rate endpoint returns weights_updated count
+
+    - id: task-6
+      title: Add THOUGHT_PULSE WebSocket Broadcasting
+      assignee: visual-feedback-engineer
+      dependencies: []
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+      acceptance_criteria:
+        - broadcast::channel for thought pulses
+        - /ws/thought_pulse WebSocket endpoint
+        - Clients receive THOUGHT_PULSE JSON messages
+
+    - id: task-7
+      title: Connect Real Activations from Inference
+      assignee: cognitive-bus-engineer
+      dependencies: [task-4]
+      files:
+        - systems/infinite_map_rs/src/bin/gpu_dev_daemon.rs
+      acceptance_criteria:
+        - /chat records activations from response
+        - Activations map to embedding region addresses
+        - Strength calculated from response tokens
+
+    - id: task-8
+      title: Add Integration Test
+      assignee: e2e-integration-engineer
+      dependencies: [task-5, task-6]
+      files:
+        - systems/infinite_map_rs/tests/pixel_brain_integration.rs
+      acceptance_criteria:
+        - test_chat_rate_roundtrip passes
+        - Chat returns chat_id
+        - Rate returns weights_updated > 0
+
+  metrics:
+    test_count: 8
+    coverage_target: 80
+    estimated_hours: 4

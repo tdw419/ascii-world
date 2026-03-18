@@ -1,0 +1,68 @@
+# OpenSpec Change: GeoASM ↔ PixelRTS v2 Containerization
+
+change:
+  name: geoasm-pixelrts-containerization
+  title: GeoASM Neural Programs as Visual Cartridges
+  status: completed
+  created: 2026-03-09
+
+  scope:
+    - systems/pixel_compiler/geoasm_encoder.py
+    - systems/pixel_compiler/geoasm_cartridge.py
+    - systems/pixel_compiler/geoasm_cartridge_reader.py
+    - systems/pixel_compiler/pixelrts_v2_converter.py
+    - scripts/geoasm_cartridge_demo.py
+    - tests/test_geoasm_encoder.py
+    - tests/test_geoasm_cartridge.py
+    - tests/test_geoasm_cartridge_reader.py
+    - tests/test_pixelrts_geoasm_mode.py
+
+  references:
+    plan: docs/plans/2026-03-09-geoasm-pixelrts-containerization.md
+    team: teams/geoasm-pixelrts-team.yaml
+    architecture: docs/META_PROMPTER_ARCHITECTURE.md
+
+  milestones:
+    - id: M1
+      name: Core Encoding
+      tasks: [task-1.1, task-1.2]
+      status: pending
+      description: Semantic encoder with lossless mode
+
+    - id: M2
+      name: Cartridge System
+      tasks: [task-2.1, task-2.2]
+      status: pending
+      description: Writer and reader for .rts.png cartridges
+
+    - id: M3
+      name: CLI Integration
+      tasks: [task-3.1]
+      status: pending
+      description: --mode geoasm in pixelrts_v2_converter
+
+    - id: M4
+      name: Validation
+      tasks: [task-4.1]
+      status: pending
+      description: Demo script and roundtrip verification
+
+  metrics:
+    test_count: 20
+    coverage_target: 90
+    estimated_hours: 1.5
+
+  semantic_mapping:
+    red_channel: "Opcode (0xD0-0xD6) scaled by compute heat"
+    green_channel: "Source Register (Rs: R0-R7)"
+    blue_channel: "Destination Register (Rd: R0-R7)"
+    alpha_channel: "Immediate Value (0-255)"
+
+  opcode_heat:
+    EMBED: 0.6
+    ATTEND: 1.0
+    PROJECT: 0.9
+    SAMPLE: 0.7
+    LAYER: 0.3
+    KV_APPEND: 0.5
+    THOUGHT_PULSE: 0.8

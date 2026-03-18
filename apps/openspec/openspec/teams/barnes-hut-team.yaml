@@ -1,0 +1,110 @@
+# Barnes-Hut Team
+# Implements O(N log N) force approximation for Neural City scale
+
+team:
+  name: barnes-hut-team
+  description: |
+    Implements Barnes-Hut quadtree acceleration for the Tectonic GravityEngine,
+    enabling "Neural City" scale with millions of entities.
+
+    Pipeline: Quadtree Construction → Center-of-Mass Aggregation → Force Approximation
+
+    This scales the Gravity OS from thousands to millions of orbs:
+    - O(N²) direct calculation: unusable beyond 10K entities
+    - O(N log N) Barnes-Hut: scales to millions
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: quadtree-engineer
+      role: Implements Barnes-Hut quadtree data structure
+      focus:
+        - Create QuadTree and QuadNode classes
+        - Implement spatial partitioning with BoundingBox
+        - Add center-of-mass aggregation
+        - Support particle insertion and subdivision
+      files:
+        - systems/infinite_map/quadtree.py
+        - tests/test_quadtree.py
+
+    - name: gravity-integration-engineer
+      role: Integrates quadtree into GravityEngine
+      focus:
+        - Add use_quadtree parameter to GravityEngine
+        - Implement _update_direct() and _update_quadtree() methods
+        - Maintain force accuracy within 10-15% of direct calculation
+        - Handle spring forces separately (not approximated)
+      files:
+        - systems/infinite_map/gravity_engine.py
+        - tests/test_gravity_engine_quadtree.py
+
+    - name: lod-rendering-engineer
+      role: Adds Level of Detail rendering support
+      focus:
+        - Implement get_visible_nodes() for LOD queries
+        - Support zoom-level based detail selection
+        - Enable "City Blocks" view at low zoom
+        - Enable "Windows" view at high zoom
+      files:
+        - systems/infinite_map/quadtree.py
+        - tests/test_glass_box_lod.py
+
+  tasks:
+    - id: task-1.1
+      title: Create Quadtree spatial partition
+      assignee: quadtree-engineer
+      dependencies: []
+      description: |
+        Create systems/infinite_map/quadtree.py with:
+        - BoundingBox dataclass (x, y, width, height, contains_point, quadrant)
+        - QuadNode class (insert, subdivide, find_nearby, center_of_mass)
+        - QuadTree class (insert, find_nearby, calculate_force)
+        - Barnes-Hut force approximation with theta parameter
+      acceptance_criteria:
+        - test_bounding_box_creation passes
+        - test_bounding_box_contains_point passes
+        - test_quad_node_insert_single_point passes
+        - test_quad_node_subdivides_on_overflow passes
+        - test_quadtree_insert_multiple passes
+        - test_theta_parameter_controls_approximation passes
+
+    - id: task-2.1
+      title: Integrate Quadtree into GravityEngine
+      assignee: gravity-integration-engineer
+      dependencies: [task-1.1]
+      description: |
+        Modify systems/infinite_map/gravity_engine.py:
+        - Add use_quadtree, quadtree_threshold, theta parameters to __init__
+        - Split update() into _update_direct() and _update_quadtree()
+        - Build quadtree each frame in _update_quadtree()
+        - Use quadtree.calculate_force() for repulsive forces
+        - Keep spring forces direct (not approximated)
+      acceptance_criteria:
+        - test_gravity_engine_quadtree_mode_default passes
+        - test_gravity_engine_small_n_uses_direct passes
+        - test_gravity_engine_large_n_uses_quadtree passes
+        - test_quadtree_forces_approximately_correct passes
+
+    - id: task-3.1
+      title: Add LOD rendering support
+      assignee: lod-rendering-engineer
+      dependencies: [task-1.1]
+      description: |
+        Add to systems/infinite_map/quadtree.py:
+        - get_visible_nodes(camera_x, camera_y, zoom, min_pixels)
+        - _collect_visible_nodes() recursive helper
+        - Support zoom-level based detail selection
+      acceptance_criteria:
+        - test_quadtree_get_visible_nodes passes
+        - test_quadtree_high_zoom_shows_details passes
+
+  success_criteria:
+    - Quadtree data structure implemented with 12+ tests
+    - GravityEngine uses quadtree for N > threshold
+    - Force accuracy within 15% of direct calculation
+    - LOD queries support zoom-level detail
+    - 19+ total tests passing
+
+  reference_docs:
+    - docs/plans/2026-03-09-barnes-hut-scaling.md
+    - systems/infinite_map/gravity_engine.py

@@ -1,0 +1,195 @@
+# Perceptual Bridge V16 Team
+# Implements the "Retina" for Geometry OS - visual anomaly detection for autonomous binary generation safety
+
+team:
+  name: perceptual-bridge-team
+  description: |
+    Implements the Perceptual Bridge V16 - the visual feedback loop that enables
+    fearless binary creativity (Hex-Painter). Detects kernel panics, errors, and
+    frozen states in the Silicon District and triggers automatic quarantine.
+
+  project_root: /home/jericho/zion/projects/geometry_os/geometry_os
+
+  agents:
+    - name: anomaly-detector-engineer
+      role: Creates the AnomalyDetector for pattern matching
+      focus:
+        - Implement CRITICAL pattern detection (kernel panic, segfault, call trace)
+        - Implement WARNING pattern detection (error, fail, bug)
+        - Case-insensitive regex matching
+        - Return structured AnomalyResult
+      files:
+        - systems/neural_city/perceptual_bridge.py
+        - systems/neural_city/tests/test_perceptual_bridge.py
+
+    - name: visual-bridge-integrator
+      role: Integrates DIAGNOSTIC_PULSE with VisualBridge
+      focus:
+        - Add diagnostic_pulse message handler
+        - Broadcast DIAGNOSTIC_PULSE to browser clients
+        - Trigger QUARANTINE_DISTRICT on CRITICAL
+        - Wire PerceptualBridge startup
+      files:
+        - systems/visual_shell/api/visual_bridge.py
+        - systems/visual_shell/api/tests/test_perceptual_integration.py
+
+    - name: hud-frontend-engineer
+      role: Creates HUD display for diagnostic status
+      focus:
+        - PerceptualBridgeHUD JavaScript class
+        - Status color coding (HEALTHY/WARNING/CRITICAL)
+        - Anomaly detail display
+        - PC tracking and freeze detection display
+      files:
+        - systems/visual_shell/web/visual_debug_overlay.js
+
+    - name: e2e-integration-engineer
+      role: Validates full loop integration
+      focus:
+        - End-to-end test: panic → CRITICAL → quarantine
+        - Healthy execution validation
+        - Warning flow validation
+        - JSON format validation
+      files:
+        - systems/neural_city/tests/test_perceptual_e2e.py
+
+  tasks:
+    - id: task-1.1
+      title: Create AnomalyDetector with Pattern Matching
+      assignee: anomaly-detector-engineer
+      dependencies: []
+      description: |
+        Create AnomalyDetector class in perceptual_bridge.py with:
+        - CRITICAL_PATTERNS list (kernel panic, segfault, call trace, etc.)
+        - WARNING_PATTERNS list (error, fail, bug, etc.)
+        - scan(text) method returning AnomalyResult
+        - Case-insensitive regex matching
+      acceptance_criteria:
+        - Detects "kernel panic" → CRITICAL
+        - Detects "ERROR:" → WARNING
+        - Healthy text → HEALTHY
+        - Empty text → HEALTHY
+        - Multiple anomalies → highest severity
+        - Tests pass: pytest systems/neural_city/tests/test_perceptual_bridge.py -v
+
+    - id: task-1.2
+      title: Create PerceptualBridge Daemon Class
+      assignee: anomaly-detector-engineer
+      dependencies: [task-1.1]
+      description: |
+        Create PerceptualBridge class with:
+        - Background monitoring loop (2s interval)
+        - _capture_text() for framebuffer capture
+        - _check_freeze() for PC tracking
+        - _broadcast_pulse() for WebSocket broadcast
+        - start() and stop() lifecycle methods
+      acceptance_criteria:
+        - PerceptualBridge can be instantiated
+        - start() begins async monitoring loop
+        - stop() cleanly terminates
+        - DIAGNOSTIC_PULSE format is JSON-serializable
+
+    - id: task-2.1
+      title: Add DIAGNOSTIC_PULSE Handler to VisualBridge
+      assignee: visual-bridge-integrator
+      dependencies: []
+      description: |
+        Extend visual_bridge.py handle_client() to process diagnostic_pulse messages:
+        - Parse district_id, status, matched_pattern, detected_text
+        - Log CRITICAL anomalies
+        - Broadcast DIAGNOSTIC_PULSE to all clients
+        - On CRITICAL, also broadcast QUARANTINE_DISTRICT
+      acceptance_criteria:
+        - diagnostic_pulse message routed correctly
+        - DIAGNOSTIC_PULSE broadcast to clients
+        - CRITICAL triggers QUARANTINE_DISTRICT
+        - Tests pass: pytest systems/visual_shell/api/tests/test_perceptual_integration.py -v
+
+    - id: task-2.2
+      title: Wire PerceptualBridge Startup with VisualBridge
+      assignee: visual-bridge-integrator
+      dependencies: [task-1.2, task-2.1]
+      description: |
+        Add _setup_perceptual_bridge() to VisualBridge:
+        - Import PerceptualBridge
+        - Create instance with ws_url, district_id, scan_interval
+        - Start as background asyncio task
+        - Graceful fallback on ImportError
+      acceptance_criteria:
+        - VisualBridge.start() initializes PerceptualBridge
+        - Background task starts monitoring
+        - Startup log shows "🔮 Perceptual Bridge V16 initialized"
+
+    - id: task-3.1
+      title: Create PerceptualBridgeHUD JavaScript Class
+      assignee: hud-frontend-engineer
+      dependencies: []
+      description: |
+        Create PerceptualBridgeHUD class in visual_debug_overlay.js:
+        - createSection() with status, last scan, PC, anomalies display
+        - updateFromPulse(data) to handle DIAGNOSTIC_PULSE events
+        - updatePC(pcValue) to handle RISCV_STATE_UPDATE events
+        - Color coding: HEALTHY (green), WARNING (orange), CRITICAL (red)
+        - Alert animation on CRITICAL status
+      acceptance_criteria:
+        - HUD section appears with 🔮 PERCEPTUAL BRIDGE V16 header
+        - Status shows ✓ HEALTHY / ⚠ WARNING / ✗ CRITICAL
+        - CRITICAL triggers red pulse animation
+        - Anomaly detail shows matched pattern
+
+    - id: task-3.2
+      title: Wire DIAGNOSTIC_PULSE Events to HUD
+      assignee: hud-frontend-engineer
+      dependencies: [task-3.1]
+      description: |
+        Add WebSocket message handlers:
+        - DIAGNOSTIC_PULSE → perceptualBridgeHUD.updateFromPulse()
+        - RISCV_STATE_UPDATE → perceptualBridgeHUD.updatePC()
+        - Register module with VisualDebugOverlay
+      acceptance_criteria:
+        - Browser receives DIAGNOSTIC_PULSE events
+        - HUD updates in real-time
+        - PC value displays correctly
+
+    - id: task-4.1
+      title: Create E2E Integration Tests
+      assignee: e2e-integration-engineer
+      dependencies: [task-1.1, task-2.1]
+      description: |
+        Create test_perceptual_e2e.py with full loop tests:
+        - test_panic_detection_to_quarantine_flow
+        - test_healthy_execution_no_quarantine
+        - test_warning_logs_but_no_quarantine
+        - test_pulse_format_for_websocket
+      acceptance_criteria:
+        - All 4 E2E tests pass
+        - Tests validate complete flow from detection to broadcast
+
+    - id: task-4.2
+      title: Full System Verification
+      assignee: e2e-integration-engineer
+      dependencies: [task-1.2, task-2.2, task-3.2, task-4.1]
+      description: |
+        Run full system verification:
+        - Start VisualBridge
+        - Verify Perceptual Bridge starts
+        - Open browser HUD (Ctrl+Shift+V)
+        - Verify HUD section appears
+        - Run all tests: pytest systems/neural_city/tests/ -v
+      acceptance_criteria:
+        - VisualBridge starts without errors
+        - Perceptual Bridge initializes
+        - HUD shows Perceptual Bridge section
+        - All 12+ tests pass
+
+  success_criteria:
+    - AnomalyDetector accuracy 100% for test patterns
+    - DIAGNOSTIC_PULSE latency <100ms
+    - CRITICAL triggers quarantine within 3 seconds
+    - All 12+ tests passing
+    - HUD displays correctly in browser
+
+  reference_docs:
+    - docs/plans/2026-02-19-perceptual-bridge-v16-design.md
+    - docs/plans/2026-02-19-perceptual-bridge-v16-implementation.md
+    - docs/SILICON_DISTRICT_GUIDE.md

@@ -1,0 +1,88 @@
+# OpenSpec Change: GeoASM Instruction Set
+
+change:
+  name: geoasm-instruction-set
+  title: GeoASM - Neural Assembly Language for PixelBrain
+  status: completed
+  created: 2026-03-09
+
+  scope:
+    - systems/visual_shell/geoasm/__init__.py
+    - systems/visual_shell/geoasm/register_file.py
+    - systems/visual_shell/geoasm/instruction.py
+    - systems/visual_shell/geoasm/assembler.py
+    - systems/visual_shell/geoasm/executor.py
+    - systems/visual_shell/geoasm/visual_bridge.py
+    - systems/visual_shell/wgsl/pixel_brain_pipeline.py
+    - tests/test_geoasm_register_file.py
+    - tests/test_geoasm_instruction.py
+    - tests/test_geoasm_assembler.py
+    - tests/test_geoasm_executor.py
+    - tests/test_geoasm_pipeline_integration.py
+    - tests/test_geoasm_visual_bridge.py
+    - scripts/geoasm_demo.py
+
+  references:
+    plan: docs/plans/2026-03-09-geoasm-instruction-set.md
+    team: teams/geoasm-team.yaml
+    architecture: docs/META_PROMPTER_ARCHITECTURE.md
+
+  milestones:
+    - id: M1
+      name: Core Components
+      tasks: [task-1.1, task-2.1, task-3.1]
+      status: completed
+      description: Register file, instruction encoding, and assembler
+
+    - id: M2
+      name: Execution Engine
+      tasks: [task-4.1, task-5.1]
+      status: completed
+      description: Executor and pipeline integration
+
+    - id: M3
+      name: Visual Feedback
+      tasks: [task-6.1]
+      status: completed
+      description: Visual bridge for thought pulses
+
+    - id: M4
+      name: E2E Validation
+      tasks: [task-7.1]
+      status: completed
+      description: Demo script and integration tests
+
+  metrics:
+    test_count: 25
+    coverage_target: 90
+    estimated_hours: 2
+
+  opcodes:
+    - code: 0xD0
+      name: EMBED
+      args: R1, R2
+      description: Token ID → Hidden vector
+    - code: 0xD1
+      name: ATTEND
+      args: R2, R3
+      description: Self-attention
+    - code: 0xD2
+      name: PROJECT
+      args: R3, R4
+      description: SwiGLU FFN
+    - code: 0xD3
+      name: SAMPLE
+      args: R4, R5
+      description: Hidden → Token ID
+    - code: 0xD4
+      name: LAYER
+      args: #imm
+      description: Set layer index
+    - code: 0xD5
+      name: KV_APPEND
+      args: R6
+      description: Update KV-cache
+    - code: 0xD6
+      name: THOUGHT_PULSE
+      args: R5
+      description: Emit visual glyph

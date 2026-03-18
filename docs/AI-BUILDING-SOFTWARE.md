@@ -105,17 +105,30 @@ AI creates the interaction logic:
 - State machine handles navigation
 - **No frontend code written yet**
 
-### Step 4: Add GUI Later (Optional)
+### Step 4: Add GUI with ASCII World Renderer
 
-A React renderer can read the same template:
+Use the `@ascii-world/renderer` package to render ASCII state as React:
 
-```typescript
-function AsciiRenderer({ template, data }) {
-  // Parse ASCII box drawing → React components
-  // [A] becomes <Button>A</Button>
-  // ● becomes <StatusIcon status="active" />
+```bash
+bun add @ascii-world/renderer
+```
+
+```tsx
+import { useAsciiState, StateView, AsciiView } from '@ascii-world/renderer';
+
+function App() {
+  const { state, view, sendControl } = useAsciiState('http://localhost:3421');
+
+  return (
+    <div className="split-view">
+      <StateView state={state} bindings={bindings} onControl={sendControl} />
+      <AsciiView content={view} />
+    </div>
+  );
 }
 ```
+
+The renderer uses the same JSON state that feeds the ASCII templates, so GUI and ASCII are always in sync.
 
 ---
 

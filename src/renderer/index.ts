@@ -5,3 +5,5 @@ export * from './components/AsciiView';
 export * from './components/LabelButton';
 export * from './components/StateView';
 export * from './hooks/useAsciiState';
+export * from './patterns/lexer';
+export * from './patterns/types';

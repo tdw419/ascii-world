@@ -14,6 +14,8 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
+import { existsSync, statSync, realpathSync } from 'fs';
+import { resolve, normalize, relative } from 'path';
 import { ProjectRegistry, ASCIIProject } from './project-registry';
 import { ManagerStateManager, ManagerContext, ManagerState } from './manager-state';
 import { AsciiGenerator, TemplateData } from './ascii-generator';
@@ -21,6 +23,18 @@ import { AsciiGenerator, TemplateData } from './ascii-generator';
 // Server configuration
 const PORT = 3422;
 const HOST = '0.0.0.0';
+
+// Security configuration
+const CORS_ORIGIN = process.env.MANAGER_CORS_ORIGIN || 'http://localhost:3422';
+const ALLOWED_BASE_DIRS = (process.env.MANAGER_ALLOWED_DIRS || process.cwd()).split(':');
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 100;
+
+// Valid input patterns
+const VALID_LABEL_PATTERN = /^[a-zA-Z0-9]$/;
+const VALID_PROJECT_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+const MIN_PORT = 1024;
+const MAX_PORT = 65535;
 
 // Request metrics tracking
 interface RequestMetrics {
@@ -34,8 +48,17 @@ interface RequestMetrics {
     responseTimes: number[];
 }
 
+// Rate limiting tracking
+interface RateLimitEntry {
+    count: number;
+    resetTime: number;
+}
+
 // Active child processes for managed projects
 const activeProcesses: Map<string, ChildProcess> = new Map();
+
+// Rate limiting store (in-memory, per IP)
+const rateLimitStore: Map<string, RateLimitEntry> = new Map();
 
 // App version (read from package.json or default)
 const APP_VERSION = '1.0.0';
@@ -73,6 +96,155 @@ export class ManagerServer {
         };
     }
 
+    // ==================== SECURITY UTILITIES ====================
+
+    /**
+     * Validate and sanitize a project path to prevent path traversal attacks
+     * @param inputPath - The path to validate
+     * @returns Sanitized absolute path or null if invalid
+     */
+    private validateProjectPath(inputPath: string): string | null {
+        // Check for empty path
+        if (!inputPath || typeof inputPath !== 'string') {
+            return null;
+        }
+
+        // Check for path traversal patterns
+        if (inputPath.includes('..') || inputPath.includes('\0')) {
+            return null;
+        }
+
+        // Resolve to absolute path
+        let resolvedPath: string;
+        try {
+            resolvedPath = resolve(inputPath);
+        } catch {
+            return null;
+        }
+
+        // Check if path exists and is a directory
+        if (!existsSync(resolvedPath)) {
+            return null;
+        }
+
+        try {
+            const stats = statSync(resolvedPath);
+            if (!stats.isDirectory()) {
+                return null;
+            }
+        } catch {
+            return null;
+        }
+
+        // Resolve symlinks to prevent symlink attacks
+        let realPath: string;
+        try {
+            realPath = realpathSync(resolvedPath);
+        } catch {
+            return null;
+        }
+
+        // Check if path is within allowed base directories
+        const isAllowed = ALLOWED_BASE_DIRS.some(baseDir => {
+            const normalizedBase = resolve(baseDir);
+            const relativePath = relative(normalizedBase, realPath);
+            // Path is within base dir if relative path doesn't start with ..
+            return !relativePath.startsWith('..') && !relativePath.startsWith('/');
+        });
+
+        if (!isAllowed) {
+            return null;
+        }
+
+        return realPath;
+    }
+
+    /**
+     * Validate label format (single letter or number)
+     */
+    private validateLabel(label: unknown): string | null {
+        if (typeof label !== 'string' || !VALID_LABEL_PATTERN.test(label)) {
+            return null;
+        }
+        return label;
+    }
+
+    /**
+     * Validate project ID format
+     */
+    private validateProjectId(projectId: unknown): string | null {
+        if (typeof projectId !== 'string' || !VALID_PROJECT_ID_PATTERN.test(projectId)) {
+            return null;
+        }
+        return projectId;
+    }
+
+    /**
+     * Validate port number
+     */
+    private validatePort(port: unknown): number | null {
+        if (typeof port !== 'number' || !Number.isInteger(port)) {
+            return null;
+        }
+        if (port < MIN_PORT || port > MAX_PORT) {
+            return null;
+        }
+        return port;
+    }
+
+    /**
+     * Check rate limit for a client IP
+     * @param clientIp - Client IP address
+     * @returns true if request is allowed, false if rate limited
+     */
+    private checkRateLimit(clientIp: string): boolean {
+        const now = Date.now();
+        const entry = rateLimitStore.get(clientIp);
+
+        if (!entry || now > entry.resetTime) {
+            // Reset or create new entry
+            rateLimitStore.set(clientIp, {
+                count: 1,
+                resetTime: now + RATE_LIMIT_WINDOW_MS
+            });
+            return true;
+        }
+
+        if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+            return false;
+        }
+
+        entry.count++;
+        return true;
+    }
+
+    /**
+     * Extract client IP from request
+     */
+    private getClientIp(request: Request): string {
+        // Check X-Forwarded-For header (for reverse proxy setups)
+        const forwarded = request.headers.get('x-forwarded-for');
+        if (forwarded) {
+            return forwarded.split(',')[0].trim();
+        }
+        // Fallback to a default - Bun doesn't expose remote address directly in fetch handler
+        return 'unknown';
+    }
+
+    /**
+     * Build safe environment variables for child processes
+     * Only includes necessary variables, prevents injection
+     */
+    private buildSafeEnv(port: number): NodeJS.ProcessEnv {
+        return {
+            PORT: String(port),
+            PATH: process.env.PATH || '',
+            NODE_ENV: process.env.NODE_ENV || 'development',
+            HOME: process.env.HOME || '',
+            USER: process.env.USER || ''
+        };
+    }
+
     /**
      * Start the HTTP server
      */
@@ -85,6 +257,17 @@ export class ManagerServer {
                 const url = new URL(request.url);
                 const path = url.pathname;
                 const method = request.method;
+                const clientIp = this.getClientIp(request);
+
+                // Apply rate limiting to /control endpoint
+                if (path === '/control' && method === 'POST') {
+                    if (!this.checkRateLimit(clientIp)) {
+                        return this.jsonResponse(
+                            { error: 'Rate limit exceeded. Please try again later.' },
+                            429
+                        );
+                    }
+                }
 
                 // Update metrics
                 this.updateMetrics(path, method, startTime);
@@ -107,6 +290,8 @@ export class ManagerServer {
         });
 
         console.log(`ASCII Interface Manager started on http://${HOST}:${PORT}`);
+        console.log(`CORS origin: ${CORS_ORIGIN}`);
+        console.log(`Allowed base directories: ${ALLOWED_BASE_DIRS.join(', ')}`);
     }
 
     /**
@@ -228,7 +413,12 @@ export class ManagerServer {
 
         // Handle project-specific actions
         if (projectId) {
-            return this.handleProjectControl(projectId, action || label);
+            // Validate projectId
+            const validatedProjectId = this.validateProjectId(projectId);
+            if (!validatedProjectId) {
+                return this.jsonResponse({ error: 'Invalid project ID format' }, 400);
+            }
+            return this.handleProjectControl(validatedProjectId, action || label);
         }
 
         // Handle manager state actions
@@ -236,7 +426,13 @@ export class ManagerServer {
             return this.jsonResponse({ error: 'Missing label or projectId' }, 400);
         }
 
-        const result = this.stateManager.handleAction(label);
+        // Validate label format
+        const validatedLabel = this.validateLabel(label);
+        if (!validatedLabel) {
+            return this.jsonResponse({ error: 'Invalid label format. Must be a single letter or digit.' }, 400);
+        }
+
+        const result = this.stateManager.handleAction(validatedLabel);
 
         if (!result.success) {
             return this.jsonResponse({ error: result.error }, 400);
@@ -270,6 +466,12 @@ export class ManagerServer {
             return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
         }
 
+        // Validate action if provided
+        const validActions = ['start', 'stop', 'select'];
+        if (action && !validActions.includes(action)) {
+            return this.jsonResponse({ error: `Unknown action: ${action}` }, 400);
+        }
+
         switch (action) {
             case 'start':
                 return this.startProject(project);
@@ -298,14 +500,27 @@ export class ManagerServer {
             }, 400);
         }
 
+        // Re-validate the project path before spawning (defense in depth)
+        const validatedPath = this.validateProjectPath(project.path);
+        if (!validatedPath) {
+            return this.jsonResponse({
+                error: `Invalid or unauthorized project path`
+            }, 400);
+        }
+
+        // Validate port
+        const validatedPort = this.validatePort(project.port);
+        if (!validatedPort) {
+            return this.jsonResponse({
+                error: `Invalid port number: ${project.port}`
+            }, 400);
+        }
+
         try {
-            // Spawn the project process
+            // Spawn the project process with sanitized environment
             const childProcess = spawn('bun', ['run', 'src/index.ts'], {
-                cwd: project.path,
-                env: {
-                    ...process.env,
-                    PORT: String(project.port)
-                },
+                cwd: validatedPath,
+                env: this.buildSafeEnv(validatedPort),
                 stdio: ['ignore', 'pipe', 'pipe']
             });
 
@@ -405,12 +620,31 @@ export class ManagerServer {
             return this.jsonResponse({ error: 'Missing project path' }, 400);
         }
 
-        try {
-            // Find an available port if not specified
-            const assignedPort = port || this.registry.findAvailablePort();
+        // Validate and sanitize the project path
+        const validatedPath = this.validateProjectPath(projectPath);
+        if (!validatedPath) {
+            return this.jsonResponse({
+                error: 'Invalid project path. Path must be an absolute path to an existing directory within allowed boundaries.'
+            }, 400);
+        }
 
-            // Register the project
-            const project = this.registry.registerProject(projectPath, assignedPort);
+        // Validate port if provided
+        let assignedPort: number;
+        if (port !== undefined) {
+            const validatedPort = this.validatePort(port);
+            if (!validatedPort) {
+                return this.jsonResponse({
+                    error: `Invalid port number. Must be between ${MIN_PORT} and ${MAX_PORT}.`
+                }, 400);
+            }
+            assignedPort = validatedPort;
+        } else {
+            assignedPort = this.registry.findAvailablePort();
+        }
+
+        try {
+            // Register the project with validated path
+            const project = this.registry.registerProject(validatedPath, assignedPort);
 
             return this.jsonResponse({
                 success: true,
@@ -466,11 +700,17 @@ export class ManagerServer {
         const projectId = parts[1];
         const action = parts[2];
 
+        // Validate project ID
+        const validatedProjectId = this.validateProjectId(projectId);
+        if (!validatedProjectId) {
+            return this.jsonResponse({ error: 'Invalid project ID format' }, 400);
+        }
+
         // GET /projects/:id - Get project details
         if (!action && method === 'GET') {
-            const project = this.registry.getProject(projectId);
+            const project = this.registry.getProject(validatedProjectId);
             if (!project) {
-                return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
+                return this.jsonResponse({ error: `Project not found: ${validatedProjectId}` }, 404);
             }
             return this.jsonResponse({ project });
         }
@@ -478,32 +718,32 @@ export class ManagerServer {
         // DELETE /projects/:id - Unregister project
         if (!action && method === 'DELETE') {
             // Stop if running
-            if (activeProcesses.has(projectId)) {
-                this.stopProject(this.registry.getProject(projectId)!);
+            if (activeProcesses.has(validatedProjectId)) {
+                this.stopProject(this.registry.getProject(validatedProjectId)!);
             }
 
-            const removed = this.registry.unregisterProject(projectId);
+            const removed = this.registry.unregisterProject(validatedProjectId);
             if (!removed) {
-                return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
+                return this.jsonResponse({ error: `Project not found: ${validatedProjectId}` }, 404);
             }
 
-            return this.jsonResponse({ success: true, action: 'unregister', projectId });
+            return this.jsonResponse({ success: true, action: 'unregister', projectId: validatedProjectId });
         }
 
         // POST /projects/:id/start - Start project
         if (action === 'start' && method === 'POST') {
-            const project = this.registry.getProject(projectId);
+            const project = this.registry.getProject(validatedProjectId);
             if (!project) {
-                return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
+                return this.jsonResponse({ error: `Project not found: ${validatedProjectId}` }, 404);
             }
             return this.startProject(project);
         }
 
         // POST /projects/:id/stop - Stop project
         if (action === 'stop' && method === 'POST') {
-            const project = this.registry.getProject(projectId);
+            const project = this.registry.getProject(validatedProjectId);
             if (!project) {
-                return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
+                return this.jsonResponse({ error: `Project not found: ${validatedProjectId}` }, 404);
             }
             return this.stopProject(project);
         }
@@ -646,7 +886,7 @@ export class ManagerServer {
             status,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': CORS_ORIGIN,
                 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type'
             }
@@ -660,7 +900,7 @@ export class ManagerServer {
         return new Response(null, {
             status: 204,
             headers: {
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': CORS_ORIGIN,
                 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type'
             }

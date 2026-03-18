@@ -518,7 +518,7 @@ export class ManagerServer {
 
         try {
             // Spawn the project process with sanitized environment
-            const childProcess = spawn('bun', ['run', 'src/index.ts'], {
+            const childProcess = spawn('bun', ['run', 'src/bun/server.ts'], {
                 cwd: validatedPath,
                 env: this.buildSafeEnv(validatedPort),
                 stdio: ['ignore', 'pipe', 'pipe']

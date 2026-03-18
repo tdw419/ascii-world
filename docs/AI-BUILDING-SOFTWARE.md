@@ -207,6 +207,6 @@ No compile step. No bundle step. Edit text → see result.
 
 ## See Also
 
-- [ASCII-First Architecture](./ASCII-FIRST-ARCHITECTURE.md) — Design philosophy
+- [ASCII World](./ASCII-WORLD.md) — Full API reference and platform overview
 - [AI Control Guide](./AI-CONTROL-GUIDE.md) — How AI agents control apps
-- [ASCII Interface Manager](./ASCII-INTERFACE-MANAGER.md) — API reference
+- [ASCII-First Architecture](./ASCII-FIRST-ARCHITECTURE.md) — Design philosophy

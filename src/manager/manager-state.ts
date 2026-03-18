@@ -1,5 +1,5 @@
 /**
- * State Manager for ASCII Interface Manager
+ * State Manager for ASCII World
  *
  * Manages the manager's own state, selected project, and view context.
  */

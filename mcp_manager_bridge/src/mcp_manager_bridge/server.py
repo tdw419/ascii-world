@@ -2,7 +2,7 @@
 """
 MCP Manager Bridge Server
 
-Exposes ASCII Interface Manager API via Model Context Protocol.
+Exposes ASCII World API via Model Context Protocol.
 Enables AI agents to develop ASCII-wrapped applications through ASCII itself.
 
 Usage:

@@ -1,25 +1,26 @@
-# ASCII Interface Manager
+# ASCII World
 
-> **The Meta-ASCII Interface** - Develop ASCII-wrapped applications through the ASCII paradigm itself.
+> **Build, Control, and Render** — AI agents create software from ASCII templates. The same ASCII becomes the running app AND can render as beautiful GUIs.
 
 ## Overview
 
-The ASCII Interface Manager is a meta-application that enables AI agents to develop, test, and deploy ASCII-first applications entirely through the ASCII paradigm - achieving **self-hosting development**. The manager itself is an ASCII-wrapped application that AI can control using the same interface patterns used by all ASCII applications.
+ASCII World is a platform for AI agents to build, control, and render software. It provides:
 
-### What is Self-Hosting Development?
-
-Self-hosting means the ASCII Interface Manager uses ASCII interfaces to develop ASCII interfaces. AI agents interact with the manager through the same paradigm they use to interact with any ASCII-wrapped application. This creates a consistent, learnable pattern at every level of the system.
+- **Build** — AI describes apps in ASCII templates, they run immediately
+- **Control** — One dashboard to manage all your ASCII applications
+- **Render** — ASCII templates can render as React, Electron, or mobile GUIs
+- **Discover** — Auto-scan filesystem for ASCII-compatible projects
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                     ASCII INTERFACE MANAGER (Port 3422)                      │
+│                        ASCII WORLD (Port 3422)                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  [A] Projects  [B] Templates  [C] Bindings  [D] Test  [E] Git  [X] Quit    │
+│  [A] Projects  [B] Templates  [C] Bindings  [F] Dashboard  [X] Quit        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌─ PROJECTS ─────────────────────────────────────────────────────────────┐ │
 │  │  [1] session-analyzer-app    (port 3421)  ● Running                    │ │
-│  │  [2] ascii-interface-manager (port 3422)  ● Running (self)             │ │
+│  │  [2] ascii-world             (port 3422)  ● Running (self)             │ │
 │  │  [3] my-new-app              (port 3423)  ○ Stopped                    │ │
 │  │  [N] New Project...                                                     │ │
 │  └─────────────────────────────────────────────────────────────────────────┘ │
@@ -27,11 +28,11 @@ Self-hosting means the ASCII Interface Manager uses ASCII interfaces to develop 
 │  Selected: my-new-app                                                       │
 │                                                                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  [S] Start  [T] Stop  [R] Restart  [V] View ASCII  [E] Edit Project        │
+│  [S] Start  [T] Stop  [R] Refresh  [V] View ASCII  [E] Edit Project        │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Starting the Manager
+## Starting ASCII World
 
 ### Prerequisites
 
@@ -42,12 +43,12 @@ Self-hosting means the ASCII Interface Manager uses ASCII interfaces to develop 
 
 ```bash
 # Navigate to the project directory
-cd /path/to/ascii_interface
+cd /path/to/ascii-world
 
-# Start the manager server
+# Start the server
 bun run src/manager/manager-server.ts
 
-# The manager will be available at http://localhost:3422
+# Available at http://localhost:3422
 ```
 
 ### Environment Variables
@@ -62,7 +63,7 @@ bun run src/manager/manager-server.ts
 
 ## API Endpoints Reference
 
-The ASCII Interface Manager exposes a REST API on port 3422.
+ASCII World exposes a REST API on port 3422.
 
 ### GET /health
 
@@ -85,7 +86,7 @@ Render the current ASCII view based on the manager's state.
 ```json
 {
   "state": "PROJECTS",
-  "view": "╔══════════════════════════════════════════════════════════════════════════════╗\n║  ASCII INTERFACE MANAGER                                   v1.0.0  ║\n...",
+  "view": "╔══════════════════════════════════════════════════════════════════════════════╗\n║  ASCII WORLD                                             v1.0.0  ║\n...",
   "context": {
     "selectedProjectId": "my-app",
     "editMode": false,
@@ -96,7 +97,7 @@ Render the current ASCII view based on the manager's state.
 
 ### POST /control
 
-Execute an action by label. This is the primary way to interact with the manager.
+Execute an action by label. This is the primary way to interact with ASCII World.
 
 **Request Body:**
 ```json
@@ -233,7 +234,7 @@ Get performance metrics for the manager API.
 
 ### Project Proxy Endpoints
 
-The Manager can proxy requests to managed ASCII projects:
+ASCII World can proxy requests to managed ASCII projects:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -249,7 +250,7 @@ curl -X POST http://localhost:3422/projects \
   -H "Content-Type: application/json" \
   -d '{"path": "/path/to/session-analyzer-app", "port": 3421}'
 
-# View its ASCII output through the Manager
+# View its ASCII output through ASCII World
 curl http://localhost:3422/projects/session-analyzer-app/view
 
 # Send a control command
@@ -258,32 +259,9 @@ curl -X POST http://localhost:3422/projects/session-analyzer-app/control \
   -d '{"label": "B"}'  # Navigate to Sources tab
 ```
 
-### MCP Project Proxy Tools
+---
 
-New MCP tools for interacting with managed projects:
-
-| Tool | Description |
-|------|-------------|
-| `manager_project_view` | Fetch ASCII view from a managed project |
-| `manager_project_control` | Send control command to managed project |
-| `manager_project_bindings` | Get label bindings for managed project |
-
-#### Example Usage with mcp2cli
-
-```bash
-# View Session Analyzer through Manager
-mcp2cli --mcp-stdio "uv run mcp_manager_bridge" manager-project-view --project-id session-analyzer-app
-
-# Navigate to Sources tab
-mcp2cli --mcp-stdio "uv run mcp_manager_bridge" manager-project-control \
-  --project-id session-analyzer-app --label B
-
-# Get available labels
-mcp2cli --mcp-stdio "uv run mcp_manager_bridge" manager-project-bindings \
-  --project-id session-analyzer-app
-```
-
-### Dashboard View
+## Dashboard View
 
 The Dashboard provides a health-at-a-glance view of all discovered projects.
 
@@ -292,7 +270,7 @@ The Dashboard provides a health-at-a-glance view of all discovered projects.
 | `/view` | GET | Renders dashboard when state is DASHBOARD |
 | `/control` | POST | Use `F` to navigate to dashboard, `R` to refresh |
 
-#### Dashboard Features
+### Dashboard Features
 
 - **Status Icons**: ● running, ○ stopped, ⚠ error
 - **Uptime**: Shows time since project started (e.g., "2h 15m")
@@ -320,7 +298,7 @@ curl -X POST http://localhost:3422/control \
 
 ## Label Reference
 
-The ASCII Interface Manager uses labeled actions for navigation and control. Each label corresponds to a specific action.
+ASCII World uses labeled actions for navigation and control. Each label corresponds to a specific action.
 
 ### Navigation Labels (Available in all states)
 
@@ -371,7 +349,7 @@ The ASCII Interface Manager uses labeled actions for navigation and control. Eac
 
 ## MCP Integration
 
-The ASCII Interface Manager provides an MCP (Model Context Protocol) bridge that enables AI assistants like Claude to interact with the manager through standardized tools.
+ASCII World provides an MCP (Model Context Protocol) bridge that enables AI assistants like Claude to interact with the manager through standardized tools.
 
 ### Installing the MCP Bridge
 
@@ -387,9 +365,9 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 ```json
 {
   "mcpServers": {
-    "ascii-manager": {
+    "ascii-world": {
       "command": "uv",
-      "args": ["--directory", "/path/to/ascii_interface/mcp_manager_bridge", "run", "mcp-manager-bridge"],
+      "args": ["--directory", "/path/to/ascii-world/mcp_manager_bridge", "run", "mcp-manager-bridge"],
       "env": {
         "MANAGER_API_URL": "http://localhost:3422"
       }
@@ -409,24 +387,27 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 | `manager_metrics` | Get performance metrics |
 | `manager_start_project` | Start the selected project |
 | `manager_stop_project` | Stop the selected project |
+| `manager_project_view` | View a managed project's ASCII |
+| `manager_project_control` | Control a managed project |
+| `manager_project_bindings` | Get available labels for a project |
 
 ### Example: Using MCP Tools
 
 ```
-AI: I'll check the current state of the manager.
+AI: I'll check the current state of ASCII World.
 
 [Uses manager_view tool]
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║  ASCII INTERFACE MANAGER                                   v1.0.0  ║
+║  ASCII WORLD                                               v1.0.0             ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  [A] Projects  [B] Templates  [C] Bindings  [D] Test  [E] Git  [X] Quit     ║
+║  [A] Projects  [B] Templates  [C] Bindings  [F] Dashboard  [X] Quit          ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                             ║
 ║  REGISTERED ASCII PROJECTS                                                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐║
-║  │  [1] my-app    (port 3421)  ● Running                                   │║
-║  └─────────────────────────────────────────────────────────────────────────┘║
+║  ┌─────────────────────────────────────────────────────────────────────────┐ ║
+║  │  [1] my-app    (port 3421)  ● Running                                  │ ║
+║  └─────────────────────────────────────────────────────────────────────────┘ ║
 ║                                                                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -434,85 +415,6 @@ AI: I can see there's one running project. Let me start a new project.
 
 [Uses manager_control tool with label "N"]
 ```
-
----
-
-## Self-Hosting Development Workflow
-
-The ASCII Interface Manager enables a unique development workflow where AI agents develop ASCII applications through ASCII interfaces.
-
-### Workflow Overview
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  AI Agent       │     │  ASCII Manager  │     │  Target App     │
-│  (Claude)       │     │  (Port 3422)    │     │  (Port 3421)    │
-└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
-         │                       │                       │
-         │  1. View Manager      │                       │
-         │──────────────────────>│                       │
-         │                       │                       │
-         │  2. Register Project  │                       │
-         │──────────────────────>│                       │
-         │                       │                       │
-         │  3. Scaffold New App  │                       │
-         │──────────────────────>│                       │
-         │                       │                       │
-         │  4. Start Project     │                       │
-         │──────────────────────>│──────────────────────>│
-         │                       │                       │
-         │  5. View App ASCII    │                       │
-         │──────────────────────>│<──────────────────────│
-         │                       │                       │
-         │  6. Edit Templates    │                       │
-         │──────────────────────>│                       │
-         │                       │                       │
-         │  7. Run Tests         │                       │
-         │──────────────────────>│                       │
-         │                       │                       │
-         │  8. Git Commit        │                       │
-         │──────────────────────>│                       │
-         │                       │                       │
-```
-
-### Step-by-Step Workflow
-
-1. **View Current State**
-   ```
-   GET /view
-   ```
-
-2. **Register Existing Project**
-   ```
-   POST /projects
-   { "path": "/path/to/project" }
-   ```
-
-3. **Create New Project (via Scaffold)**
-   Use the scaffold API or manually create the project structure.
-
-4. **Start Project**
-   ```
-   POST /control
-   { "label": "1" }  # Select project
-   POST /control
-   { "label": "S" }  # Start project
-   ```
-
-5. **View Running App**
-   ```
-   POST /control
-   { "label": "V" }  # View ASCII
-   ```
-
-6. **Edit Templates**
-   Navigate to Templates view and modify ASCII templates.
-
-7. **Run Tests**
-   Navigate to Test view and execute the test suite.
-
-8. **Git Operations**
-   Navigate to Git view to commit and push changes.
 
 ---
 
@@ -599,7 +501,7 @@ The scaffold includes security validations:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                          ASCII INTERFACE MANAGER                             │
+│                            ASCII WORLD                                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐             │
@@ -645,14 +547,6 @@ The scaffold includes security validations:
 | `Scaffold` | New project generation with security validation |
 | `MCP Bridge` | Protocol translation for AI assistants |
 
-### Data Flow
-
-```
-Request → ManagerServer → Validation → StateManager/Registry → AsciiGenerator → Response
-                                    ↓
-                              Process Spawning (for project start/stop)
-```
-
 ### Security Features
 
 - **Path validation**: Prevents path traversal attacks
@@ -660,65 +554,6 @@ Request → ManagerServer → Validation → StateManager/Registry → AsciiGene
 - **Input validation**: Strict patterns for labels, project IDs, ports
 - **Environment sanitization**: Child processes receive minimal environment
 - **CORS**: Configurable allowed origins
-
----
-
-## Future Enhancements
-
-### Planned Features
-
-1. **Live Preview Pane**
-   - Real-time preview of ASCII changes
-   - Split-view editing mode
-
-2. **WebSocket Support**
-   - Real-time state updates
-   - Push notifications for project events
-
-3. **Template Marketplace**
-   - Share ASCII templates
-   - Import community templates
-
-4. **Enhanced Git Integration**
-   - Branch management
-   - Merge conflict resolution
-   - Pull request creation
-
-5. **Multi-Agent Collaboration**
-   - Session sharing
-   - Concurrent editing
-   - Change attribution
-
-6. **Plugin System**
-   - Custom template processors
-   - External tool integrations
-   - Custom action handlers
-
-7. **Visual Editor Mode**
-   - GUI for ASCII template editing
-   - Drag-and-drop components
-   - Preview-as-you-type
-
-8. **Testing Enhancements**
-   - Visual test snapshots
-   - Coverage visualization
-   - Performance benchmarks
-
-### Contributing
-
-Contributions are welcome. Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch
-3. Write tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-### Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2026-03-18 | Initial release with core features |
 
 ---
 
@@ -755,11 +590,11 @@ Contributions are welcome. Please follow these guidelines:
 | N                | New project                                            |
 | S                | Start selected project                                 |
 | T                | Stop selected project                                  |
-| R                | Restart selected project                               |
+| R                | Refresh selected project                               |
 | V                | View project ASCII                                     |
 +------------------+--------------------------------------------------------+
 ```
 
 ---
 
-*ASCII Interface Manager - Enabling self-hosting ASCII development since 2026*
+*ASCII World — Build, Control, Render — Since 2026*

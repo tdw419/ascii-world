@@ -1,8 +1,8 @@
 /**
- * ASCII Interface Manager - HTTP API Server
+ * ASCII World - HTTP API Server
  *
  * HTTP server running on port 3422 that exposes endpoints for AI agents
- * to control the ASCII Interface Manager.
+ * to control ASCII World.
  *
  * Endpoints:
  * - GET /health - Health check
@@ -327,7 +327,7 @@ export class ManagerServer {
             }
         });
 
-        console.log(`ASCII Interface Manager started on http://${HOST}:${PORT}`);
+        console.log(`ASCII World started on http://${HOST}:${PORT}`);
         console.log(`CORS origin: ${CORS_ORIGIN}`);
         console.log(`Allowed base directories: ${ALLOWED_BASE_DIRS.join(', ')}`);
     }
@@ -359,7 +359,7 @@ export class ManagerServer {
             this.server = null;
         }
 
-        console.log('ASCII Interface Manager stopped');
+        console.log('ASCII World stopped');
     }
 
     /**

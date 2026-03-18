@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ASCII Interface Manager provides a text-based control plane for AI agents. Instead of learning complex GUIs or APIs, AI agents interact through simple ASCII views and single-character commands.
+ASCII World provides a text-based control plane for AI agents. Instead of learning complex GUIs or APIs, AI agents interact through simple ASCII views and single-character commands.
 
 ## The Problem
 
@@ -14,12 +14,12 @@ AI agents struggle with traditional software:
 
 ## The Solution
 
-The ASCII Interface Manager provides:
+ASCII World provides:
 
 1. **Unified ASCII Views** — 80x24 text grids that any LLM can read
 2. **Single-Character Control** — Press `A`, `B`, `C`, etc. to navigate and act
 3. **State Machine** — Predictable state transitions
-4. **Health at a7 Glance** — Dashboard shows all projects and their status
+4. **Health at a Glance** — Dashboard shows all projects and their status
 
 ## Architecture
 
@@ -32,7 +32,7 @@ The ASCII Interface Manager provides:
 │                           │                             │
 │                           ▼                             │
 ┌─────────────────────────────────────────────────────────────┐
-│                  ASCII Interface Manager                   │
+│                        ASCII World                         │
 │                      (port 3422)                         │
 │                                                         │
 │  ┌─────────────────────────────────────────────────────┐ │
@@ -49,7 +49,7 @@ The ASCII Interface Manager provides:
 │  │  └───────────────────────────────────────────────┘   │ │
 │  └─────────────────────────────────────────────────────┘ │
 │                                                         │
-│  State Machine: PROJECTS → TEMPLATES → BINDINGS → DASHBOARD → etc.  │
+│  State Machine: PROJECTS → TEMPLATES → BINDINGS → DASHBOARD → ...   │
 └─────────────────────────────────────────────────────────────┘
                            │
                            │ Proxy
@@ -127,7 +127,7 @@ The AI always knows:
 
 ## MCP Tools
 
-The Manager exposes these MCP tools for AI agents:
+ASCII World exposes these MCP tools for AI agents:
 
 | Tool | Description |
 |------|-------------|
@@ -191,21 +191,22 @@ After: Dashboard shows all apps in one view
 
 ## Getting Started
 
-1. Start the Manager:
+1. Start ASCII World:
 ```bash
 bun run src/manager/manager-server.ts
 ```
 
-2. The Manager auto-discovers ASCII apps in `~/zion/projects/`
+2. ASCII World auto-discovers ASCII apps in configured directories
 
 3. AI agents connect via MCP:
 ```
 mcp_manager_bridge
 ```
 
-4. AI reads views and sends commands through the Manager
+4. AI reads views and sends commands through ASCII World
 
 ## See Also
 
-- [ASCII Interface Manager](./ASCII-INTERFACE-MANAGER.md) — Full API reference
-- [ASCII-First Architecture](./ASCII-FIRST-ARCHITECTure.md) — Design philosophy
+- [ASCII World](./ASCII-WORLD.md) — Full API reference
+- [AI Building Software](./AI-BUILDING-SOFTWARE.md) — How AI builds with ASCII
+- [ASCII-First Architecture](./ASCII-FIRST-ARCHITECTURE.md) — Design philosophy

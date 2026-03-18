@@ -1,5 +1,5 @@
 #!/bin/bash
-# Register the Session Analyzer app with the ASCII Interface Manager
+# Register the Session Analyzer app with ASCII World
 
 set -e
 set -o pipefail

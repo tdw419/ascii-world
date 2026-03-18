@@ -1,5 +1,5 @@
 /**
- * Project Registry for ASCII Interface Manager
+ * Project Registry for ASCII World
  *
  * Manages the list of ASCII-wrapped projects and their state.
  */

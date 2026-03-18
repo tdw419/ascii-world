@@ -1,4 +1,4 @@
-"""MCP Manager Bridge - MCP server for ASCII Interface Manager."""
+"""MCP Manager Bridge - MCP server for ASCII World."""
 
 __version__ = "0.1.0"
 

@@ -1,6 +1,6 @@
 # Pattern Recognition System
 
-The pattern recognition system automatically detects and parses visual elements in ASCII templates, transforming them into React components for rich GUI rendering.
+The Pattern Recognition System automatically detects and parses visual elements in ASCII templates, transforming them into React components for rich GUI rendering.
 
 ## Architecture
 
@@ -26,7 +26,7 @@ The pattern recognition system automatically detects and parses visual elements 
 │                            │                                    │
 │                            ▼                                    │
 │                    ┌──────────────┐                            │
-│                    │    Parser    │  Unifies all patterns      │
+│                    │    Parser    │  Unifies all patterns              │
 │                    └──────┬───────┘                            │
 │                           │                                     │
 │                           ▼                                     │
@@ -56,11 +56,11 @@ Buttons are detected using the pattern `[X] label` where X is a single uppercase
 Containers are detected using Unicode box-drawing characters.
 
 ```
-╔════════════════════════════════════════╗
+╔══════════════════════════════════════╗
 ║  Title                                 ║
-╠════════════════════════════════════════╣
+╠══════════════════════════════════════╣
 ║  Content                               ║
-╚════════════════════════════════════════╝
+╚══════════════════════════════════════╝
 ```
 
 **Supported characters:**
@@ -91,7 +91,7 @@ Status indicators use Unicode geometric shapes to represent state.
 | ●      | running  | green   |
 | ○      | stopped  | gray    |
 | ◐      | warning  | yellow  |
-| ◑      | paused   | blue    |
+| ◑      | paused  | blue    |
 | ◉      | error    | red     |
 
 **Properties:**
@@ -101,9 +101,7 @@ Status indicators use Unicode geometric shapes to represent state.
 **Component:** `StatusIcon`
 
 ### 4. Tables
-
 Tables are detected using pipe (`│`) column separators.
-
 ```
 │ Name        │ Port │ Status │
 │ My App      │ 3000 │ ●      │
@@ -125,12 +123,12 @@ Tables are detected using pipe (`│`) column separators.
 import { parseAscii } from './patterns';
 
 const ascii = `
-╔══════════════════════╗
+╔══════════════════════════════════════════════════════════════════════════════╗
 ║  Dashboard           ║
-╠══════════════════════╣
+╠══════════════════════════════════════════════════════════════════════════════╣
 ║ [A] Start  [B] Stop  ║
 ║ Status: ● running    ║
-╚══════════════════════╝
+╚══════════════════════════════════════════════════════════════════════════════╝
 `;
 
 const result = parseAscii(ascii);
@@ -282,7 +280,7 @@ interface TableRow {
 
 ## Performance
 
-The pattern detection system is designed for real-time parsing:
+The Pattern detection system is designed for real-time parsing:
 
 - **Lexer**: O(n) where n is the number of characters
 - **Detectors**: Run in parallel, each O(m) where m is pattern occurrences
@@ -304,24 +302,39 @@ export function detectYourPattern(lexer: AsciiLexer): YourPattern[] {
 
 2. Add the type to `types.ts`:
 
-```typescript
-interface YourPattern extends DetectedPattern {
-  type: 'your-pattern';
-  // Additional properties
-}
-```
-
-3. Register in `parser.ts`:
-
-```typescript
-import { detectYourPattern } from './detectors/your-pattern';
-
-export function parseAscii(ascii: string): ParsedPatterns {
-  const lexer = new AsciiLexer(ascii);
-  const yourPatterns = detectYourPattern(lexer);
-  // ...
-}
-```
-
+3. Register in `parser.ts`
 4. Create a component in `components/patterns/YourPattern.tsx`
 5. Add export to `components/patterns/index.ts` and barrel export
+
+## Validation
+
+The project includes comprehensive validation tests:
+
+- **LLM Cross-Validation**: Compares parser output to expected patterns
+- **Manager Integration**: Tests against real ASCII output
+- **Round-Trip Fidelity**: Ensures accuracy and consistency
+
+Run validation:
+```bash
+bun test tests/validation/
+```
+
+## Demo
+
+Open the visual demo:
+```bash
+# Start a local server
+cd src/renderer/demo
+python3 -m http.server 8080 visual-demo.html
+# Or open visual-demo.html in a browser
+```
+
+---
+
+## ASCII-First Philosophy
+
+This renderer implements the **ASCII-First** development pattern where:
+1. ASCII is the source of truth for UI state
+2. GUI is a projection/view of the ASCII
+3. Pattern detection enables automatic GUI generation
+4. LLMs can control apps via ASCII labels

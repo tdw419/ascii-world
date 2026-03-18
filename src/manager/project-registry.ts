@@ -30,9 +30,16 @@ export class ProjectRegistry {
 
     private load(): void {
         if (existsSync(this.registryPath)) {
-            const data = JSON.parse(readFileSync(this.registryPath, 'utf8'));
-            for (const project of data.projects || []) {
-                this.projects.set(project.id, project);
+            try {
+                const rawData = readFileSync(this.registryPath, 'utf8');
+                const data = JSON.parse(rawData);
+                for (const project of data.projects || []) {
+                    this.projects.set(project.id, project);
+                }
+            } catch (error) {
+                // Handle malformed JSON or read errors - start with empty registry
+                console.error(`Failed to load registry from ${this.registryPath}:`, error);
+                this.projects = new Map();
             }
         }
     }
@@ -41,10 +48,20 @@ export class ProjectRegistry {
         const data = {
             projects: Array.from(this.projects.values())
         };
-        writeFileSync(this.registryPath, JSON.stringify(data, null, 2));
+        try {
+            writeFileSync(this.registryPath, JSON.stringify(data, null, 2));
+        } catch (error) {
+            console.error(`Failed to save registry to ${this.registryPath}:`, error);
+            throw new Error(`Failed to save project registry: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 
     public registerProject(path: string, port: number): ASCIIProject {
+        // Validate path exists
+        if (!existsSync(path)) {
+            throw new Error(`Project path does not exist: ${path}`);
+        }
+
         const id = basename(path);
         const project: ASCIIProject = {
             id,
@@ -57,7 +74,7 @@ export class ProjectRegistry {
         };
         this.projects.set(id, project);
         this.save();
-        return project;
+        return { ...project }; // Return a copy
     }
 
     public unregisterProject(id: string): boolean {
@@ -69,23 +86,25 @@ export class ProjectRegistry {
     }
 
     public getProject(id: string): ASCIIProject | undefined {
-        return this.projects.get(id);
+        const project = this.projects.get(id);
+        return project ? { ...project } : undefined;
     }
 
     public getAllProjects(): ASCIIProject[] {
-        return Array.from(this.projects.values());
+        return Array.from(this.projects.values()).map(p => ({ ...p }));
     }
 
     public updateProjectStatus(id: string, status: ASCIIProject['status'], pid?: number): void {
         const project = this.projects.get(id);
         if (project) {
-            project.status = status;
-            if (pid !== undefined) {
-                project.pid = pid;
-            }
-            if (status === 'running') {
-                project.lastStarted = Date.now();
-            }
+            // Create a new object instead of mutating
+            const updatedProject: ASCIIProject = {
+                ...project,
+                status,
+                ...(pid !== undefined && { pid }),
+                ...(status === 'running' && { lastStarted: Date.now() })
+            };
+            this.projects.set(id, updatedProject);
             this.save();
         }
     }

@@ -150,7 +150,7 @@ export class ManagerStateManager {
      * Handle an action by label
      * Returns the action result with success status and action name
      */
-    public async handleAction(label: string): Promise<{ success: boolean; action?: string; error?: string }> {
+    public handleAction(label: string): { success: boolean; action?: string; error?: string } {
         const stateTransitions = this.bindings.stateTransitions[this._context.state];
 
         if (!stateTransitions || !stateTransitions[label]) {
@@ -169,14 +169,13 @@ export class ManagerStateManager {
             return { success: true, action: 'quit' };
         }
 
-        // Handle state transitions
-        const validStates: ManagerState[] = ['PROJECTS', 'TEMPLATES', 'BINDINGS', 'TEST', 'GIT'];
-        if (validStates.includes(targetState as ManagerState)) {
+        // Handle state transitions - use type narrowing instead of hardcoded array
+        if (this.isValidManagerState(targetState)) {
             this._context = {
                 ...this._context,
-                state: targetState as ManagerState
+                state: targetState
             };
-            const actionMap: Record<string, string> = {
+            const actionMap: Record<ManagerState, string> = {
                 'PROJECTS': 'goto_projects',
                 'TEMPLATES': 'goto_templates',
                 'BINDINGS': 'goto_bindings',
@@ -187,6 +186,13 @@ export class ManagerStateManager {
         }
 
         return { success: true, action: 'unknown' };
+    }
+
+    /**
+     * Type guard to check if a string is a valid ManagerState
+     */
+    private isValidManagerState(state: string): state is ManagerState {
+        return state === 'PROJECTS' || state === 'TEMPLATES' || state === 'BINDINGS' || state === 'TEST' || state === 'GIT';
     }
 
     /**
@@ -302,12 +308,15 @@ export class ManagerStateManager {
     }
 
     /**
-     * Set test results
+     * Set test results (creates a deep copy to maintain immutability)
      */
     public setTestResults(results: TestResults): void {
         this._context = {
             ...this._context,
-            testResults: results
+            testResults: {
+                ...results,
+                failedTests: results.failedTests.map(test => ({ ...test }))
+            }
         };
     }
 
@@ -322,12 +331,18 @@ export class ManagerStateManager {
     }
 
     /**
-     * Set git status
+     * Set git status (creates a deep copy to maintain immutability)
      */
     public setGitStatus(status: GitStatus): void {
         this._context = {
             ...this._context,
-            gitStatus: status
+            gitStatus: {
+                ...status,
+                staged: [...status.staged],
+                unstaged: [...status.unstaged],
+                untracked: [...status.untracked],
+                lastCommit: { ...status.lastCommit }
+            }
         };
     }
 
@@ -352,12 +367,20 @@ export class ManagerStateManager {
     }
 
     /**
-     * Get the bindings configuration
+     * Get the bindings configuration (creates a deep copy to maintain immutability)
      */
     public getBindings(): ManagerBindings {
+        const deepCopyStateTransitions = (): Record<ManagerState, Record<string, string>> => {
+            const copy: Record<ManagerState, Record<string, string>> = {} as Record<ManagerState, Record<string, string>>;
+            for (const state of Object.keys(this.bindings.stateTransitions) as ManagerState[]) {
+                copy[state] = { ...this.bindings.stateTransitions[state] };
+            }
+            return copy;
+        };
+
         return {
-            bindings: [...this.bindings.bindings],
-            stateTransitions: { ...this.bindings.stateTransitions }
+            bindings: this.bindings.bindings.map(b => ({ ...b })),
+            stateTransitions: deepCopyStateTransitions()
         };
     }
 

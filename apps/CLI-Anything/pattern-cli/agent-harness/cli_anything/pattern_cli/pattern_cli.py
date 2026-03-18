@@ -145,5 +145,71 @@ def parse(file, patterns):
     output(result)
 
 
+@cli.group()
+def detect():
+    """Detect specific pattern types."""
+    pass
+
+
+@detect.command()
+@click.argument('file', type=click.File('r'))
+def buttons(file):
+    """Detect button patterns only."""
+    ascii_content = file.read()
+    args = ["--format", "json", "--patterns", "button"]
+    result = run_ts_cli(args, input_data=ascii_content)
+
+    if "error" in result:
+        click.echo(f"Error: {result['error']}", err=True)
+        sys.exit(1)
+
+    output(result, f"Found {len(result)} buttons")
+
+
+@detect.command()
+@click.argument('file', type=click.File('r'))
+def status(file):
+    """Detect status indicators only."""
+    ascii_content = file.read()
+    args = ["--format", "json", "--patterns", "status-indicator"]
+    result = run_ts_cli(args, input_data=ascii_content)
+
+    if "error" in result:
+        click.echo(f"Error: {result['error']}", err=True)
+        sys.exit(1)
+
+    output(result, f"Found {len(result)} status indicators")
+
+
+@detect.command()
+@click.argument('file', type=click.File('r'))
+def containers(file):
+    """Detect container patterns only."""
+    ascii_content = file.read()
+    args = ["--format", "json", "--patterns", "container"]
+    result = run_ts_cli(args, input_data=ascii_content)
+
+    if "error" in result:
+        click.echo(f"Error: {result['error']}", err=True)
+        sys.exit(1)
+
+    output(result, f"Found {len(result)} containers")
+
+
+@detect.command()
+@click.argument('file', type=click.File('r'))
+def tables(file):
+    """Detect table patterns only."""
+    ascii_content = file.read()
+    args = ["--format", "json", "--patterns", "table"]
+    result = run_ts_cli(args, input_data=ascii_content)
+
+    if "error" in result:
+        click.echo(f"Error: {result['error']}", err=True)
+        sys.exit(1)
+
+    output(result, f"Found {len(result)} tables")
+
+
 if __name__ == '__main__':
     cli()

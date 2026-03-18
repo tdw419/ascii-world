@@ -7,7 +7,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
-export type ManagerState = 'PROJECTS' | 'TEMPLATES' | 'BINDINGS' | 'TEST' | 'GIT';
+export type ManagerState = 'PROJECTS' | 'TEMPLATES' | 'BINDINGS' | 'TEST' | 'GIT' | 'PROJECT_VIEW';
 
 export interface TestResults {
     passed: number;
@@ -124,7 +124,8 @@ export class ManagerStateManager {
                 TEMPLATES: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
                 BINDINGS: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
                 TEST: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
-                GIT: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' }
+                GIT: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
+                PROJECT_VIEW: { A: 'PROJECTS', X: 'PROJECTS' }
             }
         };
     }
@@ -180,7 +181,8 @@ export class ManagerStateManager {
                 'TEMPLATES': 'goto_templates',
                 'BINDINGS': 'goto_bindings',
                 'TEST': 'goto_test',
-                'GIT': 'goto_git'
+                'GIT': 'goto_git',
+                'PROJECT_VIEW': 'goto_project_view'
             };
             return { success: true, action: actionMap[targetState] };
         }
@@ -192,7 +194,7 @@ export class ManagerStateManager {
      * Type guard to check if a string is a valid ManagerState
      */
     private isValidManagerState(state: string): state is ManagerState {
-        return state === 'PROJECTS' || state === 'TEMPLATES' || state === 'BINDINGS' || state === 'TEST' || state === 'GIT';
+        return state === 'PROJECTS' || state === 'TEMPLATES' || state === 'BINDINGS' || state === 'TEST' || state === 'GIT' || state === 'PROJECT_VIEW';
     }
 
     /**
@@ -212,6 +214,17 @@ export class ManagerStateManager {
         this._context = {
             ...this._context,
             selectedProjectId: null
+        };
+    }
+
+    /**
+     * Enter project view mode for a specific project
+     */
+    public enterProjectView(projectId: string): void {
+        this._context = {
+            ...this._context,
+            state: 'PROJECT_VIEW',
+            selectedProjectId: projectId
         };
     }
 

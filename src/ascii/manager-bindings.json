@@ -61,6 +61,10 @@
       "D": "TEST",
       "E": "GIT",
       "X": "QUIT"
+    },
+    "PROJECT_VIEW": {
+      "A": "PROJECTS",
+      "X": "PROJECTS"
     }
   }
 }

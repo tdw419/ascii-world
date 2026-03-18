@@ -25,6 +25,19 @@ interface CacheEntry {
 }
 
 /**
+ * Valid state name pattern - alphanumeric, underscores, and hyphens only.
+ * This prevents path traversal attacks by restricting characters that could
+ * be used to navigate directories (e.g., '..', '/', '\').
+ */
+const VALID_STATE_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+/**
+ * Default cache TTL in milliseconds (5 minutes).
+ * Set to 0 to disable TTL-based invalidation.
+ */
+const DEFAULT_CACHE_TTL_MS = 0;
+
+/**
  * Default template used when a requested template is not found
  */
 const DEFAULT_TEMPLATE = `╔══════════════════════════════════════════════════════════════════════════════╗
@@ -42,17 +55,54 @@ const DEFAULT_TEMPLATE = `╔═════════════════
  * AsciiGenerator
  *
  * Handles loading, caching, and rendering of ASCII templates with Mustache-style syntax.
+ *
+ * Cache Behavior:
+ * - Templates are cached indefinitely by default (no TTL-based invalidation).
+ * - Use `clearCache()` or `clearCacheFor(state)` to manually invalidate cache entries.
+ * - Cache entries include a `loadedAt` timestamp for custom TTL implementations if needed.
  */
 export class AsciiGenerator {
     private templateCache: Map<string, CacheEntry> = new Map();
     private templatesPath: string;
+    private cacheTtlMs: number;
 
     /**
      * Create a new AsciiGenerator
      * @param templatesPath Optional path to templates directory (defaults to src/ascii/states)
+     * @param cacheTtlMs Optional cache TTL in milliseconds (default: 0 = no TTL-based invalidation)
      */
-    constructor(templatesPath?: string) {
+    constructor(templatesPath?: string, cacheTtlMs?: number) {
         this.templatesPath = templatesPath || join(import.meta.dir, '..', 'ascii', 'states');
+        this.cacheTtlMs = cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
+    }
+
+    /**
+     * Validate a state name to prevent path traversal attacks.
+     * State names must contain only alphanumeric characters, underscores, and hyphens.
+     * @param state The state name to validate
+     * @throws Error if the state name is invalid
+     */
+    private validateStateName(state: string): void {
+        if (!state || typeof state !== 'string') {
+            throw new Error('State name must be a non-empty string');
+        }
+        if (!VALID_STATE_PATTERN.test(state)) {
+            throw new Error(
+                `Invalid state name: "${state}". State names must contain only alphanumeric characters, underscores, and hyphens.`
+            );
+        }
+    }
+
+    /**
+     * Check if a cache entry has expired based on TTL.
+     * @param entry The cache entry to check
+     * @returns True if the entry has expired, false otherwise
+     */
+    private isCacheExpired(entry: CacheEntry): boolean {
+        if (this.cacheTtlMs <= 0) {
+            return false;
+        }
+        return Date.now() - entry.loadedAt > this.cacheTtlMs;
     }
 
     /**
@@ -60,24 +110,26 @@ export class AsciiGenerator {
      * @param state The state name (e.g., 'projects', 'templates', 'bindings')
      * @param data The data to use for variable substitution
      * @returns The rendered ASCII template string
+     * @throws Error if the state name is invalid (contains path traversal characters)
      */
     public render(state: string, data: TemplateData): string {
+        this.validateStateName(state);
         const template = this.loadTemplate(state);
         return this.processTemplate(template, data);
     }
 
     /**
      * Load a template from file or cache
-     * @param state The state name
+     * @param state The state name (must be validated before calling this method)
      * @returns The template content
      */
     private loadTemplate(state: string): string {
         const normalizedState = state.toLowerCase();
         const templateFile = join(this.templatesPath, `${normalizedState}.ascii`);
 
-        // Check cache first
+        // Check cache first (with TTL-based expiration)
         const cached = this.templateCache.get(normalizedState);
-        if (cached) {
+        if (cached && !this.isCacheExpired(cached)) {
             return cached.content;
         }
 
@@ -271,8 +323,10 @@ export class AsciiGenerator {
     /**
      * Clear a specific template from the cache
      * @param state The state name to clear from cache
+     * @throws Error if the state name is invalid
      */
     public clearCacheFor(state: string): void {
+        this.validateStateName(state);
         this.templateCache.delete(state.toLowerCase());
     }
 
@@ -288,8 +342,10 @@ export class AsciiGenerator {
      * Preload a template into the cache
      * @param state The state name to preload
      * @returns True if the template was loaded successfully
+     * @throws Error if the state name is invalid
      */
     public preloadTemplate(state: string): boolean {
+        this.validateStateName(state);
         const normalizedState = state.toLowerCase();
         const templateFile = join(this.templatesPath, `${normalizedState}.ascii`);
 
@@ -301,7 +357,8 @@ export class AsciiGenerator {
                     loadedAt: Date.now()
                 });
                 return true;
-            } catch {
+            } catch (error) {
+                console.error(`Failed to preload template "${state}" from ${templateFile}:`, error);
                 return false;
             }
         }
@@ -327,22 +384,36 @@ export class AsciiGenerator {
 
 // Export a singleton instance for convenience
 let defaultGenerator: AsciiGenerator | null = null;
+let defaultGeneratorPath: string | undefined;
 
 /**
- * Get the default AsciiGenerator instance
- * @param templatesPath Optional path to templates directory
+ * Get the default AsciiGenerator instance.
+ *
+ * IMPORTANT: This function returns a singleton. The first call initializes the generator
+ * with the provided templatesPath. Subsequent calls with a different templatesPath will
+ * emit a warning and return the existing instance. To use a different templatesPath,
+ * call resetAsciiGenerator() first.
+ *
+ * @param templatesPath Optional path to templates directory (only used on first call)
  * @returns The default AsciiGenerator instance
  */
 export function getAsciiGenerator(templatesPath?: string): AsciiGenerator {
     if (!defaultGenerator) {
         defaultGenerator = new AsciiGenerator(templatesPath);
+        defaultGeneratorPath = templatesPath;
+    } else if (templatesPath && templatesPath !== defaultGeneratorPath) {
+        console.warn(
+            `getAsciiGenerator: Singleton already initialized with path "${defaultGeneratorPath}". ` +
+            `Ignoring new path "${templatesPath}". Call resetAsciiGenerator() first to use a different path.`
+        );
     }
     return defaultGenerator;
 }
 
 /**
- * Reset the default generator (useful for testing)
+ * Reset the default generator (useful for testing or changing templatesPath)
  */
 export function resetAsciiGenerator(): void {
     defaultGenerator = null;
+    defaultGeneratorPath = undefined;
 }

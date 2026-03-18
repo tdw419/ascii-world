@@ -125,3 +125,21 @@ body {
   padding: 16px;
   border-radius: 4px;
 }
+
+.gui-pane {
+  min-height: 400px;
+}
+
+.ascii-pane {
+  background: #0f0f1a;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.ascii-pane h3 {
+  font-size: 14px;
+  color: var(--ascii-muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

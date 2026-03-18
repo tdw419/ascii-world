@@ -231,6 +231,60 @@ Get performance metrics for the manager API.
 
 ---
 
+### Project Proxy Endpoints
+
+The Manager can proxy requests to managed ASCII projects:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/projects/:id/view` | GET | Fetch managed project's ASCII view |
+| `/projects/:id/control` | POST | Forward control command to project |
+| `/projects/:id/bindings` | GET | Get project's label bindings |
+
+#### Example: View Session Analyzer
+
+```bash
+# Register the Session Analyzer
+curl -X POST http://localhost:3422/projects \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/path/to/session-analyzer-app", "port": 3421}'
+
+# View its ASCII output through the Manager
+curl http://localhost:3422/projects/session-analyzer-app/view
+
+# Send a control command
+curl -X POST http://localhost:3422/projects/session-analyzer-app/control \
+  -H "Content-Type: application/json" \
+  -d '{"label": "B"}'  # Navigate to Sources tab
+```
+
+### MCP Project Proxy Tools
+
+New MCP tools for interacting with managed projects:
+
+| Tool | Description |
+|------|-------------|
+| `manager_project_view` | Fetch ASCII view from a managed project |
+| `manager_project_control` | Send control command to managed project |
+| `manager_project_bindings` | Get label bindings for managed project |
+
+#### Example Usage with mcp2cli
+
+```bash
+# View Session Analyzer through Manager
+mcp2cli --mcp-stdio "uv run mcp_manager_bridge" manager-project-view --project-id session-analyzer-app
+
+# Navigate to Sources tab
+mcp2cli --mcp-stdio "uv run mcp_manager_bridge" manager-project-control \
+  --project-id session-analyzer-app --label B
+
+# Get available labels
+mcp2cli --mcp-stdio "uv run mcp_manager_bridge" manager-project-bindings \
+  --project-id session-analyzer-app
+```
+
+---
+
 ## Label Reference
 
 The ASCII Interface Manager uses labeled actions for navigation and control. Each label corresponds to a specific action.

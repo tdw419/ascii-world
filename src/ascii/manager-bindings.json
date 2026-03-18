@@ -1,0 +1,66 @@
+{
+  "bindings": [
+    { "label": "A", "action": "goto_projects", "target": "PROJECTS" },
+    { "label": "B", "action": "goto_templates", "target": "TEMPLATES" },
+    { "label": "C", "action": "goto_bindings", "target": "BINDINGS" },
+    { "label": "D", "action": "goto_test", "target": "TEST" },
+    { "label": "E", "action": "goto_git", "target": "GIT" },
+    { "label": "X", "action": "quit", "target": "QUIT" },
+    { "label": "1", "action": "select_item_1", "target": null },
+    { "label": "2", "action": "select_item_2", "target": null },
+    { "label": "3", "action": "select_item_3", "target": null },
+    { "label": "N", "action": "new_item", "target": null },
+    { "label": "S", "action": "start_project", "target": null },
+    { "label": "T", "action": "stop_project", "target": null },
+    { "label": "R", "action": "restart_project", "target": null },
+    { "label": "V", "action": "view_detail", "target": null },
+    { "label": "W", "action": "save_changes", "target": null },
+    { "label": "U", "action": "undo_changes", "target": null },
+    { "label": "G", "action": "run_tests", "target": null },
+    { "label": "L", "action": "git_status", "target": null },
+    { "label": "M", "action": "git_commit", "target": null },
+    { "label": "P", "action": "git_push", "target": null }
+  ],
+  "stateTransitions": {
+    "PROJECTS": {
+      "A": "PROJECTS",
+      "B": "TEMPLATES",
+      "C": "BINDINGS",
+      "D": "TEST",
+      "E": "GIT",
+      "X": "QUIT"
+    },
+    "TEMPLATES": {
+      "A": "PROJECTS",
+      "B": "TEMPLATES",
+      "C": "BINDINGS",
+      "D": "TEST",
+      "E": "GIT",
+      "X": "QUIT"
+    },
+    "BINDINGS": {
+      "A": "PROJECTS",
+      "B": "TEMPLATES",
+      "C": "BINDINGS",
+      "D": "TEST",
+      "E": "GIT",
+      "X": "QUIT"
+    },
+    "TEST": {
+      "A": "PROJECTS",
+      "B": "TEMPLATES",
+      "C": "BINDINGS",
+      "D": "TEST",
+      "E": "GIT",
+      "X": "QUIT"
+    },
+    "GIT": {
+      "A": "PROJECTS",
+      "B": "TEMPLATES",
+      "C": "BINDINGS",
+      "D": "TEST",
+      "E": "GIT",
+      "X": "QUIT"
+    }
+  }
+}

@@ -14,7 +14,7 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
-import { existsSync, statSync, realpathSync } from 'fs';
+import { existsSync, statSync, realpathSync, readFileSync } from 'fs';
 import { resolve, normalize, relative } from 'path';
 import { ProjectRegistry, ASCIIProject } from './project-registry';
 import { ManagerStateManager, ManagerContext, ManagerState } from './manager-state';
@@ -592,6 +592,135 @@ export class ManagerServer {
     }
 
     /**
+     * GET /projects/:id/view - Proxy view endpoint to managed project
+     * Fetches the managed project's ASCII view from its /view endpoint
+     */
+    private async handleProxyView(projectId: string): Promise<Response> {
+        const project = this.registry.getProject(projectId);
+
+        if (!project) {
+            return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
+        }
+
+        if (project.status !== 'running') {
+            return this.jsonResponse({ error: `Project ${projectId} is not running` }, 503);
+        }
+
+        try {
+            const response = await fetch(`http://localhost:${project.port}/view`);
+
+            if (!response.ok) {
+                return this.jsonResponse({
+                    error: `Failed to fetch view from project ${projectId}`,
+                    status: response.status
+                }, 502);
+            }
+
+            const data = await response.json();
+            return this.jsonResponse(data);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return this.jsonResponse({
+                error: `Failed to connect to project ${projectId}: ${errorMessage}`
+            }, 502);
+        }
+    }
+
+    /**
+     * POST /projects/:id/control - Proxy control endpoint to managed project
+     * Forwards control commands (label) to the managed project's /control endpoint
+     */
+    private async handleProxyControl(projectId: string, request: Request): Promise<Response> {
+        const project = this.registry.getProject(projectId);
+
+        if (!project) {
+            return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
+        }
+
+        if (project.status !== 'running') {
+            return this.jsonResponse({ error: `Project ${projectId} is not running` }, 503);
+        }
+
+        let body: { label?: string };
+
+        try {
+            body = await request.json();
+        } catch {
+            return this.jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+
+        const { label } = body;
+
+        if (!label) {
+            return this.jsonResponse({ error: 'Missing label' }, 400);
+        }
+
+        // Validate label format (single character A-Z or 1-9)
+        const validatedLabel = this.validateLabel(label);
+        if (!validatedLabel) {
+            return this.jsonResponse({
+                error: 'Invalid label format. Must be a single character A-Z or 1-9.'
+            }, 400);
+        }
+
+        try {
+            const response = await fetch(`http://localhost:${project.port}/control`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ label: validatedLabel })
+            });
+
+            if (!response.ok) {
+                return this.jsonResponse({
+                    error: `Failed to send control to project ${projectId}`,
+                    status: response.status
+                }, 502);
+            }
+
+            const data = await response.json();
+            return this.jsonResponse(data);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return this.jsonResponse({
+                error: `Failed to connect to project ${projectId}: ${errorMessage}`
+            }, 502);
+        }
+    }
+
+    /**
+     * GET /projects/:id/bindings - Get project bindings
+     * Reads the project's bindings.json from {project.path}/src/ascii/bindings.json
+     */
+    private handleProjectBindings(projectId: string): Response {
+        const project = this.registry.getProject(projectId);
+
+        if (!project) {
+            return this.jsonResponse({ error: `Project not found: ${projectId}` }, 404);
+        }
+
+        const bindingsPath = resolve(project.path, 'src/ascii/bindings.json');
+
+        if (!existsSync(bindingsPath)) {
+            return this.jsonResponse({
+                error: `Bindings file not found for project ${projectId}`
+            }, 404);
+        }
+
+        try {
+            const content = readFileSync(bindingsPath, 'utf-8');
+            const bindings = JSON.parse(content);
+            return this.jsonResponse({ bindings });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return this.jsonResponse({
+                error: `Failed to read bindings for project ${projectId}: ${errorMessage}`
+            }, 500);
+        }
+    }
+
+    /**
      * GET /projects - List all registered projects
      */
     private handleGetProjects(): Response {
@@ -746,6 +875,21 @@ export class ManagerServer {
                 return this.jsonResponse({ error: `Project not found: ${validatedProjectId}` }, 404);
             }
             return this.stopProject(project);
+        }
+
+        // GET /projects/:id/view - Proxy view endpoint to managed project
+        if (action === 'view' && method === 'GET') {
+            return this.handleProxyView(validatedProjectId);
+        }
+
+        // POST /projects/:id/control - Proxy control endpoint to managed project
+        if (action === 'control' && method === 'POST') {
+            return this.handleProxyControl(validatedProjectId, request);
+        }
+
+        // GET /projects/:id/bindings - Get project bindings
+        if (action === 'bindings' && method === 'GET') {
+            return this.handleProjectBindings(validatedProjectId);
         }
 
         return this.jsonResponse({ error: 'Unknown project action' }, 400);

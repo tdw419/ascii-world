@@ -1,2 +1,19 @@
-// ASCII Interface Manager - Projects State Template
-// This template will be implemented in a later task
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ASCII INTERFACE MANAGER                                   v{{app_version}}   ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  [A] Projects  [B] Templates  [C] Bindings  [D] Test  [E] Git  [X] Quit     ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                             ║
+║  REGISTERED ASCII PROJECTS                                                  ║
+║  ┌─────────────────────────────────────────────────────────────────────────┐║
+{{#each projects}}
+║  │  [{{label}}] {{name}}    (port {{port}})  {{status_icon}} {{status}}     │║
+{{/each}}
+║  │  [N] New Project...                                                      │║
+║  └─────────────────────────────────────────────────────────────────────────┘║
+║                                                                             ║
+║  Selected: {{selected_project}}                                             ║
+║                                                                             ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  [S] Start  [T] Stop  [R] Restart  [V] View ASCII  [E] Edit Project         ║
+╚══════════════════════════════════════════════════════════════════════════════╝

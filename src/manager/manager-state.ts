@@ -1,0 +1,380 @@
+/**
+ * State Manager for ASCII Interface Manager
+ *
+ * Manages the manager's own state, selected project, and view context.
+ */
+
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+
+export type ManagerState = 'PROJECTS' | 'TEMPLATES' | 'BINDINGS' | 'TEST' | 'GIT';
+
+export interface TestResults {
+    passed: number;
+    failed: number;
+    skipped: number;
+    total: number;
+    duration: number;
+    failedTests: Array<{
+        name: string;
+        error: string;
+    }>;
+    lastRun: number;
+}
+
+export interface GitStatus {
+    branch: string;
+    ahead: number;
+    behind: number;
+    staged: string[];
+    unstaged: string[];
+    untracked: string[];
+    lastCommit: {
+        hash: string;
+        message: string;
+        author: string;
+        date: string;
+    };
+}
+
+export interface ManagerContext {
+    state: ManagerState;
+    selectedProjectId: string | null;
+    selectedTemplateFile: string | null;
+    templateScrollOffset: number;
+    testResults: TestResults | null;
+    gitStatus: GitStatus | null;
+    editMode: boolean;
+    editBuffer: string[];
+    unsavedChanges: boolean;
+}
+
+interface Binding {
+    label: string;
+    action: string;
+    target: string | null;
+}
+
+interface ManagerBindings {
+    bindings: Binding[];
+    stateTransitions: Record<ManagerState, Record<string, string>>;
+}
+
+/**
+ * ManagerStateManager
+ *
+ * Handles the manager's own state machine. Tracks:
+ * - Current state (which view)
+ * - Selected project
+ * - Selected template file
+ * - Test results
+ * - Git status
+ * - Edit mode state
+ */
+export class ManagerStateManager {
+    private _context: ManagerContext;
+    private bindings: ManagerBindings;
+
+    constructor(bindingsPath?: string) {
+        const defaultBindingsPath = join(import.meta.dir, '..', 'ascii', 'manager-bindings.json');
+        const path = bindingsPath || defaultBindingsPath;
+
+        this.bindings = this.loadBindings(path);
+
+        this._context = {
+            state: 'PROJECTS',
+            selectedProjectId: null,
+            selectedTemplateFile: null,
+            templateScrollOffset: 0,
+            testResults: null,
+            gitStatus: null,
+            editMode: false,
+            editBuffer: [],
+            unsavedChanges: false
+        };
+    }
+
+    private loadBindings(path: string): ManagerBindings {
+        if (!existsSync(path)) {
+            // Return default bindings if file doesn't exist
+            return this.getDefaultBindings();
+        }
+
+        try {
+            const rawData = readFileSync(path, 'utf8');
+            return JSON.parse(rawData) as ManagerBindings;
+        } catch (error) {
+            console.error(`Failed to load bindings from ${path}:`, error);
+            return this.getDefaultBindings();
+        }
+    }
+
+    private getDefaultBindings(): ManagerBindings {
+        return {
+            bindings: [
+                { label: 'A', action: 'goto_projects', target: 'PROJECTS' },
+                { label: 'B', action: 'goto_templates', target: 'TEMPLATES' },
+                { label: 'C', action: 'goto_bindings', target: 'BINDINGS' },
+                { label: 'D', action: 'goto_test', target: 'TEST' },
+                { label: 'E', action: 'goto_git', target: 'GIT' },
+                { label: 'X', action: 'quit', target: 'QUIT' }
+            ],
+            stateTransitions: {
+                PROJECTS: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
+                TEMPLATES: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
+                BINDINGS: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
+                TEST: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' },
+                GIT: { A: 'PROJECTS', B: 'TEMPLATES', C: 'BINDINGS', D: 'TEST', E: 'GIT', X: 'QUIT' }
+            }
+        };
+    }
+
+    /**
+     * Get the current state
+     */
+    public getState(): ManagerState {
+        return this._context.state;
+    }
+
+    /**
+     * Set the current state
+     */
+    public setState(state: ManagerState): void {
+        this._context = {
+            ...this._context,
+            state
+        };
+    }
+
+    /**
+     * Handle an action by label
+     * Returns the action result with success status and action name
+     */
+    public async handleAction(label: string): Promise<{ success: boolean; action?: string; error?: string }> {
+        const stateTransitions = this.bindings.stateTransitions[this._context.state];
+
+        if (!stateTransitions || !stateTransitions[label]) {
+            // Check for non-navigation actions (like select_item_1, start_project, etc.)
+            const binding = this.bindings.bindings.find((b: Binding) => b.label === label);
+            if (binding) {
+                return { success: true, action: binding.action };
+            }
+            return { success: false, error: `No action for label [${label}] in state ${this._context.state}` };
+        }
+
+        const targetState = stateTransitions[label];
+
+        // Handle QUIT
+        if (targetState === 'QUIT') {
+            return { success: true, action: 'quit' };
+        }
+
+        // Handle state transitions
+        const validStates: ManagerState[] = ['PROJECTS', 'TEMPLATES', 'BINDINGS', 'TEST', 'GIT'];
+        if (validStates.includes(targetState as ManagerState)) {
+            this._context = {
+                ...this._context,
+                state: targetState as ManagerState
+            };
+            const actionMap: Record<string, string> = {
+                'PROJECTS': 'goto_projects',
+                'TEMPLATES': 'goto_templates',
+                'BINDINGS': 'goto_bindings',
+                'TEST': 'goto_test',
+                'GIT': 'goto_git'
+            };
+            return { success: true, action: actionMap[targetState] };
+        }
+
+        return { success: true, action: 'unknown' };
+    }
+
+    /**
+     * Select a project by ID
+     */
+    public selectProject(projectId: string): void {
+        this._context = {
+            ...this._context,
+            selectedProjectId: projectId
+        };
+    }
+
+    /**
+     * Clear the selected project
+     */
+    public clearSelectedProject(): void {
+        this._context = {
+            ...this._context,
+            selectedProjectId: null
+        };
+    }
+
+    /**
+     * Select a template file
+     */
+    public selectTemplate(templateFile: string): void {
+        this._context = {
+            ...this._context,
+            selectedTemplateFile: templateFile,
+            templateScrollOffset: 0
+        };
+    }
+
+    /**
+     * Clear the selected template
+     */
+    public clearSelectedTemplate(): void {
+        this._context = {
+            ...this._context,
+            selectedTemplateFile: null,
+            templateScrollOffset: 0
+        };
+    }
+
+    /**
+     * Scroll the template view
+     */
+    public scrollTemplate(direction: 'up' | 'down'): void {
+        if (direction === 'up' && this._context.templateScrollOffset > 0) {
+            this._context = {
+                ...this._context,
+                templateScrollOffset: this._context.templateScrollOffset - 1
+            };
+        } else if (direction === 'down') {
+            this._context = {
+                ...this._context,
+                templateScrollOffset: this._context.templateScrollOffset + 1
+            };
+        }
+    }
+
+    /**
+     * Set the template scroll offset directly
+     */
+    public setTemplateScrollOffset(offset: number): void {
+        this._context = {
+            ...this._context,
+            templateScrollOffset: Math.max(0, offset)
+        };
+    }
+
+    /**
+     * Enter edit mode with the given lines
+     */
+    public enterEditMode(lines: string[]): void {
+        this._context = {
+            ...this._context,
+            editMode: true,
+            editBuffer: [...lines]
+        };
+    }
+
+    /**
+     * Exit edit mode
+     * @param save If true, mark that there are unsaved changes
+     */
+    public exitEditMode(save: boolean): void {
+        this._context = {
+            ...this._context,
+            editMode: false,
+            unsavedChanges: save ? true : this._context.unsavedChanges
+        };
+    }
+
+    /**
+     * Update the edit buffer
+     */
+    public updateEditBuffer(lines: string[]): void {
+        this._context = {
+            ...this._context,
+            editBuffer: [...lines]
+        };
+    }
+
+    /**
+     * Mark changes as saved
+     */
+    public markChangesSaved(): void {
+        this._context = {
+            ...this._context,
+            unsavedChanges: false
+        };
+    }
+
+    /**
+     * Set test results
+     */
+    public setTestResults(results: TestResults): void {
+        this._context = {
+            ...this._context,
+            testResults: results
+        };
+    }
+
+    /**
+     * Clear test results
+     */
+    public clearTestResults(): void {
+        this._context = {
+            ...this._context,
+            testResults: null
+        };
+    }
+
+    /**
+     * Set git status
+     */
+    public setGitStatus(status: GitStatus): void {
+        this._context = {
+            ...this._context,
+            gitStatus: status
+        };
+    }
+
+    /**
+     * Clear git status
+     */
+    public clearGitStatus(): void {
+        this._context = {
+            ...this._context,
+            gitStatus: null
+        };
+    }
+
+    /**
+     * Get the current context (returns a copy to maintain immutability)
+     */
+    public getData(): ManagerContext {
+        return {
+            ...this._context,
+            editBuffer: [...this._context.editBuffer]
+        };
+    }
+
+    /**
+     * Get the bindings configuration
+     */
+    public getBindings(): ManagerBindings {
+        return {
+            bindings: [...this.bindings.bindings],
+            stateTransitions: { ...this.bindings.stateTransitions }
+        };
+    }
+
+    /**
+     * Reset the context to initial state
+     */
+    public reset(): void {
+        this._context = {
+            state: 'PROJECTS',
+            selectedProjectId: null,
+            selectedTemplateFile: null,
+            templateScrollOffset: 0,
+            testResults: null,
+            gitStatus: null,
+            editMode: false,
+            editBuffer: [],
+            unsavedChanges: false
+        };
+    }
+}

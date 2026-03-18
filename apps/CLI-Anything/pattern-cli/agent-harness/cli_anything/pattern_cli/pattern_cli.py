@@ -256,5 +256,104 @@ def tables(ctx, file):
     output(ctx, result, f"Found {count} tables")
 
 
+@cli.command()
+@click.pass_context
+def repl(ctx):
+    """Start interactive REPL mode for real-time pattern detection.
+
+    In REPL mode, you can type ASCII strings and get immediate pattern detection.
+    Type 'exit' or press Ctrl+D to quit.
+    """
+    click.echo("Pattern REPL - Type ASCII art to detect patterns")
+    click.echo("Commands: 'exit', 'quit', 'q' to quit, Ctrl+D to exit")
+    click.echo("")
+
+    while True:
+        try:
+            user_input = input("pattern> ")
+        except EOFError:
+            click.echo("\nGoodbye!")
+            break
+        except KeyboardInterrupt:
+            click.echo("\nGoodbye!")
+            break
+
+        # Check for exit commands
+        if user_input.lower() in ('exit', 'quit', 'q'):
+            click.echo("Goodbye!")
+            break
+
+        # Skip empty input
+        if not user_input.strip():
+            continue
+
+        # Run pattern detection
+        args = ["--format", "json"]
+        result = run_ts_cli(args, input_data=user_input)
+
+        if "error" in result:
+            click.echo(f"Error: {result['error']}")
+            continue
+
+        # Display results
+        count = _get_result_count(result)
+        click.echo(f"Detected {count} patterns")
+
+        if isinstance(result, list) and count > 0:
+            # Show first 5 patterns with type and id
+            for i, pattern in enumerate(result[:5]):
+                pattern_type = pattern.get('type', 'unknown')
+                pattern_id = pattern.get('id', 'no-id')
+                click.echo(f"  [{i+1}] type={pattern_type}, id={pattern_id}")
+
+            if count > 5:
+                click.echo(f"  ... and {count - 5} more")
+
+
+@cli.command()
+@click.argument('file', type=click.File('r'))
+@click.option('--expected', '-e', type=int, help='Expected pattern count (for validation)')
+@click.pass_context
+def validate(ctx, file, expected):
+    """Validate pattern detection against expected results.
+
+    Returns exit code 0 if validation passes, 1 if it fails.
+    """
+    ascii_content = file.read()
+
+    # Run pattern detection
+    args = ["--format", "json"]
+    result = run_ts_cli(args, input_data=ascii_content)
+
+    if "error" in result:
+        click.echo(f"Error: {result['error']}", err=True)
+        sys.exit(1)
+
+    count = _get_result_count(result)
+
+    if expected is not None:
+        # Validation mode - compare with expected count
+        if count == expected:
+            click.echo(f"PASS: Detected {count} patterns (expected {expected})")
+            sys.exit(0)
+        else:
+            click.echo(f"FAIL: Detected {count} patterns (expected {expected})")
+            sys.exit(1)
+    else:
+        # Info mode - show count and breakdown by type
+        click.echo(f"Detected {count} patterns")
+
+        if isinstance(result, list) and count > 0:
+            # Count patterns by type
+            type_counts = {}
+            for pattern in result:
+                pattern_type = pattern.get('type', 'unknown')
+                type_counts[pattern_type] = type_counts.get(pattern_type, 0) + 1
+
+            click.echo("\nBreakdown by type:")
+            for pattern_type, type_count in sorted(type_counts.items()):
+                click.echo(f"  {pattern_type}: {type_count}")
+
+
 if __name__ == '__main__':
     cli()

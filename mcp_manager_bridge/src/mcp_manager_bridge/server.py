@@ -35,6 +35,9 @@ TOOL_MANAGER_REGISTER_PROJECT = "manager_register_project"
 TOOL_MANAGER_METRICS = "manager_metrics"
 TOOL_MANAGER_START_PROJECT = "manager_start_project"
 TOOL_MANAGER_STOP_PROJECT = "manager_stop_project"
+TOOL_MANAGER_PROJECT_VIEW = "manager_project_view"
+TOOL_MANAGER_PROJECT_CONTROL = "manager_project_control"
+TOOL_MANAGER_PROJECT_BINDINGS = "manager_project_bindings"
 
 # Validation constants
 LABEL_PATTERN = re.compile(r"^[A-Z1-9]$")
@@ -120,6 +123,43 @@ async def get_metrics() -> dict[str, Any]:
     """Get manager performance metrics."""
     client = await get_http_client()
     url = f"{MANAGER_API_URL}/metrics"
+    logger.debug(f"GET {url}")
+    response = await client.get(url, timeout=5.0)
+    response.raise_for_status()
+    logger.debug(f"GET {url} -> {response.status_code}")
+    return response.json()
+
+
+async def fetch_project_view(project_id: str) -> str:
+    """Fetch ASCII view from a managed project via manager proxy."""
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/projects/{project_id}/view"
+    logger.debug(f"GET {url}")
+    response = await client.get(url, timeout=5.0)
+    response.raise_for_status()
+    logger.debug(f"GET {url} -> {response.status_code}")
+    return response.text
+
+
+async def send_project_control(project_id: str, label: str) -> dict[str, Any]:
+    """Send control command to a managed project via manager proxy."""
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/projects/{project_id}/control"
+    logger.debug(f"POST {url} with label={label}")
+    response = await client.post(
+        url,
+        json={"label": label},
+        timeout=5.0,
+    )
+    response.raise_for_status()
+    logger.debug(f"POST {url} -> {response.status_code}")
+    return response.json()
+
+
+async def get_project_bindings(project_id: str) -> dict[str, Any]:
+    """Get label bindings for a managed project via manager proxy."""
+    client = await get_http_client()
+    url = f"{MANAGER_API_URL}/projects/{project_id}/bindings"
     logger.debug(f"GET {url}")
     response = await client.get(url, timeout=5.0)
     response.raise_for_status()
@@ -230,6 +270,62 @@ async def list_tools():
                 "properties": {},
             },
         ),
+        Tool(
+            name=TOOL_MANAGER_PROJECT_VIEW,
+            description=(
+                "Fetch the current ASCII view from a managed project. "
+                "Use this to see the interface of a specific managed project."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "The ID of the managed project",
+                    },
+                },
+                "required": ["project_id"],
+            },
+        ),
+        Tool(
+            name=TOOL_MANAGER_PROJECT_CONTROL,
+            description=(
+                "Send a control command to a managed project. "
+                "Valid labels are A-Z or 1-9."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "The ID of the managed project",
+                    },
+                    "label": {
+                        "type": "string",
+                        "description": "Single character label (A-Z or 1-9)",
+                        "pattern": "^[A-Z1-9]$",
+                    },
+                },
+                "required": ["project_id", "label"],
+            },
+        ),
+        Tool(
+            name=TOOL_MANAGER_PROJECT_BINDINGS,
+            description=(
+                "Get the label bindings for a managed project. "
+                "Shows which labels are available and what actions they perform."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "The ID of the managed project",
+                    },
+                },
+                "required": ["project_id"],
+            },
+        ),
     ]
 
 
@@ -273,6 +369,35 @@ async def call_tool(name: str, arguments: dict):
         if name == TOOL_MANAGER_STOP_PROJECT:
             result = await send_control("T")
             return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+        if name == TOOL_MANAGER_PROJECT_VIEW:
+            project_id = arguments.get("project_id")
+            if not project_id:
+                return [TextContent(type="text", text="Error: project_id is required")]
+
+            view = await fetch_project_view(project_id)
+            return [TextContent(type="text", text=view)]
+
+        if name == TOOL_MANAGER_PROJECT_CONTROL:
+            project_id = arguments.get("project_id")
+            if not project_id:
+                return [TextContent(type="text", text="Error: project_id is required")]
+
+            label = arguments.get("label", "").upper()
+            # Server-side validation: must match ^[A-Z1-9]$ pattern
+            if not LABEL_PATTERN.match(label):
+                return [TextContent(type="text", text="Error: label must be a single character (A-Z or 1-9)")]
+
+            result = await send_project_control(project_id, label)
+            return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+        if name == TOOL_MANAGER_PROJECT_BINDINGS:
+            project_id = arguments.get("project_id")
+            if not project_id:
+                return [TextContent(type="text", text="Error: project_id is required")]
+
+            bindings = await get_project_bindings(project_id)
+            return [TextContent(type="text", text=json.dumps(bindings, indent=2))]
 
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
 

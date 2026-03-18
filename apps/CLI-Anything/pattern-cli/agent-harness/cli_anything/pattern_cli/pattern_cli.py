@@ -292,22 +292,29 @@ def repl(ctx):
         result = run_ts_cli(args, input_data=user_input)
 
         if "error" in result:
-            click.echo(f"Error: {result['error']}")
+            if ctx.obj.get('json_output'):
+                click.echo(json.dumps(result, indent=2))
+            else:
+                click.echo(f"Error: {result['error']}")
             continue
 
         # Display results
         count = _get_result_count(result)
-        click.echo(f"Detected {count} patterns")
 
-        if isinstance(result, list) and count > 0:
-            # Show first 5 patterns with type and id
-            for i, pattern in enumerate(result[:5]):
-                pattern_type = pattern.get('type', 'unknown')
-                pattern_id = pattern.get('id', 'no-id')
-                click.echo(f"  [{i+1}] type={pattern_type}, id={pattern_id}")
+        if ctx.obj.get('json_output'):
+            click.echo(json.dumps(result, indent=2))
+        else:
+            click.echo(f"Detected {count} patterns")
 
-            if count > 5:
-                click.echo(f"  ... and {count - 5} more")
+            if isinstance(result, list) and count > 0:
+                # Show first 5 patterns with type and id
+                for i, pattern in enumerate(result[:5]):
+                    pattern_type = pattern.get('type', 'unknown')
+                    pattern_id = pattern.get('id', 'no-id')
+                    click.echo(f"  [{i+1}] type={pattern_type}, id={pattern_id}")
+
+                if count > 5:
+                    click.echo(f"  ... and {count - 5} more")
 
 
 @cli.command()

@@ -283,6 +283,39 @@ mcp2cli --mcp-stdio "uv run mcp_manager_bridge" manager-project-bindings \
   --project-id session-analyzer-app
 ```
 
+### Dashboard View
+
+The Dashboard provides a health-at-a-glance view of all discovered projects.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/view` | GET | Renders dashboard when state is DASHBOARD |
+| `/control` | POST | Use `F` to navigate to dashboard, `R` to refresh |
+
+#### Dashboard Features
+
+- **Status Icons**: ● running, ○ stopped, ⚠ error
+- **Uptime**: Shows time since project started (e.g., "2h 15m")
+- **Last Check**: Timestamp of most recent health check
+- **Summary**: Count of running/stopped/error projects
+
+#### Example: View Dashboard
+
+```bash
+# Navigate to dashboard
+curl -X POST http://localhost:3422/control \
+  -H "Content-Type: application/json" \
+  -d '{"label": "F"}'
+
+# View the dashboard
+curl http://localhost:3422/view
+
+# Refresh health data
+curl -X POST http://localhost:3422/control \
+  -H "Content-Type: application/json" \
+  -d '{"label": "R"}'
+```
+
 ---
 
 ## Label Reference
@@ -298,6 +331,7 @@ The ASCII Interface Manager uses labeled actions for navigation and control. Eac
 | `C` | `goto_bindings` | Navigate to Bindings view |
 | `D` | `goto_test` | Navigate to Test view |
 | `E` | `goto_git` | Navigate to Git view |
+| `F` | `goto_dashboard` | Navigate to Dashboard view |
 | `X` | `quit` | Shutdown the manager |
 
 ### Project Management Labels
@@ -710,6 +744,7 @@ Contributions are welcome. Please follow these guidelines:
 | C                | Bindings view                                          |
 | D                | Test view                                              |
 | E                | Git view                                               |
+| F                | Dashboard view                                         |
 | X                | Quit                                                   |
 +------------------+--------------------------------------------------------+
 

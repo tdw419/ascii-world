@@ -566,6 +566,11 @@ export class ManagerServer {
             return this.handleProjectViewRender(context.selectedProjectId);
         }
 
+        // Handle DASHBOARD state specially - fetch health data for all projects
+        if (context.state === 'DASHBOARD') {
+            return this.handleDashboardView();
+        }
+
         // Build template data based on current state
         const templateData = this.buildTemplateData(context);
 
@@ -691,6 +696,78 @@ export class ManagerServer {
     }
 
     /**
+     * Update dashboard health data for all projects
+     */
+    private async updateDashboardHealth(): Promise<Array<{
+        projectId: string;
+        projectName: string;
+        port: number;
+        status: 'running' | 'stopped' | 'error';
+        uptime: string | null;
+        lastCheck: string | null;
+        responseTime: number | null;
+    }>> {
+        const healthData = await this.checkAllProjectsHealth();
+        this.stateManager.setDashboardHealth(healthData);
+        return healthData;
+    }
+
+    /**
+     * Handle rendering of DASHBOARD state
+     * Displays health status of all registered projects
+     */
+    private async handleDashboardView(): Promise<Response> {
+        try {
+            // Fetch health data for all projects
+            const healthData = await this.updateDashboardHealth();
+
+            // Calculate summary
+            const runningCount = healthData.filter(h => h.status === 'running').length;
+            const stoppedCount = healthData.filter(h => h.status === 'stopped').length;
+            const errorCount = healthData.filter(h => h.status === 'error').length;
+
+            // Format health items for template
+            const healthItems = healthData.map((health, index) => ({
+                label: String(index + 1),
+                project_name: health.projectName.padEnd(20).substring(0, 20),
+                port: health.port,
+                status_icon: health.status === 'running' ? '●' : health.status === 'stopped' ? '○' : '⚠',
+                status: health.status.padEnd(7),
+                uptime: (health.uptime || '--').padStart(8),
+                last_check: (health.lastCheck || '--').padStart(8)
+            }));
+
+            const templateData: TemplateData = {
+                app_version: APP_VERSION,
+                last_check_time: formatTime(this.stateManager.getData().lastHealthCheck),
+                health_items: healthItems,
+                running_count: runningCount,
+                stopped_count: stoppedCount,
+                error_count: errorCount
+            };
+
+            const rendered = this.asciiGenerator.render('dashboard', templateData);
+
+            return this.jsonResponse({
+                state: 'DASHBOARD',
+                view: rendered,
+                context: {
+                    selectedProjectId: null,
+                    editMode: false,
+                    unsavedChanges: false
+                }
+            });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Error rendering dashboard:', errorMessage);
+            return this.jsonResponse({
+                error: 'Failed to render dashboard',
+                details: errorMessage
+            }, 500);
+        }
+    }
+
+    /**
      * POST /control - Execute an action by label
      */
     private async handleControl(request: Request): Promise<Response> {
@@ -757,6 +834,17 @@ export class ManagerServer {
         // Handle PROJECT_VIEW state control
         if (currentState === 'PROJECT_VIEW') {
             return this.handleProjectViewControl(validatedLabel);
+        }
+
+        // Handle 'R' action to refresh dashboard
+        if (validatedLabel === 'R' && currentState === 'DASHBOARD') {
+            const healthData = await this.updateDashboardHealth();
+            return this.jsonResponse({
+                success: true,
+                action: 'refresh_dashboard',
+                projects_checked: healthData.length,
+                state: 'DASHBOARD'
+            });
         }
 
         const result = this.stateManager.handleAction(validatedLabel);

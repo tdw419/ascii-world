@@ -64,6 +64,33 @@ const rateLimitStore: Map<string, RateLimitEntry> = new Map();
 const APP_VERSION = '1.0.0';
 
 /**
+ * Format uptime from milliseconds to human-readable string
+ */
+function formatUptime(startedAt: number | undefined): string {
+    if (!startedAt) return '--';
+
+    const elapsedMs = Date.now() - startedAt;
+    const seconds = Math.floor(elapsedMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ${hours % 24}h`;
+    if (hours > 0) return `${hours}h ${minutes % 60}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
+}
+
+/**
+ * Format timestamp to HH:MM:SS
+ */
+function formatTime(timestamp: number | null): string {
+    if (!timestamp) return '--';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { hour12: false });
+}
+
+/**
  * ManagerServer
  *
  * Main HTTP server class that integrates all manager components.
@@ -74,6 +101,8 @@ export class ManagerServer {
     private asciiGenerator: AsciiGenerator;
     private metrics: RequestMetrics;
     private server: ReturnType<typeof Bun.serve> | null = null;
+    private discoveryInterval: ReturnType<typeof setInterval> | null = null;
+    private lastDiscoveryTime: number | null = null;
 
     constructor(
         registryPath?: string,
@@ -246,9 +275,18 @@ export class ManagerServer {
     }
 
     /**
-     * Start the HTTP server
+     * Start the HTTP server and auto-discovery background tasks
      */
     public start(): void {
+        // Initial auto-discovery
+        this.runDiscovery();
+
+        // Background interval for auto-discovery and health checks (every 60s)
+        this.discoveryInterval = setInterval(() => {
+            this.runDiscovery();
+            this.runHealthChecks();
+        }, 60000);
+
         this.server = Bun.serve({
             port: PORT,
             hostname: HOST,
@@ -298,6 +336,12 @@ export class ManagerServer {
      * Stop the HTTP server and all managed processes
      */
     public stop(): void {
+        // Stop discovery interval
+        if (this.discoveryInterval) {
+            clearInterval(this.discoveryInterval);
+            this.discoveryInterval = null;
+        }
+
         // Stop all managed processes
         for (const [projectId, childProcess] of activeProcesses) {
             try {
@@ -316,6 +360,143 @@ export class ManagerServer {
         }
 
         console.log('ASCII Interface Manager stopped');
+    }
+
+    /**
+     * Run the project auto-discovery scan
+     * Scans zion/projects/ base directories for ASCII projects
+     */
+    public runDiscovery(): string[] {
+        console.log(`[Auto-Discovery] Starting project scan...`);
+        this.lastDiscoveryTime = Date.now();
+        const newlyDiscovered = this.registry.syncDiscoveredProjects(ALLOWED_BASE_DIRS);
+        
+        if (newlyDiscovered.length > 0) {
+            console.log(`[Auto-Discovery] Discovered ${newlyDiscovered.length} new project(s): ${newlyDiscovered.join(', ')}`);
+        } else {
+            console.log(`[Auto-Discovery] Scan complete - no new projects found.`);
+        }
+        
+        return newlyDiscovered;
+    }
+
+    /**
+     * Run background health checks for all running projects
+     */
+    public async runHealthChecks(): Promise<void> {
+        const projects = this.registry.getAllProjects();
+        const runningProjects = projects.filter(p => p.status === 'running');
+
+        if (runningProjects.length === 0) return;
+
+        console.log(`[Health-Check] Running status verification for ${runningProjects.length} project(s)...`);
+
+        for (const project of runningProjects) {
+            try {
+                // Fetch /health from the project
+                const response = await fetch(`http://localhost:${project.port}/health`);
+                
+                if (!response.ok) {
+                    console.warn(`[Health-Check] Project ${project.id} is non-responsive (HTTP ${response.status}).`);
+                    // We don't automatically stop it, but we could mark it as 'error'
+                }
+            } catch (error) {
+                console.warn(`[Health-Check] Project ${project.id} connection failed: ${error instanceof Error ? error.message : String(error)}`);
+                // If the process is supposed to be running but the port is closed, update status
+                const childProcess = activeProcesses.get(project.id);
+                if (childProcess && childProcess.killed) {
+                    this.registry.updateProjectStatus(project.id, 'stopped');
+                    activeProcesses.delete(project.id);
+                }
+            }
+        }
+    }
+
+    /**
+     * Check health of a single project
+     */
+    private async checkProjectHealth(project: ASCIIProject): Promise<{
+        projectId: string;
+        projectName: string;
+        port: number;
+        status: 'running' | 'stopped' | 'error';
+        uptime: string | null;
+        lastCheck: string | null;
+        responseTime: number | null;
+    }> {
+        const startTime = Date.now();
+
+        if (project.status !== 'running') {
+            return {
+                projectId: project.id,
+                projectName: project.name,
+                port: project.port,
+                status: project.status,
+                uptime: null,
+                lastCheck: null,
+                responseTime: null
+            };
+        }
+
+        try {
+            const response = await fetch(`http://localhost:${project.port}/health`, {
+                method: 'GET',
+                signal: AbortSignal.timeout(5000) // 5 second timeout
+            });
+
+            const responseTime = Date.now() - startTime;
+
+            if (response.ok) {
+                return {
+                    projectId: project.id,
+                    projectName: project.name,
+                    port: project.port,
+                    status: 'running',
+                    uptime: formatUptime(project.lastStarted),
+                    lastCheck: formatTime(Date.now()),
+                    responseTime
+                };
+            } else {
+                return {
+                    projectId: project.id,
+                    projectName: project.name,
+                    port: project.port,
+                    status: 'error',
+                    uptime: null,
+                    lastCheck: formatTime(Date.now()),
+                    responseTime
+                };
+            }
+        } catch (error) {
+            return {
+                projectId: project.id,
+                projectName: project.name,
+                port: project.port,
+                status: 'error',
+                uptime: null,
+                lastCheck: formatTime(Date.now()),
+                responseTime: null
+            };
+        }
+    }
+
+    /**
+     * Check health of all projects
+     */
+    private async checkAllProjectsHealth(): Promise<Array<{
+        projectId: string;
+        projectName: string;
+        port: number;
+        status: 'running' | 'stopped' | 'error';
+        uptime: string | null;
+        lastCheck: string | null;
+        responseTime: number | null;
+    }>> {
+        const projects = this.registry.getAllProjects();
+        const healthChecks = await Promise.all(
+            projects.map(project => this.checkProjectHealth(project))
+        );
+        return healthChecks;
     }
 
     /**
@@ -585,6 +766,17 @@ export class ManagerServer {
         }
 
         // Handle special actions
+        if (result.action === 'refresh_discovery') {
+            const newlyDiscovered = this.runDiscovery();
+            return this.jsonResponse({
+                success: true,
+                action: 'refresh_discovery',
+                message: `Scan complete. Discovered ${newlyDiscovered.length} new project(s).`,
+                count: newlyDiscovered.length,
+                newlyDiscovered
+            });
+        }
+
         if (result.action === 'quit') {
             // Graceful shutdown
             setTimeout(() => {
@@ -1127,6 +1319,7 @@ export class ManagerServer {
         // Map projects to template-friendly format
         const projectList = projects.map((project, index) => ({
             index: index + 1,
+            label: String(index + 1),
             id: project.id,
             name: project.name,
             port: project.port,

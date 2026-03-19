@@ -156,6 +156,40 @@ The cartridge is a single PNG file. No parsing, no JSON, no virtual DOM. Just pi
 - [ ] Multi-page navigation support
 - [ ] Integration with Glyph VM
 
+## ASCII-First Architecture
+
+ASCII World now supports the full ASCII-First Architecture:
+
+### Components
+
+- **State Store**: Centralized state management via `AsciiStateStore`
+- **Templates**: Dynamic rendering with `{{variable}}` substitution
+- **HTTP API**: `/view`, `/control`, `/state` endpoints
+- **MCP Bridge**: AI agent control via Claude Code
+
+### Quick Start
+
+```bash
+# Start the ASCII World server
+bun run ascii
+
+# View current screen
+curl http://localhost:3421/view
+
+# Navigate via label
+curl -X POST http://localhost:3421/control -d '{"label":"B"}'
+```
+
+### Integration with GeosASCII
+
+The compiler now supports template variables:
+
+```bash
+python3 compiler/geos_ascii_compiler.py template.ascii \
+  --variables '{"cpu_percent": 45, "memory": 2048}' \
+  -o output.rts.png
+```
+
 ## License
 
 MIT

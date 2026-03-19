@@ -41,4 +41,23 @@ describe('AsciiStateStore', () => {
     const action = store.getAction('F')
     expect(action).toBe('runAnalysis')
   })
+
+  test('setState directly sets state', () => {
+    const store = new AsciiStateStore()
+    store.setState('CONFIG')
+    expect(store.getState()).toBe('CONFIG')
+  })
+
+  test('getBindings returns binding configuration', () => {
+    const store = new AsciiStateStore()
+    const bindings = store.getBindings()
+    expect(bindings.stateTransitions).toBeDefined()
+    expect(bindings.actions).toBeDefined()
+  })
+
+  test('getAction returns undefined for invalid label', () => {
+    const store = new AsciiStateStore()
+    const action = store.getAction('Z')
+    expect(action).toBeUndefined()
+  })
 })

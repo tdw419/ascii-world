@@ -1,0 +1,15 @@
+{
+  "stateTransitions": {
+    "DASHBOARD": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
+    "SOURCES": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
+    "CONFIG": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
+    "HISTORY": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
+    "PROVIDERS": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" }
+  },
+  "actions": {
+    "F": "runAnalysis",
+    "G": "exportReport",
+    "H": "refresh",
+    "X": "quit"
+  }
+}

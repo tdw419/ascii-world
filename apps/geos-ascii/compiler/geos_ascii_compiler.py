@@ -15,7 +15,7 @@ import json
 import re
 import argparse
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 
 try:
     from PIL import Image
@@ -40,6 +40,22 @@ OPCODES = {
 }
 
 ACTION_PATTERN = re.compile(r"\[([A-Z0-9])\]\s*(\w+)")
+
+
+def substitute_variables(ascii_content: str, variables: Dict[str, Any]) -> str:
+    """Replace {{variable}} syntax with actual values.
+
+    Args:
+        ascii_content: The ASCII template content
+        variables: Dictionary of variable names to values
+
+    Returns:
+        ASCII content with variables substituted
+    """
+    def replace(match):
+        key = match.group(1)
+        return str(variables.get(key, ''))
+    return re.sub(r'{{(\w+)}}', replace, ascii_content)
 
 
 def create_glyph_grid(ascii_content: str) -> np.ndarray:
@@ -128,9 +144,23 @@ def create_bootstrap(name: str, version: str, pattern_count: int) -> np.ndarray:
     return bootstrap
 
 
-def compile_cartridge(ascii_path: Path, mapping: Dict, output: Path) -> bool:
-    """Compile ASCII file to .rts.png cartridge."""
+def compile_cartridge(ascii_path: Path, mapping: Dict, output: Path, variables: Dict[str, Any] = None) -> bool:
+    """Compile ASCII file to .rts.png cartridge.
+
+    Args:
+        ascii_path: Path to the input ASCII file
+        mapping: Action mapping dictionary
+        output: Path to output .rts.png file
+        variables: Optional dictionary of template variables to substitute
+
+    Returns:
+        True if compilation succeeded
+    """
     ascii_content = ascii_path.read_text()
+
+    # Apply variable substitution if provided
+    if variables:
+        ascii_content = substitute_variables(ascii_content, variables)
 
     glyph_grid = create_glyph_grid(ascii_content)
     patterns = detect_patterns(ascii_content)
@@ -169,6 +199,7 @@ def main():
     parser.add_argument(
         "--generate-mapping", action="store_true", help="Generate default mapping.json"
     )
+    parser.add_argument('--variables', type=str, help='JSON string of variables for template substitution')
 
     args = parser.parse_args()
 
@@ -204,7 +235,16 @@ def main():
 
     output = args.output or args.input.with_suffix(".rts.png")
 
-    if compile_cartridge(args.input, mapping, output):
+    # Parse variables if provided
+    variables = None
+    if args.variables:
+        try:
+            variables = json.loads(args.variables)
+        except json.JSONDecodeError:
+            print(f"Error: Invalid JSON in --variables")
+            return 1
+
+    if compile_cartridge(args.input, mapping, output, variables):
         print(f"Compiled: {args.input} -> {output}")
         patterns = detect_patterns(args.input.read_text())
         print(f"Detected {len(patterns)} patterns")

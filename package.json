@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "ascii": "bun run src/ascii/cli.ts",
+    "ascii:dev": "bun --watch run src/ascii/cli.ts"
+  },
   "dependencies": {
     "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",

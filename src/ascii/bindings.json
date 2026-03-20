@@ -1,15 +1,23 @@
 {
   "stateTransitions": {
-    "DASHBOARD": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
-    "SOURCES": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
-    "CONFIG": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
-    "HISTORY": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" },
-    "PROVIDERS": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" }
+    "DASHBOARD": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS", "Y": "SAFE_YOUTUBE" },
+    "SOURCES": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS", "Y": "SAFE_YOUTUBE" },
+    "CONFIG": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS", "Y": "SAFE_YOUTUBE" },
+    "HISTORY": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS", "Y": "SAFE_YOUTUBE" },
+    "PROVIDERS": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS", "Y": "SAFE_YOUTUBE" },
+    "SAFE_YOUTUBE": { "A": "DASHBOARD", "B": "SOURCES", "C": "CONFIG", "D": "HISTORY", "E": "PROVIDERS" }
   },
   "actions": {
     "F": "runAnalysis",
     "G": "exportReport",
     "H": "refresh",
-    "X": "quit"
+    "X": "quit",
+    "1": "playVideo1",
+    "2": "playVideo2",
+    "3": "playVideo3",
+    "P": "togglePlay",
+    "S": "stopPlayback",
+    "M": "toggleMute",
+    "Q": "quit"
   }
 }

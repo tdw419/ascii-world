@@ -4,12 +4,24 @@ export type AsciiState =
   | 'CONFIG'
   | 'HISTORY'
   | 'PROVIDERS'
+  | 'SAFE_YOUTUBE'
+
+export interface VideoInfo {
+  id: string
+  title: string
+  duration: number
+}
 
 export interface AsciiStateData {
   state: AsciiState
   timestamp: string
   appVersion: string
   status: 'READY' | 'LOADING' | 'ERROR'
+  // YouTube state
+  videos?: VideoInfo[]
+  nowPlaying?: string
+  volume?: number
+  volumeBar?: string
   [key: string]: any
 }
 

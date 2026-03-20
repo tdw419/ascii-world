@@ -18,18 +18,19 @@ export class AsciiGenerator {
 
   private loadTemplates(): void {
     const templatesDir = join(import.meta.dir)
+    const { readdirSync, statSync } = require('fs')
 
-    const templates = [
-      { name: 'DASHBOARD', file: 'dashboard.ascii' },
-    ]
-
-    for (const template of templates) {
-      try {
-        const path = join(templatesDir, template.file)
-        this.templates.set(template.name, readFileSync(path, 'utf8'))
-      } catch (error) {
-        console.error(`Failed to load template ${template.name}:`, error)
+    try {
+      const files = readdirSync(templatesDir)
+      for (const file of files) {
+        if (file.endsWith('.ascii')) {
+          const name = file.replace('.ascii', '').toUpperCase()
+          const path = join(templatesDir, file)
+          this.templates.set(name, readFileSync(path, 'utf8'))
+        }
       }
+    } catch (error) {
+      console.error(`Failed to load templates from ${templatesDir}:`, error)
     }
   }
 

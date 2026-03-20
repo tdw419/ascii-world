@@ -3,10 +3,13 @@ import { AutoRenderer } from '../AutoRenderer';
 import { useAsciiState } from '../../hooks/useAsciiState';
 import './MasterPortal.css';
 
-const MANAGER_URL = 'http://localhost:3422';
-const WP_URL = 'http://localhost:3450';
-const CLAW_URL = 'http://localhost:3425';
-const YOUTUBE_URL = 'http://localhost:3470';
+// Dynamic substrate URLs (will be set from registry)
+const SUBSTRATE_URLS: Record<string, string> = {
+    MANAGER: 'http://localhost:3422',
+    WORDPRESS: 'http://localhost:3450',
+    CLAWLAUNCHER: 'http://localhost:3425',
+    YOUTUBE: 'http://localhost:3470',
+};
 
 // Global keys that always go to the Manager
 const GLOBALS = ['A', 'B', 'R', 'H', 'M', 'X'];
@@ -17,6 +20,7 @@ export function MasterPortal() {
     const [clawView, setClawView] = useState<string>('');
     const [youtubeView, setYoutubeView] = useState<string>('');
     const [focus, setFocus] = useState<'WP' | 'CLAW' | 'YOUTUBE'>('WP');
+    const [showHelp, setShowHelp] = useState(false);
 
     // Quad-Polling Stream
     useEffect(() => {
@@ -43,6 +47,19 @@ export function MasterPortal() {
         const interval = setInterval(pollSubstrates, 1500);
         return () => clearInterval(interval);
     }, []);
+
+    // Keyboard help toggle
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+                setShowHelp(h => !h);
+            } else if (e.key === 'Escape' && showHelp) {
+                setShowHelp(false);
+            }
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [showHelp]);
 
     const handleControl = useCallback(async (label: string, sourceSubstrate?: string) => {
         console.log(`[Portal] Label: ${label} | Source: ${sourceSubstrate}`);
@@ -89,6 +106,10 @@ export function MasterPortal() {
                         onClick={() => setFocus('YOUTUBE')}
                         style={{ background: focus === 'YOUTUBE' ? '#ff0055' : '#222', color: '#fff', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
                     >FOCUS: YT</button>
+                    <button
+                        onClick={() => setShowHelp(!showHelp)}
+                        style={{ background: showHelp ? '#fff' : '#333', color: showHelp ? '#000' : '#888', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
+                    >?</button>
                 </div>
             </header>
 
@@ -143,6 +164,55 @@ export function MasterPortal() {
                 <div>Substrates: 4 Running</div>
                 <div>Standard: Neural-Reality v2</div>
             </footer>
+
+            {/* Help Overlay */}
+            {showHelp && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.9)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    cursor: 'pointer'
+                }} onClick={() => setShowHelp(false)}>
+                    <div style={{
+                        background: '#111',
+                        border: '1px solid #333',
+                        borderRadius: '12px',
+                        padding: '30px',
+                        maxWidth: '500px',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        color: '#e0e0e0'
+                    }} onClick={e => e.stopPropagation()}>
+                        <h2 style={{ color: 'var(--neon-green)', marginBottom: '20px' }}>⌨ Keyboard Shortcuts</h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div>
+                                <h3 style={{ color: 'var(--neon-blue)', marginBottom: '10px' }}>Global</h3>
+                                <div><code style={{ color: '#00ff88' }}>[A]</code> Projects</div>
+                                <div><code style={{ color: '#00ff88' }}>[B]</code> Templates</div>
+                                <div><code style={{ color: '#00ff88' }}>[R]</code> Refresh All</div>
+                                <div><code style={{ color: '#00ff88' }}>[H]</code> Health Check</div>
+                                <div><code style={{ color: '#00ff88' }}>[X]</code> Global Shutdown</div>
+                            </div>
+                            <div>
+                                <h3 style={{ color: '#ff0055', marginBottom: '10px' }}>YouTube</h3>
+                                <div><code style={{ color: '#00ff88' }}>[1-3]</code> Select Video</div>
+                                <div><code style={{ color: '#00ff88' }}>[P]</code> Play</div>
+                                <div><code style={{ color: '#00ff88' }}>[S]</code> Stop</div>
+                                <div><code style={{ color: '#00ff88' }}>[M]</code> Mute</div>
+                            </div>
+                        </div>
+                        <div style={{ marginTop: '20px', color: '#666', fontSize: '12px' }}>
+                            Click anywhere to close
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

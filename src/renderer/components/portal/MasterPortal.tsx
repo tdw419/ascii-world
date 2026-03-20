@@ -8,6 +8,7 @@ const MANAGER_URL = 'http://localhost:3422';
 const WP_URL = 'http://localhost:3450';
 const CLAW_URL = 'http://localhost:3425';
 const YOUTUBE_URL = 'http://localhost:3470';
+const PHP_URL = 'http://localhost:3480';
 
 // Global keys that always go to the Manager
 const GLOBALS = ['A', 'B', 'R', 'H', 'M', 'X'];
@@ -17,8 +18,9 @@ export function MasterPortal() {
     const [wpView, setWpView] = useState<string>('');
     const [clawView, setClawView] = useState<string>('');
     const [youtubeView, setYoutubeView] = useState<string>('');
-    const [focus, setFocus] = useState<'WP' | 'CLAW' | 'YOUTUBE'>('WP');
+    const [focus, setFocus] = useState<'WP' | 'CLAW' | 'YOUTUBE' | 'PHP'>('WP');
     const [showHelp, setShowHelp] = useState(false);
+    const [phpView, setPhpView] = useState<string>('');
 
     // Quad-Polling Stream
     useEffect(() => {
@@ -40,6 +42,12 @@ export function MasterPortal() {
                 const res = await fetch(YOUTUBE_URL + '/');
                 if (res.ok) setYoutubeView(await res.text());
             } catch (e) { setYoutubeView("SAFE YOUTUBE OFFLINE [3470]"); }
+
+            // Poll PHP Bridge
+            try {
+                const res = await fetch(PHP_URL + '/');
+                if (res.ok) setPhpView(await res.text());
+            } catch (e) { setPhpView("PHP BRIDGE OFFLINE [3480]"); }
         };
 
         const interval = setInterval(pollSubstrates, 1500);
@@ -74,6 +82,8 @@ export function MasterPortal() {
             targetUrl = CLAW_URL;
         } else if (sourceSubstrate === 'YOUTUBE' || (focus === 'YOUTUBE' && !sourceSubstrate)) {
             targetUrl = YOUTUBE_URL;
+        } else if (sourceSubstrate === 'PHP' || (focus === 'PHP' && !sourceSubstrate)) {
+            targetUrl = PHP_URL;
         }
 
         try {
@@ -105,6 +115,10 @@ export function MasterPortal() {
                         style={{ background: focus === 'YOUTUBE' ? '#ff0055' : '#222', color: '#fff', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
                     >FOCUS: YT</button>
                     <button
+                        onClick={() => setFocus('PHP')}
+                        style={{ background: focus === 'PHP' ? '#ff9900' : '#222', color: focus === 'PHP' ? '#000' : '#888', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
+                    >FOCUS: PHP</button>
+                    <button
                         onClick={() => setShowHelp(!showHelp)}
                         style={{ background: showHelp ? '#fff' : '#333', color: showHelp ? '#000' : '#888', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
                     >?</button>
@@ -116,7 +130,7 @@ export function MasterPortal() {
                 <aside className="source-pane">
                     <h3>
                         <span>Neural Map [Raw Substrates]</span>
-                        <span style={{ color: '#00ff88' }}>● Live (4 Stream)</span>
+                        <span style={{ color: '#00ff88' }}>● Live (5 Stream)</span>
                     </h3>
                     <div className="raw-ascii-buffer">
                         <div style={{ marginBottom: '15px', opacity: 0.5 }}>// Manager (3422)</div>
@@ -129,7 +143,10 @@ export function MasterPortal() {
                         <pre style={{ marginBottom: '20px' }}>{clawView}</pre>
 
                         <div style={{ marginBottom: '15px', opacity: 0.5, color: '#ff0055' }}>// Safe YouTube (3470)</div>
-                        <pre>{youtubeView}</pre>
+                        <pre style={{ marginBottom: '20px' }}>{youtubeView}</pre>
+
+                        <div style={{ marginBottom: '15px', opacity: 0.5, color: '#ff9900' }}>// PHP Bridge (3480)</div>
+                        <pre>{phpView}</pre>
                     </div>
                 </aside>
 
@@ -154,12 +171,17 @@ export function MasterPortal() {
                         <div className="card-title" style={{ color: '#ff0055' }}>Safe YouTube (Audio Only)</div>
                         <AutoRenderer ascii={youtubeView} onControl={(l) => handleControl(l, 'YOUTUBE')} />
                     </div>
+
+                    <div className={`glass-card ${focus === 'PHP' ? 'focused' : ''}`} style={{ borderLeft: '4px solid #ff9900' }}>
+                        <div className="card-title" style={{ color: '#ff9900' }}>PHP Site Bridge</div>
+                        <AutoRenderer ascii={phpView} onControl={(l) => handleControl(l, 'PHP')} />
+                    </div>
                 </section>
             </main>
 
             <footer className="portal-footer">
-                <div>Phase Alignment: Quad-Sync Active</div>
-                <div>Substrates: 4 Running</div>
+                <div>Phase Alignment: Penta-Sync Active</div>
+                <div>Substrates: 5 Running</div>
                 <div>Standard: Neural-Reality v2</div>
             </footer>
 

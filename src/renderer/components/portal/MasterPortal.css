@@ -42,33 +42,18 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.05);
-}
-
-.source-pane h3 {
-  color: #333;
-  font-size: 12px;
-  text-transform: uppercase;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.raw-ascii-buffer {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: var(--terminal-green);
-  line-height: 1.2;
-  white-space: pre;
-  overflow: hidden;
-  opacity: 0.8;
-  text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+  height: calc(100vh - 150px);
+  overflow-y: auto;
 }
 
 /* Reality Pane (Right) */
 .reality-pane {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 20px;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 .glass-card {
@@ -76,9 +61,10 @@
   backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  padding: 25px;
+  padding: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .glass-card:hover {

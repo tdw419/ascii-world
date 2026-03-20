@@ -1,0 +1,17 @@
+{
+  "bindings": [
+    { "label": "D", "action": "goto_dashboard", "target": "DASHBOARD" },
+    { "label": "P", "action": "goto_posts", "target": "POSTS" },
+    { "label": "G", "action": "goto_pages", "target": "PAGES" },
+    { "label": "S", "action": "goto_settings", "target": "SETTINGS" },
+    { "label": "X", "action": "quit", "target": "QUIT" },
+    { "label": "U", "action": "publish_post", "target": null },
+    { "label": "R", "action": "refresh", "target": null }
+  ],
+  "stateTransitions": {
+    "DASHBOARD": { "D": "DASHBOARD", "P": "POSTS", "G": "PAGES", "S": "SETTINGS", "X": "QUIT" },
+    "POSTS": { "D": "DASHBOARD", "P": "POSTS", "G": "PAGES", "S": "SETTINGS", "X": "QUIT" },
+    "PAGES": { "D": "DASHBOARD", "P": "POSTS", "G": "PAGES", "S": "SETTINGS", "X": "QUIT" },
+    "SETTINGS": { "D": "DASHBOARD", "P": "POSTS", "G": "PAGES", "S": "SETTINGS", "X": "QUIT" }
+  }
+}

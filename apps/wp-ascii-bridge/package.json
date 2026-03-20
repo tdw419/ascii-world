@@ -1,0 +1,20 @@
+{
+  "name": "wp-ascii-bridge",
+  "version": "0.1.0",
+  "description": "WordPress AI Remote Control via ASCII World",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/bun/server.ts",
+    "dev": "bun --watch run src/bun/server.ts",
+    "gui:dev": "vite renderer"
+  },
+  "dependencies": {
+    "@ascii-world/renderer": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.2.0"
+  }
+}

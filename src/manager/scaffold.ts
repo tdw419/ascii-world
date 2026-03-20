@@ -237,7 +237,13 @@ serve({
         const headers = {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
         };
+
+        if (req.method === "OPTIONS") {
+            return new Response(null, { headers });
+        }
 
         if (path === "/health") {
             return new Response(JSON.stringify({ status: "healthy", port: PORT }), { headers });
@@ -254,6 +260,16 @@ serve({
             };
 
             const ascii = asciiGenerator.render(stateManager.getState(), viewData);
+
+            // Return JSON by default for high-fidelity renderers
+            if (req.headers.get("accept")?.includes("application/json")) {
+                return new Response(JSON.stringify({
+                    state: stateManager.getState(),
+                    view: ascii,
+                    context: viewData
+                }), { headers });
+            }
+
             return new Response(ascii, { headers: { ...headers, 'Content-Type': 'text/plain' } });
         }
 
@@ -277,7 +293,50 @@ serve({
 });
 
 console.log(\`+ {{app_name}} running at http://localhost:\${PORT}\`);
-`;
+\`;
+
+const RENDERER_INDEX_HTML = \`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{app_name}} - ASCII GUI</title>
+    <style>
+        body { margin: 0; background: #0f0f12; color: #e0e0e0; font-family: sans-serif; }
+        #root { display: flex; justify-content: center; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
+\`;
+
+const RENDERER_MAIN_TSX = \`import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { AutoRenderer, useAsciiState } from '@ascii-world/renderer';
+
+function App() {
+    const { view, sendControl } = useAsciiState('http://localhost:{{api_port}}');
+
+    return (
+        <div className="app-container">
+            <AutoRenderer 
+                ascii={view} 
+                onControl={(label) => sendControl({ label })} 
+            />
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>
+);
+\`;
+
 
 /**
  * Scaffold a new ASCII-wrapped project
@@ -319,7 +378,9 @@ export function scaffoldProject(options: ScaffoldOptions): void {
             join(resolvedTargetPath, 'src'),
             join(resolvedTargetPath, 'src/bun'),
             join(resolvedTargetPath, 'src/ascii'),
-            join(resolvedTargetPath, 'src/ascii/states')
+            join(resolvedTargetPath, 'src/ascii/states'),
+            join(resolvedTargetPath, 'renderer'),
+            join(resolvedTargetPath, 'renderer/src')
         ];
 
         for (const dir of dirs) {
@@ -356,6 +417,17 @@ export function scaffoldProject(options: ScaffoldOptions): void {
                 .replace(/{{api_port}}/g, String(port))
         );
 
+        // Create HTML Renderer files
+        writeFileSync(
+            join(resolvedTargetPath, 'renderer/index.html'),
+            RENDERER_INDEX_HTML.replace(/{{app_name}}/g, appName)
+        );
+
+        writeFileSync(
+            join(resolvedTargetPath, 'renderer/src/main.tsx'),
+            RENDERER_MAIN_TSX.replace(/{{api_port}}/g, String(port))
+        );
+
         // Create package.json
         writeFileSync(
             join(resolvedTargetPath, 'package.json'),
@@ -365,9 +437,18 @@ export function scaffoldProject(options: ScaffoldOptions): void {
                 description: description || `${appName} - ASCII-wrapped application`,
                 scripts: {
                     start: "bun run src/bun/server.ts",
-                    dev: "bun --watch run src/bun/server.ts"
+                    dev: "bun --watch run src/bun/server.ts",
+                    "gui:dev": "vite renderer"
                 },
-                dependencies: {}
+                dependencies: {
+                    "@ascii-world/renderer": "workspace:*",
+                    "react": "^18.3.1",
+                    "react-dom": "^18.3.1"
+                },
+                devDependencies: {
+                    "vite": "^5.0.0",
+                    "@vitejs/plugin-react": "^4.2.0"
+                }
             }, null, 2)
         );
 

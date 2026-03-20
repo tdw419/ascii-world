@@ -426,18 +426,10 @@ export class ManagerServer {
     }> {
         const startTime = Date.now();
 
-        if (project.status !== 'running') {
-            return {
-                projectId: project.id,
-                projectName: project.name,
-                port: project.port,
-                status: project.status,
-                uptime: null,
-                lastCheck: null,
-                responseTime: null
-            };
-        }
-
+        // In this architecture, we allow probing even if the status is "stopped"
+        // to discover processes started externally or to catch stale "stopped" states.
+        // If it responds to /health, we'll mark it as running.
+        
         try {
             const response = await fetch(`http://localhost:${project.port}/health`, {
                 method: 'GET',
@@ -510,6 +502,11 @@ export class ManagerServer {
 
         // Route by path
         switch (path) {
+            case '/':
+            case '/index.html':
+                // Return the dashboard view by default for the root
+                return this.handleView();
+
             case '/health':
                 return this.handleHealth();
 
@@ -708,6 +705,12 @@ export class ManagerServer {
         responseTime: number | null;
     }>> {
         const healthData = await this.checkAllProjectsHealth();
+        
+        // Synchronize health data back to registry
+        for (const health of healthData) {
+            this.registry.updateProjectStatus(health.projectId, health.status);
+        }
+        
         this.stateManager.setDashboardHealth(healthData);
         return healthData;
     }
@@ -1642,7 +1645,11 @@ export function stopServer(): void {
 
 // CLI entry point
 if (import.meta.main) {
-    const server = new ManagerServer();
+    const registryPath = resolve(process.cwd(), '.ascii-registry.json');
+    const templatesPath = resolve(process.cwd(), 'src/ascii/states');
+    const bindingsPath = resolve(process.cwd(), 'src/ascii/manager-bindings.json');
+    
+    const server = new ManagerServer(registryPath, templatesPath, bindingsPath);
     server.start();
 
     // Handle graceful shutdown

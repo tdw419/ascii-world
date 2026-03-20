@@ -3,13 +3,11 @@ import { AutoRenderer } from '../AutoRenderer';
 import { useAsciiState } from '../../hooks/useAsciiState';
 import './MasterPortal.css';
 
-// Dynamic substrate URLs (will be set from registry)
-const SUBSTRATE_URLS: Record<string, string> = {
-    MANAGER: 'http://localhost:3422',
-    WORDPRESS: 'http://localhost:3450',
-    CLAWLAUNCHER: 'http://localhost:3425',
-    YOUTUBE: 'http://localhost:3470',
-};
+// Dynamic substrate URLs
+const MANAGER_URL = 'http://localhost:3422';
+const WP_URL = 'http://localhost:3450';
+const CLAW_URL = 'http://localhost:3425';
+const YOUTUBE_URL = 'http://localhost:3470';
 
 // Global keys that always go to the Manager
 const GLOBALS = ['A', 'B', 'R', 'H', 'M', 'X'];

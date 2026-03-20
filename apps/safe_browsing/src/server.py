@@ -141,21 +141,22 @@ class SafeYouTubeHandler(BaseHTTPRequestHandler):
                 if state['now_playing'].get('id'):
                     state['status'] = "playing"
                     action = "play"
-                    # Start actual playback (commented for safety)
-                    # if playback_process:
-                    #     playback_process.terminate()
-                    # playback_process = subprocess.Popen([
-                    #     "ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet",
-                    #     f"https://www.youtube.com/watch?v={state['now_playing']['id']}"
-                    # ])
+                    # Start actual playback
+                    if playback_process:
+                        playback_process.terminate()
+                    video_id = state['now_playing']['id']
+                    url = f"https://www.youtube.com/watch?v={video_id}"
+                    playback_process = subprocess.Popen([
+                        "ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", "-i", url
+                    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
             elif label == 'S':
                 # Stop
                 state['status'] = "stopped"
                 action = "stop"
-                # if playback_process:
-                #     playback_process.terminate()
-                #     playback_process = None
+                if playback_process:
+                    playback_process.terminate()
+                    playback_process = None
 
             elif label == 'M':
                 # Mute toggle (simplified)

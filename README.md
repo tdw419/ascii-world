@@ -200,6 +200,23 @@ curl http://localhost:3839/health
 # {"status":"ok","timestamp":1711050000000}
 ```
 
+#### GET /status
+Built-in status dashboard showing server metrics.
+
+```bash
+curl -o status.png http://localhost:3839/status
+```
+
+**Displays:**
+- Uptime (hours, minutes, seconds)
+- Connected WebSocket clients
+- Cell count
+- Alert rule count
+- Memory usage (MB)
+- Request rate (per minute)
+
+Returns a 480×240 PNG image.
+
 #### GET /api/v1/cells
 Get all current cell values.
 

@@ -24,6 +24,12 @@ export class PxOSServer {
         this.httpServer = null;
         this.wss = null;
         this.clients = new Set();
+        
+        // Metrics tracking
+        this.startTime = Date.now();
+        this.requestCount = 0;
+        this.requestCountPerMinute = 0;
+        this.lastMinuteReset = Date.now();
 
         // Setup alert notifiers
         this.alertEngine.addNotifier((alert, rule) => {
@@ -82,6 +88,9 @@ export class PxOSServer {
     }
 
     async handleHTTPRequest(req, res) {
+        // Track requests
+        this.trackRequest();
+        
         const url = new URL(req.url, `http://localhost:${this.port}`);
         const pathname = url.pathname;
 
@@ -99,6 +108,8 @@ export class PxOSServer {
         try {
             if (pathname === '/health') {
                 this.handleHealth(req, res);
+            } else if (pathname === '/status') {
+                await this.handleStatus(req, res);
             } else if (pathname === '/api/v1/cells') {
                 if (req.method === 'GET') {
                     this.handleGetCells(req, res);
@@ -241,6 +252,77 @@ export class PxOSServer {
         const deleted = this.dashboardStore.delete(name);
 
         this.sendJSON(res, 200, { ok: deleted });
+    }
+
+    trackRequest() {
+        this.requestCount++;
+        
+        // Reset per-minute counter
+        const now = Date.now();
+        if (now - this.lastMinuteReset >= 60000) {
+            this.requestCountPerMinute = this.requestCount;
+            this.requestCount = 0;
+            this.lastMinuteReset = now;
+        }
+    }
+
+    getStatusCells() {
+        const uptime = Math.floor((Date.now() - this.startTime) / 1000);
+        const hours = Math.floor(uptime / 3600);
+        const minutes = Math.floor((uptime % 3600) / 60);
+        const seconds = uptime % 60;
+        const uptimeStr = `${hours}h ${minutes}m ${seconds}s`;
+        
+        const mem = process.memoryUsage();
+        const memMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
+        
+        const cells = this.cellStore.getCells();
+        const alerts = this.alertEngine.getRules();
+        
+        return {
+            title: 'pxOS Status',
+            uptime_label: 'Uptime',
+            uptime: uptimeStr,
+            clients_label: 'Clients',
+            clients: this.clients.size,
+            cells_label: 'Cells',
+            cells_count: Object.keys(cells).length,
+            alerts_label: 'Alerts',
+            alerts_count: `${alerts.length} rules`,
+            memory_label: 'Memory',
+            memory: `${memMB} MB`,
+            requests_label: 'Requests',
+            requests: `${this.requestCountPerMinute}/min`,
+        };
+    }
+
+    async handleStatus(req, res) {
+        const statusCells = this.getStatusCells();
+        this.engine.setCells(statusCells);
+        
+        const template = [
+            { fn: 'TEXT', args: [0, 0, 'title'] },
+            { fn: 'TIME', args: [70, 0, 'HH:mm:ss'] },
+            { fn: 'LINE', args: [0, 1, 80, 'h', 'borderHighlight'] },
+            { fn: 'TEXT', args: [0, 2, 'uptime_label'] },
+            { fn: 'TEXT', args: [12, 2, 'uptime'] },
+            { fn: 'TEXT', args: [0, 3, 'clients_label'] },
+            { fn: 'NUMBER', args: [12, 3, 'clients', '0'] },
+            { fn: 'TEXT', args: [0, 4, 'cells_label'] },
+            { fn: 'NUMBER', args: [12, 4, 'cells_count', '0'] },
+            { fn: 'TEXT', args: [0, 5, 'alerts_label'] },
+            { fn: 'TEXT', args: [12, 5, 'alerts_count'] },
+            { fn: 'TEXT', args: [40, 2, 'memory_label'] },
+            { fn: 'TEXT', args: [52, 2, 'memory'] },
+            { fn: 'TEXT', args: [40, 3, 'requests_label'] },
+            { fn: 'TEXT', args: [52, 3, 'requests'] },
+        ];
+        
+        this.engine.renderTemplate(template);
+        const png = await this.engine.toPNG();
+        
+        res.writeHead(200, { 'Content-Type': 'image/png' });
+        res.end(png);
     }
 
     handleWebSocket(ws) {

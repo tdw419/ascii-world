@@ -33,6 +33,13 @@ export class PixelBuffer {
         }
     }
 
+    clear(color = 0x0a0a0f) {
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+        this.fill(r, g, b, 255);
+    }
+
     drawRect(x, y, w, h, r, g, b, a = 255) {
         for (let dy = 0; dy < h; dy++) {
             for (let dx = 0; dx < w; dx++) {

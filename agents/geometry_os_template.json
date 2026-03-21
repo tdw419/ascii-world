@@ -1,0 +1,22 @@
+[
+  {"fn": "TEXT", "args": [0, 0, "title"]},
+  {"fn": "TIME", "args": [70, 0, "HH:mm:ss"]},
+  {"fn": "LINE", "args": [0, 1, 80, "h", "borderHighlight"]},
+  {"fn": "TEXT", "args": [0, 2, "neb_label"]},
+  {"fn": "BAR", "args": [8, 2, "neb_rate_pct", 25]},
+  {"fn": "NUMBER", "args": [36, 2, "neb_rate", "0k/s"]},
+  {"fn": "TEXT", "args": [0, 3, "gpu_label"]},
+  {"fn": "BAR", "args": [8, 3, "gpu_tiles_pct", 25]},
+  {"fn": "TEXT", "args": [36, 3, "gpu_pc"]},
+  {"fn": "TEXT", "args": [0, 4, "ctrm_label"]},
+  {"fn": "BAR", "args": [8, 4, "ctrm_pct", 25]},
+  {"fn": "NUMBER", "args": [36, 4, "ctrm_facts", "0 facts"]},
+  {"fn": "TEXT", "args": [0, 5, "swarm_label"]},
+  {"fn": "TEXT", "args": [8, 5, "swarm_agents"]},
+  {"fn": "TEXT", "args": [20, 5, "guilds"]},
+  {"fn": "LINE", "args": [0, 6, 80, "h", "border"]},
+  {"fn": "TEXT", "args": [0, 7, "sys_label"]},
+  {"fn": "BAR", "args": [8, 7, "cpu", 15]},
+  {"fn": "BAR", "args": [26, 7, "mem", 15]},
+  {"fn": "NUMBER", "args": [44, 7, "mem_gb", "0.0 GB"]}
+]

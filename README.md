@@ -361,6 +361,73 @@ post_cells('http://localhost:3839', {
 })
 ```
 
+## Geometry OS Integration
+
+Monitor Geometry OS internals (NEB, GPU VMs, CTRM, Swarm) in real-time.
+
+### Setup
+
+```bash
+# Install Python dependencies
+pip install -r agents/requirements.txt
+
+# Start the server
+npm start
+
+# Run Geometry OS monitor (with mock data for testing)
+python agents/geometry_os_monitor.py --mock
+
+# Or with real Geometry OS installation
+python agents/geometry_os_monitor.py --geometry-os-path ~/zion/projects/geometry_os
+```
+
+### Output
+
+```
+pxOS Geometry OS Monitor
+Server: http://localhost:3839
+Geometry OS: not specified (using mock)
+Mode: mock
+
+Template set (19 operations)
+
+Starting monitor... (Ctrl+C to stop)
+------------------------------------------------------------
+[16:42:15] NEB: 134.2k/s | GPU: 25/64 tiles | CTRM: 32,847 facts | SWARM: 12 agents
+[16:42:16] NEB: 137.8k/s | GPU: 25/64 tiles | CTRM: 32,847 facts | SWARM: 12 agents
+```
+
+### Metrics Collected
+
+| Component | Cell Key | Description |
+|-----------|----------|-------------|
+| NEB | `neb_rate` | Events per second |
+| NEB | `neb_total` | Total events |
+| GPU | `gpu_tiles` | Tiles loaded |
+| GPU | `gpu_pc` | Program counter |
+| CTRM | `ctrm_facts` | Total facts |
+| CTRM | `ctrm_verified` | Verified facts |
+| Swarm | `swarm_agents` | Active agents |
+| Swarm | `guilds` | Active guilds |
+
+### Integration Script
+
+```bash
+# Set up symlinks in Geometry OS directory
+./scripts/integrate-with-geometry-os.sh ~/zion/projects/geometry_os
+```
+
+### Options
+
+```bash
+python agents/geometry_os_monitor.py --help
+
+python agents/geometry_os_monitor.py --mock  # Use mock data
+python agents/geometry_os_monitor.py --geometry-os-path /path/to/geometry_os
+python agents/geometry_os_monitor.py --interval 2
+python agents/geometry_os_monitor.py --once
+```
+
 ## License
 
 MIT

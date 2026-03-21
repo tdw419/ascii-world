@@ -292,6 +292,75 @@ npx serve .
 └─────────────────────────────────────────┘
 ```
 
+## Python Agent Example
+
+Use the included Python agent to monitor system metrics.
+
+### Setup
+
+```bash
+# Install Python dependencies
+pip install -r agents/requirements.txt
+
+# Start the server
+npm start
+
+# Run the agent
+python agents/system_monitor.py
+```
+
+### Output
+
+```
+pxOS System Monitor Agent
+Server: http://localhost:3839
+Interval: 1.0s
+
+Using default template
+Template set (14 operations)
+
+Starting monitor... (Ctrl+C to stop)
+--------------------------------------------------
+[16:35:42] CPU:  23.5% | MEM:  28.1/62.3GB | DISK: 145.2/500.0GB
+[16:35:43] CPU:  18.2% | MEM:  28.1/62.3GB | DISK: 145.2/500.0GB
+[16:35:44] CPU:  45.1% | MEM:  28.2/62.3GB | DISK: 145.2/500.0GB
+```
+
+### Options
+
+```bash
+python agents/system_monitor.py --help
+
+python agents/system_monitor.py --url http://localhost:8080
+python agents/system_monitor.py --interval 2
+python agents/system_monitor.py --template agents/template.json
+python agents/system_monitor.py --once  # Single update, then exit
+```
+
+### Custom Agent
+
+```python
+import urllib.request
+import json
+
+def post_cells(url, cells):
+    data = json.dumps(cells).encode('utf-8')
+    req = urllib.request.Request(
+        f"{url}/api/v1/cells",
+        data=data,
+        headers={'Content-Type': 'application/json'},
+        method='POST'
+    )
+    urllib.request.urlopen(req)
+
+# Post your data
+post_cells('http://localhost:3839', {
+    'title': 'My Dashboard',
+    'cpu': 0.67,
+    'status': 'OK'
+})
+```
+
 ## License
 
 MIT

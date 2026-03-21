@@ -1,0 +1,16 @@
+[
+  {"fn": "TEXT", "args": [0, 0, "title"]},
+  {"fn": "LINE", "args": [0, 1, 80, "h", "border"]},
+  {"fn": "TEXT", "args": [0, 2, "cpu_label"]},
+  {"fn": "BAR", "args": [10, 2, "cpu", 30]},
+  {"fn": "NUMBER", "args": [42, 2, "cpu", "0%"]},
+  {"fn": "TEXT", "args": [0, 3, "mem_label"]},
+  {"fn": "BAR", "args": [10, 3, "mem", 30]},
+  {"fn": "NUMBER", "args": [42, 3, "mem_gb", "0.0 GB"]},
+  {"fn": "TEXT", "args": [0, 4, "disk_label"]},
+  {"fn": "BAR", "args": [10, 4, "disk", 30]},
+  {"fn": "NUMBER", "args": [42, 4, "disk_gb", "0.0 GB"]},
+  {"fn": "TIME", "args": [70, 0, "HH:mm:ss"]},
+  {"fn": "TEXT", "args": [0, 5, "status_label"]},
+  {"fn": "STATUS", "args": [10, 5, "cpu", 0.8, "◉ HIGH", 0.5, "● MED", "○ OK"]}
+]

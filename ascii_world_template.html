@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII World - Strict Compliance Renderer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            min-height: 100vh;
+            color: #c9d1d9;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #21262d;
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .sync-dot.synced { background: #3fb950; }
+        .sync-dot.out_of_sync { background: #d29922; }
+        .sync-dot.disconnected { background: #f85149; }
+        .sync-dot.syncing { background: #00d4ff; animation: pulse 0.5s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hash-display {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .hash-display.mismatch {
+            color: #d29922;
+            background: rgba(210, 153, 34, 0.1);
+        }
+
+        .ascii-input {
+            width: 100%;
+            height: 500px;
+            background: #0d1117;
+            border: none;
+            color: #c9d1d9;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            padding: 16px;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        .ascii-input:focus {
+            outline: none;
+        }
+
+        .gui-output {
+            padding: 16px;
+            min-height: 500px;
+            font-size: 14px;
+        }
+
+        .gui-output:empty::before {
+            content: '';
+        }
+
+        /* Parsed Elements - Strict Compliance Styles */
+
+        /* Buttons */
+        .button-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .ascii-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #238636;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .ascii-button:hover {
+            background: #2ea043;
+        }
+
+        .ascii-button kbd {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        /* Status Indicators */
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+
+        .status-running { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+        .status-stopped { background: rgba(139, 148, 158, 0.15); color: #8b949e; }
+        .status-warning { background: rgba(210, 153, 34, 0.15); color: #d29922; }
+        .status-paused { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+        .status-error { background: rgba(248, 81, 73, 0.15); color: #f85149; }
+
+        /* Tables */
+        .ascii-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .ascii-table th {
+            background: #21262d;
+            color: #8b949e;
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid #30363d;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ascii-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+
+        .ascii-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Cards */
+        .ascii-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .ascii-card-title {
+            background: rgba(0, 212, 255, 0.08);
+            color: #00d4ff;
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .ascii-card-content {
+            padding: 14px;
+        }
+
+        /* Text */
+        .ascii-text {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* Parse Report (for verification) */
+        .parse-report {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 16px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #8b949e;
+            max-height: 150px;
+            overflow: auto;
+        }
+
+        .parse-report-header {
+            color: #00d4ff;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* Compliance status */
+        .compliance-status {
+            display: flex;
+            gap: 16px;
+            padding: 12px 16px;
+            background: #21262d;
+            border-top: 1px solid #30363d;
+            font-size: 12px;
+        }
+
+        .compliance-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .compliance-label {
+            color: #8b949e;
+        }
+
+        .compliance-value {
+            color: #c9d1d9;
+            font-weight: 600;
+        }
+
+        /* Action Feedback */
+        .action-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #238636;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ASCII Input Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">ASCII Source</span>
+                <div class="sync-status">
+                    <span class="sync-dot disconnected" id="syncDot"></span>
+                    <span id="syncText">Disconnected</span>
+                    <span class="hash-display" id="hashDisplay">ver:--------</span>
+                </div>
+            </div>
+            <textarea id="asciiInput" class="ascii-input" oninput="onAsciiChange()"></textarea>
+        </div>
+
+        <!-- GUI Output Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">GUI Output</span>
+                <span style="font-size: 11px; color: #8b949e;">Strict Compliance Renderer</span>
+            </div>
+            <div id="guiOutput" class="gui-output"></div>
+            <div class="compliance-status">
+                <div class="compliance-item">
+                    <span class="compliance-label">Buttons:</span>
+                    <span class="compliance-value" id="buttonCount">0</span>
+                </div>
+                <div class="compliance-item">
+                    <span class="compliance-label">Statuses:</span>
+                    <span class="compliance-value" id="statusCount">0</span>
+                </div>
+                <div class="compliance-item">
+                    <span class="compliance-label">Tables:</span>
+                    <span class="compliance-value" id="tableCount">0</span>
+                </div>
+                <div class="compliance-item">
+                    <span class="compliance-label">Cards:</span>
+                    <span class="compliance-value" id="cardCount">0</span>
+                </div>
+            </div>
+            <div class="parse-report" id="parseReport" style="display:none;">
+                <div class="parse-report-header">Parse Report (for AI verification)</div>
+                <pre id="parseReportContent"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="actionFeedback" class="action-feedback" style="display:none;">
+        <span id="actionText"></span>
+    </div>
+
+    <script>
+        // ============================================
+        // STRICT COMPLIANCE PARSER
+        // Follows compliance.md specification
+        // ============================================
+
+        class AsciiParser {
+            constructor() {
+                this.elements = {
+                    buttons: [],
+                    statuses: [],
+                    tables: [],
+                    cards: [],
+                    text: []
+                };
+                this.hash = null;
+                this.title = null;
+            }
+
+            parse(ascii) {
+                this.elements = { buttons: [], statuses: [], tables: [], cards: [], text: [] };
+                this.hash = null;
+                this.title = null;
+
+                const lines = ascii.split('\n');
+
+                // Extract hash from header
+                const hashMatch = ascii.match(/ver:([a-f0-9]{8})/i);
+                if (hashMatch) {
+                    this.hash = hashMatch[1].toLowerCase();
+                }
+
+                // Extract title from first ╔...║ line
+                const titleMatch = ascii.match(/╔[═]+╗\n║\s*(.+?)\s+ver:/);
+                if (titleMatch) {
+                    this.title = titleMatch[1].trim();
+                }
+
+                // Parse each line
+                let inTable = false;
+                let tableLines = [];
+                let inCard = false;
+                let cardTitle = null;
+                let cardContent = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+
+                    // Skip box drawing borders for content detection
+                    if (this.isBorderLine(line)) {
+                        // Check for card boundaries
+                        if (line.startsWith('┌') && !inCard) {
+                            inCard = true;
+                            cardTitle = null;
+                            cardContent = [];
+                            continue;
+                        }
+                        if (line.includes('├') && inCard && !cardTitle) {
+                            // Next lines are card content
+                            continue;
+                        }
+                        if (line.startsWith('└') && inCard) {
+                            // End of card
+                            if (cardTitle) {
+                                this.elements.cards.push({
+                                    title: cardTitle,
+                                    content: cardContent.join('\n').trim()
+                                });
+                            }
+                            inCard = false;
+                            cardTitle = null;
+                            cardContent = [];
+                            continue;
+                        }
+                        continue;
+                    }
+
+                    // Inside card - first non-border line is title
+                    if (inCard && !cardTitle && line.trim()) {
+                        cardTitle = line.trim();
+                        continue;
+                    }
+
+                    // Card content
+                    if (inCard && cardTitle) {
+                        cardContent.push(line);
+                        continue;
+                    }
+
+                    // Parse buttons: [A] Label
+                    const buttonMatches = [...line.matchAll(/\[([A-Z0-9])\]\s*([A-Za-z][A-Za-z\s]*?)(?=\s{2}|\s*\[|\s*║|$)/g)];
+                    for (const match of buttonMatches) {
+                        this.elements.buttons.push({
+                            key: match[1],
+                            label: match[2].trim()
+                        });
+                    }
+
+                    // Parse status indicators
+                    const statusSymbols = {
+                        '●': 'running',
+                        '○': 'stopped',
+                        '◐': 'warning',
+                        '◑': 'paused',
+                        '◉': 'error'
+                    };
+
+                    for (const [symbol, state] of Object.entries(statusSymbols)) {
+                        const regex = new RegExp(symbol + '\\s+(\\w+)', 'g');
+                        let match;
+                        while ((match = regex.exec(line)) !== null) {
+                            this.elements.statuses.push({
+                                symbol,
+                                state,
+                                context: match[1]
+                            });
+                        }
+                    }
+
+                    // Parse tables (lines with │ separators)
+                    if (line.includes('│') && !line.includes('║')) {
+                        if (!inTable) {
+                            inTable = true;
+                            tableLines = [];
+                        }
+                        // Skip separator lines
+                        if (!line.match(/^[\s│├└┌─]+$/)) {
+                            tableLines.push(line);
+                        }
+                    } else if (inTable) {
+                        // End of table
+                        if (tableLines.length >= 2) {
+                            this.elements.tables.push(this.parseTable(tableLines));
+                        }
+                        inTable = false;
+                        tableLines = [];
+                    }
+
+                    // Parse plain text (lines with content but no special patterns)
+                    if (this.isPlainText(line)) {
+                        const trimmed = line.trim();
+                        if (trimmed) {
+                            this.elements.text.push(trimmed);
+                        }
+                    }
+                }
+
+                // Handle remaining table
+                if (inTable && tableLines.length >= 2) {
+                    this.elements.tables.push(this.parseTable(tableLines));
+                }
+
+                return this.elements;
+            }
+
+            isBorderLine(line) {
+                return /^[╔╗╚╝║═┌┐└┘│─├┤┬┴┼]+$/.test(line.trim());
+            }
+
+            isPlainText(line) {
+                const trimmed = line.trim();
+                if (!trimmed) return false;
+                if (this.isBorderLine(line)) return false;
+                if (/\[([A-Z0-9])\]/.test(trimmed)) return false;
+                if (/[●○◐◑◉]/.test(trimmed)) return false;
+                if (trimmed.includes('│')) return false;
+                return true;
+            }
+
+            parseTable(lines) {
+                const rows = lines.map(line => {
+                    return line.split('│')
+                        .map(cell => cell.trim())
+                        .filter(cell => cell.length > 0);
+                }).filter(row => row.length > 0);
+
+                return {
+                    headers: rows[0] || [],
+                    rows: rows.slice(1)
+                };
+            }
+
+            getReport() {
+                return {
+                    hash: this.hash,
+                    title: this.title,
+                    elements: {
+                        buttons: this.elements.buttons.map(b => ({ key: b.key, label: b.label })),
+                        statuses: this.elements.statuses.map(s => ({ symbol: s.symbol, state: s.state, context: s.context })),
+                        tables: this.elements.tables.map(t => ({ rows: t.rows.length + 1, cols: t.headers.length })),
+                        cards: this.elements.cards.map(c => ({ title: c.title })),
+                        textCount: this.elements.text.length
+                    }
+                };
+            }
+        }
+
+        // ============================================
+        // STRICT COMPLIANCE RENDERER
+        // Renders ONLY what is parsed
+        // ============================================
+
+        class AsciiRenderer {
+            constructor(outputEl) {
+                this.output = outputEl;
+            }
+
+            render(elements) {
+                this.output.innerHTML = '';
+
+                // Render buttons
+                if (elements.buttons.length > 0) {
+                    const buttonBar = document.createElement('div');
+                    buttonBar.className = 'button-bar';
+                    for (const btn of elements.buttons) {
+                        const button = document.createElement('button');
+                        button.className = 'ascii-button';
+                        button.innerHTML = `<kbd>${btn.key}</kbd> ${btn.label}`;
+                        button.onclick = () => handleButtonClick(btn.key, btn.label);
+                        buttonBar.appendChild(button);
+                    }
+                    this.output.appendChild(buttonBar);
+                }
+
+                // Render cards (which may contain tables and statuses)
+                if (elements.cards.length > 0) {
+                    for (const card of elements.cards) {
+                        this.renderCard(card, elements);
+                    }
+                } else {
+                    // Render tables directly if no cards
+                    for (const table of elements.tables) {
+                        this.output.appendChild(this.renderTable(table));
+                    }
+
+                    // Render statuses directly if no cards
+                    if (elements.statuses.length > 0) {
+                        const statusBar = document.createElement('div');
+                        statusBar.className = 'status-bar';
+                        for (const status of elements.statuses) {
+                            statusBar.appendChild(this.renderStatus(status));
+                        }
+                        this.output.appendChild(statusBar);
+                    }
+                }
+
+                // Render plain text (only if no other elements)
+                if (elements.text.length > 0 && elements.buttons.length === 0 && elements.statuses.length === 0 && elements.tables.length === 0) {
+                    for (const text of elements.text) {
+                        const textEl = document.createElement('div');
+                        textEl.className = 'ascii-text';
+                        textEl.textContent = text;
+                        this.output.appendChild(textEl);
+                    }
+                }
+
+                // If nothing was rendered, output stays empty (Rule 4: Empty = empty)
+            }
+
+            renderCard(card, elements) {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'ascii-card';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'ascii-card-title';
+                titleEl.textContent = card.title;
+                cardEl.appendChild(titleEl);
+
+                const contentEl = document.createElement('div');
+                contentEl.className = 'ascii-card-content';
+
+                // Check if card content has table
+                const hasTable = card.content.includes('│');
+                if (hasTable) {
+                    // Parse table from card content
+                    const lines = card.content.split('\n').filter(l => l.includes('│') && !l.match(/^[\s│├└┌─]+$/));
+                    if (lines.length >= 2) {
+                        const tableData = this.parseTableFromLines(lines);
+                        contentEl.appendChild(this.renderTable(tableData));
+                    }
+                } else {
+                    // Render as text
+                    contentEl.textContent = card.content;
+                }
+
+                cardEl.appendChild(contentEl);
+                this.output.appendChild(cardEl);
+            }
+
+            parseTableFromLines(lines) {
+                const rows = lines.map(line => {
+                    return line.split('│')
+                        .map(cell => cell.trim())
+                        .filter(cell => cell.length > 0);
+                }).filter(row => row.length > 0);
+
+                return {
+                    headers: rows[0] || [],
+                    rows: rows.slice(1)
+                };
+            }
+
+            renderTable(table) {
+                const tableEl = document.createElement('table');
+                tableEl.className = 'ascii-table';
+
+                // Header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                for (const header of table.headers) {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                }
+                thead.appendChild(headerRow);
+                tableEl.appendChild(thead);
+
+                // Body
+                const tbody = document.createElement('tbody');
+                for (const row of table.rows) {
+                    const tr = document.createElement('tr');
+                    for (let i = 0; i < table.headers.length; i++) {
+                        const td = document.createElement('td');
+                        const cellContent = row[i] || '';
+
+                        // Check for status indicators in cell
+                        const statusMatch = cellContent.match(/([●○◐◑◉])\s*(\w+)/);
+                        if (statusMatch) {
+                            const statusEl = this.renderStatus({ symbol: statusMatch[1], context: statusMatch[2] });
+                            td.appendChild(statusEl);
+                        } else {
+                            td.textContent = cellContent;
+                        }
+                        tr.appendChild(td);
+                    }
+                    tbody.appendChild(tr);
+                }
+                tableEl.appendChild(tbody);
+
+                return tableEl;
+            }
+
+            renderStatus(status) {
+                const el = document.createElement('span');
+                el.className = `status-indicator status-${status.state}`;
+                el.textContent = `${status.symbol} ${status.context}`;
+                return el;
+            }
+        }
+
+        // ============================================
+        // SYNC CLIENT
+        // ============================================
+
+        const SYNC_URL = 'ws://localhost:3839';
+        let ws = null;
+        const parser = new AsciiParser();
+        const renderer = new AsciiRenderer(document.getElementById('guiOutput'));
+
+        function connectSync() {
+            try {
+                ws = new WebSocket(SYNC_URL);
+
+                ws.onopen = () => {
+                    updateSyncStatus('synced', 'Connected');
+                    ws.send(JSON.stringify({ type: 'get_state' }));
+                };
+
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'file_update') {
+                        document.getElementById('asciiInput').value = msg.content;
+                        onAsciiChange();
+                    } else if (msg.type === 'action_processed') {
+                        // Show feedback
+                        const feedback = document.getElementById('actionFeedback');
+                        const actionText = document.getElementById('actionText');
+                        actionText.textContent = `Action processed: ${msg.changes.join(', ')}`;
+                        feedback.style.display = 'block';
+                        setTimeout(() => feedback.style.display = 'none', 3000);
+                    }
+                };
+
+                ws.onclose = () => {
+                    updateSyncStatus('disconnected', 'Disconnected');
+                    setTimeout(connectSync, 3000);
+                };
+
+                ws.onerror = () => {
+                    updateSyncStatus('disconnected', 'Error');
+                };
+            } catch (e) {
+                updateSyncStatus('disconnected', 'Failed');
+            }
+        }
+
+        function updateSyncStatus(state, text) {
+            const dot = document.getElementById('syncDot');
+            const statusText = document.getElementById('syncText');
+            dot.className = 'sync-dot ' + state;
+            statusText.textContent = text;
+        }
+
+        async function updateHashDisplay() {
+            const content = document.getElementById('asciiInput').value;
+            const stripped = content.replace(/ver:[a-f0-9]{8}/i, 'ver:--------');
+            const encoder = new TextEncoder();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(stripped));
+            const computed = Array.from(new Uint8Array(hashBuffer))
+                .map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 8);
+
+            const embedded = parser.hash;
+            const display = document.getElementById('hashDisplay');
+
+            if (embedded === computed) {
+                display.textContent = `ver:${computed} ✓`;
+                display.classList.remove('mismatch');
+            } else if (embedded) {
+                display.textContent = `ver:${embedded} ≠ ${computed}`;
+                display.classList.add('mismatch');
+            } else {
+                display.textContent = `ver:${computed}`;
+                display.classList.remove('mismatch');
+            }
+        }
+
+        // ============================================
+        // MAIN HANDLERS
+        // ============================================
+
+        function onAsciiChange() {
+            const ascii = document.getElementById('asciiInput').value;
+            const elements = parser.parse(ascii);
+
+            // Render GUI (strict compliance - only parsed elements)
+            renderer.render(elements);
+
+            // Update counts
+            document.getElementById('buttonCount').textContent = elements.buttons.length;
+            document.getElementById('statusCount').textContent = elements.statuses.length;
+            document.getElementById('tableCount').textContent = elements.tables.length;
+            document.getElementById('cardCount').textContent = elements.cards.length;
+
+            // Generate parse report
+            const report = parser.getReport();
+            document.getElementById('parseReportContent').textContent = JSON.stringify(report, null, 2);
+            document.getElementById('parseReport').style.display = 'block';
+
+            // Update hash display
+            updateHashDisplay();
+
+            // Send parse report to sync server (for AI verification)
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'parse_report',
+                    ...report
+                }));
+            }
+        }
+
+        function handleButtonClick(key, label) {
+            console.log(`Button clicked: [${key}] ${label}`);
+
+            // Show visual feedback (find button by text)
+            const buttons = document.querySelectorAll('.ascii-button');
+            for (const btn of buttons) {
+                if (btn.textContent.includes(`[${key}]`)) {
+                    btn.style.transform = 'scale(0.95)';
+                    setTimeout(() => btn.style.transform = '', 100);
+                    break;
+                }
+            }
+
+            // Send to sync server
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'gui_action',
+                    action: 'click',
+                    key,
+                    label,
+                    hash: parser.hash,
+                    timestamp: Date.now()
+                }));
+            } else {
+                console.warn('Not connected to sync server');
+            }
+        }
+
+        // Initialize
+        setTimeout(connectSync, 500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+commit	task	status	description
+4d0f870	1	pass	PixelBuffer with setPixel, drawRect, drawProgressBar, getRegion, toPNG, toASCII
+57dc280	4	pass	GlyphAtlas with 6x10 bitmap font, drawText, drawTextCell
+WIP	5	skip	PixelFormulaEngine - paused to stabilize Phase 2 first

@@ -63,7 +63,7 @@ npm start
 | `sync/cell-store.js` | Reactive key-value store | 7 |
 | `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 80 tests**
+**Total: 88 tests**
 
 ## Formula Functions
 
@@ -312,6 +312,44 @@ curl -X POST http://localhost:3839/api/v1/alerts \
 - Discord webhooks
 - PagerDuty Events API
 - Custom endpoints (any URL that accepts JSON POST)
+
+### Dashboard Management
+
+Save, load, and switch between visualization configurations.
+
+#### POST /api/v1/dashboards
+Save current template and alerts as a named dashboard.
+
+```bash
+curl -X POST http://localhost:3839/api/v1/dashboards \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "system-monitor"}'
+# {"ok":true,"name":"system-monitor"}
+```
+
+#### GET /api/v1/dashboards
+List all saved dashboards.
+
+```bash
+curl http://localhost:3839/api/v1/dashboards
+# [{"name":"system-monitor","created":1711050000000,"templateSize":5,"alertCount":2}]
+```
+
+#### GET /api/v1/dashboards/:name
+Load a dashboard (applies template and alerts).
+
+```bash
+curl http://localhost:3839/api/v1/dashboards/system-monitor
+# {"ok":true,"template":[...],"alerts":[...]}
+```
+
+#### DELETE /api/v1/dashboards/:name
+Delete a dashboard.
+
+```bash
+curl -X DELETE http://localhost:3839/api/v1/dashboards/system-monitor
+# {"ok":true}
+```
 
 ### Time-Series API
 

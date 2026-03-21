@@ -7,6 +7,7 @@ import { CellStore } from './cell-store.js';
 import { PixelFormulaEngine } from './pixel-formula-engine.js';
 import { AlertEngine } from './alert-engine.js';
 import { TimeSeriesStore } from './time-series-store.js';
+import { DashboardStore } from './dashboard-store.js';
 
 export class PxOSServer {
     constructor(port = 3839) {
@@ -15,6 +16,7 @@ export class PxOSServer {
         this.engine = new PixelFormulaEngine(480, 240);
         this.alertEngine = new AlertEngine();
         this.timeSeriesStore = new TimeSeriesStore({ maxPoints: 1000, minInterval: 1000 });
+        this.dashboardStore = new DashboardStore();
         this.template = [];
         this.httpServer = null;
         this.wss = null;
@@ -124,6 +126,14 @@ export class PxOSServer {
                 this.handleGetCellHistory(req, res, url);
             } else if (pathname === '/api/v1/history') {
                 this.handleGetAllHistory(req, res, url);
+            } else if (pathname === '/api/v1/dashboards' && req.method === 'GET') {
+                this.handleListDashboards(req, res);
+            } else if (pathname === '/api/v1/dashboards' && req.method === 'POST') {
+                await this.handleSaveDashboard(req, res);
+            } else if (pathname.startsWith('/api/v1/dashboards/') && req.method === 'GET') {
+                this.handleLoadDashboard(req, res, url);
+            } else if (pathname.startsWith('/api/v1/dashboards/') && req.method === 'DELETE') {
+                this.handleDeleteDashboard(req, res, url);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -188,6 +198,46 @@ export class PxOSServer {
         const points = parseInt(url.searchParams.get('points')) || 100;
         const history = this.timeSeriesStore.getAllHistory(points);
         this.sendJSON(res, 200, history);
+    }
+
+    handleListDashboards(req, res) {
+        this.sendJSON(res, 200, this.dashboardStore.list());
+    }
+
+    async handleSaveDashboard(req, res) {
+        const body = await this.readBody(req);
+        const { name } = JSON.parse(body);
+        
+        if (!name) {
+            this.sendError(res, 400, 'Dashboard name required');
+            return;
+        }
+
+        this.dashboardStore.save(name, this.template, this.alertEngine.getRules());
+        this.sendJSON(res, 200, { ok: true, name });
+    }
+
+    handleLoadDashboard(req, res, url) {
+        const name = url.pathname.replace('/api/v1/dashboards/', '');
+        const dashboard = this.dashboardStore.load(name);
+
+        if (!dashboard) {
+            this.sendError(res, 404, 'Dashboard not found');
+            return;
+        }
+
+        // Apply template and alerts
+        this.template = [...dashboard.template];
+        this.alertEngine.setRules(dashboard.alerts);
+
+        this.sendJSON(res, 200, { ok: true, ...dashboard });
+    }
+
+    handleDeleteDashboard(req, res, url) {
+        const name = url.pathname.replace('/api/v1/dashboards/', '');
+        const deleted = this.dashboardStore.delete(name);
+
+        this.sendJSON(res, 200, { ok: deleted });
     }
 
     handleWebSocket(ws) {

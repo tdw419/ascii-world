@@ -55,18 +55,42 @@ npm start
 |------|---------|-------|
 | `sync/pixel-buffer.js` | RGBA pixel buffer with drawing primitives | 16 |
 | `sync/glyph-atlas.js` | 6×10 bitmap font for text rendering | - |
-| `sync/pixel-formula-engine.js` | Reactive formula evaluator | 20 |
+| `sync/pixel-formula-engine.js` | Reactive formula evaluator | 28 |
 | `sync/pixel-renderer.js` | ASCII → PNG bridge | - |
 | `sync/cell-store.js` | Reactive key-value store | 7 |
 | `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 50 tests**
+**Total: 58 tests**
 
 ## Formula Functions
+
+### Basic Formulas
 
 | Function | Pixel Operation | Example |
 |----------|-----------------|---------|
 | `BAR(col, row, val, w)` | Progress bar | `BAR(0, 0, 'cpu', 40)` |
+| `TEXT(col, row, val)` | Text label | `TEXT(0, 0, 'label')` |
+| `STATUS(col, row, val, ...)` | Status indicator | `STATUS(0, 0, 'state', 2, '◉ done', '○ idle')` |
+| `BOX(col, row, w, h)` | Box outline | `BOX(0, 0, 40, 5)` |
+| `SPARKLINE(col, row, arr, w)` | Mini chart | `SPARKLINE(0, 0, 'history', 50)` |
+| `RECT(col, row, w, h, color)` | Filled rectangle | `RECT(0, 0, 10, 5, 'barFill')` |
+| `LINE(col, row, len, dir, color)` | Line (h/v) | `LINE(0, 0, 40, 'h', 'border')` |
+| `CIRCLE(col, row, r, color, fill)` | Circle | `CIRCLE(10, 5, 3, 'active', true)` |
+| `GAUGE(col, row, val, r, color)` | Circular gauge | `GAUGE(10, 5, 'cpu', 3, 'active')` |
+| `NUMBER(col, row, val, fmt)` | Formatted number | `NUMBER(0, 0, 'cpu', '0%')` |
+| `TIME(col, row, fmt)` | Current time | `TIME(70, 0, 'HH:mm')` |
+
+### Advanced Formulas
+
+| Function | Pixel Operation | Example |
+|----------|-----------------|---------|
+| `CHART(col, row, arr, w, h, color)` | Bar chart | `CHART(0, 2, 'data', 40, 3, 'barFill')` |
+| `DONUT(col, row, val, r, color, bg)` | Donut chart | `DONUT(10, 5, 'cpu', 3, 'active', 'barEmpty')` |
+| `PROGRESS(col, row, val, size, color)` | Circular progress | `PROGRESS(70, 3, 'cpu', 3, 'active')` |
+| `BADGE(col, row, text, bg, fg)` | Status badge | `BADGE(0, 0, 'ACTIVE', 'active', 'white')` |
+| `COND(col, row, val, thresh, above, below)` | Conditional color | `COND(0, 2, 'cpu', 0.8, 'critical', 'active')` |
+| `HISTORY(col, row, val, prev, fmt)` | Value with trend | `HISTORY(0, 2, 'cpu', 'cpu_prev', '0%')` |
+| `GRID(col, row, arr, cols, color)` | Array as grid | `GRID(0, 5, 'metrics', 4, 'text')` |
 | `TEXT(col, row, val)` | Text label | `TEXT(0, 0, 'label')` |
 | `STATUS(col, row, val, ...)` | Status indicator | `STATUS(0, 0, 'state', 2, '◉ done', '○ idle')` |
 | `BOX(col, row, w, h)` | Box outline | `BOX(0, 0, 40, 5)` |

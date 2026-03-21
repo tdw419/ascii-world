@@ -351,6 +351,163 @@ export class PixelFormulaEngine {
     }
 
     /**
+     * Draw a bar chart from array.
+     * =CHART(col, row, cellArray, width, height, color)
+     */
+    CHART(col, row, cellArray, widthCells = 10, heightCells = 3, color = 'barFill') {
+        const arr = this.resolveValue(cellArray);
+        if (!Array.isArray(arr) || arr.length === 0) return;
+
+        const px = col * this.atlas.glyphW;
+        const py = row * this.atlas.glyphH;
+        const chartW = widthCells * this.atlas.glyphW;
+        const chartH = heightCells * this.atlas.glyphH;
+        const [r, g, b] = this.resolveColor(color);
+
+        const max = Math.max(...arr);
+        const barWidth = Math.floor(chartW / arr.length);
+        const gap = 1;
+
+        for (let i = 0; i < arr.length; i++) {
+            const val = arr[i] || 0;
+            const barH = Math.round((val / max) * chartH);
+            const x = px + i * barWidth;
+            const y = py + chartH - barH;
+            
+            this.buffer.drawRect(x, y, barWidth - gap, barH, r, g, b);
+        }
+    }
+
+    /**
+     * Draw a donut/ring chart.
+     * =DONUT(col, row, cellValue, radius, color, bgColor)
+     */
+    DONUT(col, row, cellValue, radiusCells = 3, color = 'active', bgColor = 'barEmpty') {
+        const cx = col * this.atlas.glyphW + this.atlas.glyphW / 2;
+        const cy = row * this.atlas.glyphH + this.atlas.glyphH / 2;
+        const outerR = radiusCells * this.atlas.glyphW;
+        const innerR = outerR * 0.6;
+        const [cr, cg, cb] = this.resolveColor(color);
+        const [br, bg, bb] = this.resolveColor(bgColor);
+
+        const val = this.resolveValue(cellValue);
+        const fraction = Math.max(0, Math.min(1, Number(val) || 0));
+
+        // Draw background ring
+        for (let angle = 0; angle < 2 * Math.PI; angle += 0.02) {
+            for (let r = innerR; r <= outerR; r++) {
+                const x = Math.round(cx + r * Math.cos(angle));
+                const y = Math.round(cy + r * Math.sin(angle));
+                this.buffer.setPixel(x, y, br, bg, bb);
+            }
+        }
+
+        // Draw filled arc
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + (fraction * 2 * Math.PI);
+
+        for (let angle = startAngle; angle < endAngle; angle += 0.02) {
+            for (let r = innerR; r <= outerR; r++) {
+                const x = Math.round(cx + r * Math.cos(angle));
+                const y = Math.round(cy + r * Math.sin(angle));
+                this.buffer.setPixel(x, y, cr, cg, cb);
+            }
+        }
+    }
+
+    /**
+     * Draw circular progress indicator.
+     * =PROGRESS(col, row, cellValue, size, color)
+     */
+    PROGRESS(col, row, cellValue, radiusCells = 3, color = 'active') {
+        this.DONUT(col, row, cellValue, radiusCells, color, 'barEmpty');
+    }
+
+    /**
+     * Draw a status badge.
+     * =BADGE(col, row, text, bgColor, textColor)
+     */
+    BADGE(col, row, text, bgColor = 'active', textColor = 'white') {
+        const label = String(this.resolveValue(text) ?? text);
+        const [br, bg, bb] = this.resolveColor(bgColor);
+        const [tr, tg, tb] = this.resolveColor(textColor);
+
+        const px = col * this.atlas.glyphW;
+        const py = row * this.atlas.glyphH;
+        const padding = 3;
+        const labelWidth = label.length * this.atlas.glyphW;
+        const badgeW = labelWidth + padding * 2;
+        const badgeH = this.atlas.glyphH;
+
+        // Draw badge background
+        this.buffer.drawRect(px, py, badgeW, badgeH, br, bg, bb);
+
+        // Draw text
+        this.atlas.drawText(this.buffer, px + padding, py, label, [tr, tg, tb]);
+    }
+
+    /**
+     * Conditional cell coloring.
+     * =COND(col, row, cellValue, threshold, aboveColor, belowColor)
+     */
+    COND(col, row, cellValue, threshold = 0.5, aboveColor = 'active', belowColor = 'idle') {
+        const val = this.resolveValue(cellValue);
+        const num = Number(val) || 0;
+        const color = num >= threshold ? aboveColor : belowColor;
+        const [r, g, b] = this.resolveColor(color);
+
+        // Fill cell with color
+        const px = col * this.atlas.glyphW;
+        const py = row * this.atlas.glyphH;
+        this.buffer.drawRect(px, py, this.atlas.glyphW, this.atlas.glyphH, r, g, b);
+    }
+
+    /**
+     * Show value with trend arrow.
+     * =HISTORY(col, row, cellValue, prevValue, format)
+     */
+    HISTORY(col, row, cellValue, prevValue, format = '0.0') {
+        const current = Number(this.resolveValue(cellValue)) || 0;
+        const prev = Number(this.resolveValue(prevValue)) || current;
+        const diff = current - prev;
+
+        // Format value
+        let text;
+        if (format.includes('%')) {
+            text = (current * 100).toFixed(1) + '%';
+        } else {
+            text = current.toFixed(1);
+        }
+
+        // Add trend arrow
+        const arrow = diff > 0.001 ? ' ↑' : diff < -0.001 ? ' ↓' : ' →';
+        text += arrow;
+
+        // Color based on direction
+        const color = diff > 0 ? COLORS.active : diff < 0 ? COLORS.critical : COLORS.idle;
+        this.atlas.drawTextCell(this.buffer, col, row, text, color);
+    }
+
+    /**
+     * Display array as grid.
+     * =GRID(col, row, cellArray, cols, color)
+     */
+    GRID(col, row, cellArray, cols = 4, color = 'text') {
+        const arr = this.resolveValue(cellArray);
+        if (!Array.isArray(arr) || arr.length === 0) return;
+
+        const [r, g, b] = this.resolveColor(color);
+
+        for (let i = 0; i < arr.length; i++) {
+            const c = col + (i % cols);
+            const r = row + Math.floor(i / cols);
+            const val = arr[i];
+            const text = typeof val === 'number' ? val.toFixed(1) : String(val);
+            this.atlas.drawTextCell(this.buffer, c, r, text, [r, g, b]);
+        }
+    }
+
+    /**
      * Evaluate a pixel template (array of formula calls).
      * Each entry: { fn: 'BAR', args: [col, row, 'cpu', 40] }
      */

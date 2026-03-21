@@ -198,4 +198,85 @@ describe('PixelFormulaEngine', () => {
         const pixel = engine.buffer.getPixel(10, 5);
         assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'TIME should draw pixels');
     });
+
+    // Advanced formula tests
+
+    it('CHART draws bar chart from array', () => {
+        engine.clear();
+        engine.setCells({ data: [0.2, 0.5, 0.8, 0.3] });
+        engine.CHART(0, 0, 'data', 10, 3, 'barFill');
+
+        // Check some pixels are filled
+        const pixel = engine.buffer.getPixel(30, 20);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'CHART should draw pixels');
+    });
+
+    it('DONUT draws ring chart', () => {
+        engine.clear();
+        engine.setCells({ cpu: 0.75 });
+        engine.DONUT(5, 3, 'cpu', 2, 'active', 'barEmpty');
+
+        // Check center area has some pixels
+        const pixel = engine.buffer.getPixel(33, 35);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'DONUT should draw pixels');
+    });
+
+    it('PROGRESS draws circular progress', () => {
+        engine.clear();
+        engine.setCells({ progress: 0.5 });
+        engine.PROGRESS(5, 3, 'progress', 2, 'active');
+
+        // Check some pixels are drawn
+        const pixel = engine.buffer.getPixel(33, 35);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'PROGRESS should draw pixels');
+    });
+
+    it('BADGE draws status badge', () => {
+        engine.clear();
+        engine.BADGE(0, 0, 'ACTIVE', 'active', 'white');
+
+        // Check badge background
+        const pixel = engine.buffer.getPixel(5, 5);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'BADGE should draw pixels');
+    });
+
+    it('COND colors cell based on threshold', () => {
+        engine.clear();
+        engine.setCells({ cpu: 0.9 });
+        engine.COND(0, 0, 'cpu', 0.8, 'critical', 'active');
+
+        // Check cell is filled with critical color (red)
+        const pixel = engine.buffer.getPixel(3, 5);
+        assert.deepStrictEqual(pixel.slice(0, 3), [0xf8, 0x51, 0x49]);
+    });
+
+    it('COND uses below color when under threshold', () => {
+        engine.clear();
+        engine.setCells({ cpu: 0.3 });
+        engine.COND(0, 0, 'cpu', 0.8, 'critical', 'active');
+
+        // Check cell is filled with active color (green)
+        const pixel = engine.buffer.getPixel(3, 5);
+        assert.deepStrictEqual(pixel.slice(0, 3), [0x3f, 0xb9, 0x50]);
+    });
+
+    it('HISTORY shows value with trend arrow', () => {
+        engine.clear();
+        engine.setCells({ cpu: 0.75, cpu_prev: 0.50 });
+        engine.HISTORY(0, 0, 'cpu', 'cpu_prev', '0%');
+
+        // Check text was drawn
+        const pixel = engine.buffer.getPixel(10, 5);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'HISTORY should draw pixels');
+    });
+
+    it('GRID displays array as grid', () => {
+        engine.clear();
+        engine.setCells({ metrics: [1, 2, 3, 4, 5, 6] });
+        engine.GRID(0, 0, 'metrics', 3, 'text');
+
+        // Check first cell has content
+        const pixel = engine.buffer.getPixel(3, 5);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'GRID should draw pixels');
+    });
 });

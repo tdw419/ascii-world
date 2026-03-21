@@ -301,16 +301,16 @@ ascii_world/
 
 ## Implementation Status (Mar 2026)
 
-**Phase 2 Complete (merged to master):**
-- `sync/pixel-buffer.js` — RGBA buffer, 9 tests passing
-- `sync/glyph-atlas.js` — 6×10 bitmap font, 7 tests passing
+**Phase 2 Complete (all tests passing):**
+- `sync/pixel-buffer.js` — RGBA buffer, 16 tests passing
+- `sync/glyph-atlas.js` — 6×10 bitmap font, tests passing
+- `sync/pixel-formula-engine.js` — Pixel formulas, 11 tests passing
 - `sync/pixel-renderer.js` — ASCII → PNG bridge
 - API: `GET /api/v1/ui/pixels/{file}` returns 480×240 PNG
+- Total: 27 tests passing
 
-**Phase 3 Paused (needs design review):**
-- `sync/pixel-formula-engine.js.wip` — Direct pixel formulas (4/11 tests)
-- Issue: Interface mismatch between formula functions and glyph atlas
-- Solution: Stabilize Phase 2 first, then redesign Phase 3 API
+**Phase 3: Not started**
+- Waiting for Phase 2 stabilization
 
 ## Running It
 

@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "scripts": {
     "ascii": "bun run src/ascii/cli.ts",
     "ascii:dev": "bun --watch run src/ascii/cli.ts"

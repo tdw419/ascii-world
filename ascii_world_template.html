@@ -251,6 +251,53 @@
             font-weight: 600;
         }
 
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            background: #21262d;
+            padding: 4px 4px 0 4px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #8b949e;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #c9d1d9;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab.active {
+            color: #00d4ff;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-bottom: 1px solid #161b22;
+            margin-bottom: -1px;
+        }
+
+        .code-view {
+            padding: 16px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            background: #0d1117;
+            color: #c9d1d9;
+            white-space: pre-wrap;
+            min-height: 400px;
+            overflow: auto;
+            display: none;
+        }
+
+        .code-view.active {
+            display: block;
+        }
+
         /* Compliance status */
         .compliance-status {
             display: flex;
@@ -316,9 +363,19 @@
         <div class="panel">
             <div class="panel-header">
                 <span class="panel-title">GUI Output</span>
-                <span style="font-size: 11px; color: #8b949e;">Strict Compliance Renderer</span>
+                <span style="font-size: 11px; color: #8b949e;">Text-to-Interface Engine</span>
             </div>
-            <div id="guiOutput" class="gui-output"></div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('preview')">UI Preview</div>
+                <div class="tab" onclick="switchTab('react')">React JSX</div>
+                <div class="tab" onclick="switchTab('python')">Python Textual</div>
+            </div>
+
+            <div id="guiOutput" class="gui-output active"></div>
+            <div id="reactCode" class="code-view"></div>
+            <div id="pythonCode" class="code-view"></div>
+
             <div class="compliance-status">
                 <div class="compliance-item">
                     <span class="compliance-label">Buttons:</span>
@@ -399,7 +456,7 @@
                     // Skip box drawing borders for content detection
                     if (this.isBorderLine(line)) {
                         // Check for card boundaries
-                        if (line.startsWith('┌') && !inCard) {
+                        if (line.trim().startsWith('┌') && !inCard) {
                             inCard = true;
                             cardTitle = null;
                             cardContent = [];
@@ -409,7 +466,7 @@
                             // Next lines are card content
                             continue;
                         }
-                        if (line.startsWith('└') && inCard) {
+                        if (line.trim().startsWith('└') && inCard) {
                             // End of card
                             if (cardTitle) {
                                 this.elements.cards.push({
@@ -438,7 +495,7 @@
                     }
 
                     // Parse buttons: [A] Label
-                    const buttonMatches = [...line.matchAll(/\[([A-Z0-9])\]\s*([A-Za-z][A-Za-z\s]*?)(?=\s{2}|\s*\[|\s*║|$)/g)];
+                    const buttonMatches = [...line.matchAll(/\[([A-Z0-9])\]\s*(.+?)(?=\s{2}|\s*\[|\s*║|$)/g)];
                     for (const match of buttonMatches) {
                         this.elements.buttons.push({
                             key: match[1],
@@ -456,30 +513,32 @@
                     };
 
                     for (const [symbol, state] of Object.entries(statusSymbols)) {
-                        const regex = new RegExp(symbol + '\\s+(\\w+)', 'g');
+                        const regex = new RegExp(symbol + '(?:\\s+(\\w+))?', 'g');
                         let match;
                         while ((match = regex.exec(line)) !== null) {
                             this.elements.statuses.push({
                                 symbol,
                                 state,
-                                context: match[1]
+                                context: match[1] || ''
                             });
                         }
                     }
 
                     // Parse tables (lines with │ separators)
-                    if (line.includes('│') && !line.includes('║')) {
+                    if (line.includes('│')) {
                         if (!inTable) {
                             inTable = true;
                             tableLines = [];
                         }
+                        // Strip outer borders if nested
+                        const content = line.replace(/^║|║$/g, '');
                         // Skip separator lines
-                        if (!line.match(/^[\s│├└┌─]+$/)) {
-                            tableLines.push(line);
+                        if (!content.match(/^[\s│├└┌─]+$/)) {
+                            tableLines.push(content);
                         }
                     } else if (inTable) {
                         // End of table
-                        if (tableLines.length >= 2) {
+                        if (tableLines.length >= 1) {
                             this.elements.tables.push(this.parseTable(tableLines));
                         }
                         inTable = false;
@@ -496,7 +555,7 @@
                 }
 
                 // Handle remaining table
-                if (inTable && tableLines.length >= 2) {
+                if (inTable && tableLines.length >= 1) {
                     this.elements.tables.push(this.parseTable(tableLines));
                 }
 
@@ -519,9 +578,16 @@
 
             parseTable(lines) {
                 const rows = lines.map(line => {
-                    return line.split('│')
+                    // Split by │ first
+                    let cells = line.split('│')
                         .map(cell => cell.trim())
                         .filter(cell => cell.length > 0);
+                    
+                    // If only one cell, try splitting by 2 or more spaces (smart split)
+                    if (cells.length === 1 && cells[0].includes('  ')) {
+                        cells = cells[0].split(/\s{2,}/).map(c => c.trim());
+                    }
+                    return cells;
                 }).filter(row => row.length > 0);
 
                 return {
@@ -699,6 +765,84 @@
         }
 
         // ============================================
+        // TEXT-TO-INTERFACE COMPILER
+        // ============================================
+
+        class AsciiCompiler {
+            constructor(ast) {
+                this.ast = ast;
+            }
+
+            toReact() {
+                let code = `import React from 'react';\n\n`;
+                code += `export default function AsciiInterface({ onAction }) {\n`;
+                code += `    return (\n        <div className="ascii-container">\n`;
+
+                if (this.ast.buttons.length > 0) {
+                    code += `            <div className="button-bar">\n`;
+                    for (const btn of this.ast.buttons) {
+                        code += `                <button className="ascii-button" onClick={() => onAction('${btn.key}', '${btn.label}')}>\n`;
+                        code += `                    <kbd>${btn.key}</kbd> ${btn.label}\n`;
+                        code += `                </button>\n`;
+                    }
+                    code += `            </div>\n`;
+                }
+
+                if (this.ast.tables.length > 0) {
+                    for (const table of this.ast.tables) {
+                        code += `            <table className="ascii-table">\n`;
+                        code += `                <thead><tr>${table.headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>\n`;
+                        code += `                <tbody>\n`;
+                        for (const row of table.rows) {
+                            code += `                    <tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>\n`;
+                        }
+                        code += `                </tbody>\n            </table>\n`;
+                    }
+                }
+
+                code += `        </div>\n    );\n}\n`;
+                return code;
+            }
+
+            toPython() {
+                let code = `from textual.app import App, ComposeResult\n`;
+                code += `from textual.widgets import Button, DataTable\n`;
+                code += `from textual.containers import Horizontal\n\n`;
+                code += `class AsciiApp(App):\n`;
+                code += `    def compose(self) -> ComposeResult:\n`;
+                
+                if (this.ast.tables.length > 0) {
+                    code += `        yield DataTable()\n`;
+                }
+                if (this.ast.buttons.length > 0) {
+                    code += `        with Horizontal():\n`;
+                    for (const btn of this.ast.buttons) {
+                        code += `            yield Button("${btn.label}", id="btn_${btn.key.toLowerCase()}")\n`;
+                    }
+                }
+                return code;
+            }
+        }
+
+        function switchTab(target) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+                if (t.textContent.toLowerCase().includes(target)) t.classList.add('active');
+                if (target === 'preview' && t.textContent === 'UI Preview') t.classList.add('active');
+            });
+
+            // Update tab contents
+            document.getElementById('guiOutput').classList.remove('active');
+            document.getElementById('reactCode').classList.remove('active');
+            document.getElementById('pythonCode').classList.remove('active');
+
+            if (target === 'preview') document.getElementById('guiOutput').classList.add('active');
+            if (target === 'react') document.getElementById('reactCode').classList.add('active');
+            if (target === 'python') document.getElementById('pythonCode').classList.add('active');
+        }
+
+        // ============================================
         // SYNC CLIENT
         // ============================================
 
@@ -790,6 +934,11 @@
             document.getElementById('statusCount').textContent = elements.statuses.length;
             document.getElementById('tableCount').textContent = elements.tables.length;
             document.getElementById('cardCount').textContent = elements.cards.length;
+
+            // Run Compiler
+            const compiler = new AsciiCompiler(elements);
+            document.getElementById('reactCode').textContent = compiler.toReact();
+            document.getElementById('pythonCode').textContent = compiler.toPython();
 
             // Generate parse report
             const report = parser.getReport();

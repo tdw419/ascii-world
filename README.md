@@ -43,7 +43,10 @@ npm install
 # Run tests
 npm test
 
-# Expected: 28 tests passing
+# Expected: 42 tests passing
+
+# Start server
+npm start
 ```
 
 ## Components
@@ -54,8 +57,10 @@ npm test
 | `sync/glyph-atlas.js` | 6×10 bitmap font for text rendering | - |
 | `sync/pixel-formula-engine.js` | Reactive formula evaluator | 12 |
 | `sync/pixel-renderer.js` | ASCII → PNG bridge | - |
+| `sync/cell-store.js` | Reactive key-value store | 7 |
+| `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 28 tests**
+**Total: 42 tests**
 
 ## Formula Functions
 
@@ -131,6 +136,110 @@ class PixelFormulaEngine {
   renderTemplate(template)
   toPNG() → Promise<Buffer>
 }
+```
+
+## Running the Server
+
+```bash
+# Start server (default port 3839)
+npm start
+
+# Or specify port
+PORT=8080 npm start
+node bin/pxos-server.js 8080
+```
+
+## Server API
+
+### HTTP Endpoints
+
+#### GET /health
+Health check endpoint.
+
+```bash
+curl http://localhost:3839/health
+# {"status":"ok","timestamp":1711050000000}
+```
+
+#### GET /api/v1/cells
+Get all current cell values.
+
+```bash
+curl http://localhost:3839/api/v1/cells
+# {"cpu":0.67,"mem":28.1}
+```
+
+#### POST /api/v1/cells
+Update cell values. Returns changed keys.
+
+```bash
+curl -X POST http://localhost:3839/api/v1/cells \
+  -H 'Content-Type: application/json' \
+  -d '{"cpu":0.75,"disk":45}'
+# {"ok":true,"changes":{"cpu":0.75,"disk":45}}
+```
+
+#### GET /api/v1/render
+Render current state as PNG image.
+
+```bash
+curl -o output.png http://localhost:3839/api/v1/render
+```
+
+#### POST /api/v1/template
+Set the render template (array of formula operations).
+
+```bash
+curl -X POST http://localhost:3839/api/v1/template \
+  -H 'Content-Type: application/json' \
+  -d '[{"fn":"BAR","args":[0,0,"cpu",40]}]'
+# {"ok":true,"templateSize":1}
+```
+
+### WebSocket
+
+Connect to `ws://localhost:3839` for live updates.
+
+```javascript
+const ws = new WebSocket('ws://localhost:3839');
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  // msg.type === 'cells'
+  // msg.cells = { cpu: 0.67, ... }
+  // msg.changes = { cpu: 0.67 } (only changed)
+};
+```
+
+## Example: Live Dashboard
+
+```javascript
+// Set up template
+await fetch('http://localhost:3839/api/v1/template', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify([
+    { fn: 'TEXT', args: [0, 0, 'title'] },
+    { fn: 'BAR', args: [0, 1, 'cpu', 40] },
+    { fn: 'BAR', args: [0, 2, 'mem', 40] },
+    { fn: 'STATUS', args: [42, 2, 'state', 2, '◉ done', 1, '● active', '○ idle'] }
+  ])
+});
+
+// Update cells (e.g., from an AI agent)
+await fetch('http://localhost:3839/api/v1/cells', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: 'System Monitor',
+    cpu: 0.67,
+    mem: 0.45,
+    state: 1
+  })
+});
+
+// Get rendered PNG
+const res = await fetch('http://localhost:3839/api/v1/render');
+const png = await res.arrayBuffer();
 ```
 
 ## License

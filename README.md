@@ -55,22 +55,34 @@ npm start
 |------|---------|-------|
 | `sync/pixel-buffer.js` | RGBA pixel buffer with drawing primitives | 16 |
 | `sync/glyph-atlas.js` | 6×10 bitmap font for text rendering | - |
-| `sync/pixel-formula-engine.js` | Reactive formula evaluator | 12 |
+| `sync/pixel-formula-engine.js` | Reactive formula evaluator | 20 |
 | `sync/pixel-renderer.js` | ASCII → PNG bridge | - |
 | `sync/cell-store.js` | Reactive key-value store | 7 |
 | `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 42 tests**
+**Total: 50 tests**
 
 ## Formula Functions
 
 | Function | Pixel Operation | Example |
 |----------|-----------------|---------|
-| `BAR(col, row, val, w)` | Progress bar | `=BAR(cpu, 40)` |
-| `TEXT(col, row, val)` | Text label | `=TEXT(label)` |
-| `STATUS(col, row, val, ...)` | Status indicator | `=STATUS(state, 2, "◉ done", "○ idle")` |
-| `BOX(col, row, w, h)` | Box outline | `=BOX(0, 0, 40, 5)` |
-| `SPARKLINE(col, row, arr, w)` | Mini chart | `=SPARKLINE(history, 50)` |
+| `BAR(col, row, val, w)` | Progress bar | `BAR(0, 0, 'cpu', 40)` |
+| `TEXT(col, row, val)` | Text label | `TEXT(0, 0, 'label')` |
+| `STATUS(col, row, val, ...)` | Status indicator | `STATUS(0, 0, 'state', 2, '◉ done', '○ idle')` |
+| `BOX(col, row, w, h)` | Box outline | `BOX(0, 0, 40, 5)` |
+| `SPARKLINE(col, row, arr, w)` | Mini chart | `SPARKLINE(0, 0, 'history', 50)` |
+| `RECT(col, row, w, h, color)` | Filled rectangle | `RECT(0, 0, 10, 5, 'barFill')` |
+| `LINE(col, row, len, dir, color)` | Line (h/v) | `LINE(0, 0, 40, 'h', 'border')` |
+| `CIRCLE(col, row, r, color, fill)` | Circle | `CIRCLE(10, 5, 3, 'active', true)` |
+| `GAUGE(col, row, val, r, color)` | Circular gauge | `GAUGE(10, 5, 'cpu', 3, 'active')` |
+| `NUMBER(col, row, val, fmt)` | Formatted number | `NUMBER(0, 0, 'cpu', '0%')` |
+| `TIME(col, row, fmt)` | Current time | `TIME(70, 0, 'HH:mm')` |
+
+### Colors
+
+Named colors: `active`, `idle`, `critical`, `barFill`, `barEmpty`, `border`, `borderHighlight`, `text`, `textMuted`, `white`, `black`, `red`, `green`, `blue`, `yellow`, `cyan`, `magenta`
+
+Or use RGB: `[255, 0, 0]` or hex: `0xff0000`
 
 ## Usage
 

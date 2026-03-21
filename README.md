@@ -242,6 +242,44 @@ const res = await fetch('http://localhost:3839/api/v1/render');
 const png = await res.arrayBuffer();
 ```
 
+## Browser Viewer
+
+Open `viewer/viewer.html` in your browser for a live visual dashboard.
+
+### Features
+- **Live canvas** - Renders PNG output in real-time
+- **Connection status** - Green ● connected, Red ○ disconnected
+- **Cell inspector** - Shows all current cell values
+- **Auto-reconnect** - Reconnects automatically if server restarts
+
+### Usage
+
+```bash
+# Start the server
+npm start
+
+# Open viewer in browser
+open viewer/viewer.html
+# Or serve it:
+npx serve .
+# Then visit http://localhost:3000/viewer/viewer.html
+```
+
+### Screenshot
+
+```
+┌─────────────────────────────────────────┐
+│ ● Connected | Last: 14:05:32            │
+├─────────────────────────────────────────┤
+│ [Canvas showing rendered PNG]           │
+│                                         │
+├─────────────────────────────────────────┤
+│ Cells                                   │
+│ cpu    0.75                             │
+│ mem    28.10                            │
+└─────────────────────────────────────────┘
+```
+
 ## License
 
 MIT

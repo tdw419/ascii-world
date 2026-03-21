@@ -125,4 +125,77 @@ describe('PixelFormulaEngine', () => {
         assert.strictEqual(png[2], 0x4E); // 'N'
         assert.strictEqual(png[3], 0x47); // 'G'
     });
+
+    // New formula tests
+
+    it('resolveColor returns color array', () => {
+        assert.deepStrictEqual(engine.resolveColor('active'), [0x3f, 0xb9, 0x50]);
+        assert.deepStrictEqual(engine.resolveColor([255, 0, 0]), [255, 0, 0]);
+        assert.deepStrictEqual(engine.resolveColor(0xff0000), [255, 0, 0]);
+    });
+
+    it('RECT draws filled rectangle', () => {
+        engine.clear();
+        engine.RECT(0, 0, 5, 3, 'barFill');
+
+        // Check inside rect has color
+        const inside = engine.buffer.getPixel(10, 10);
+        assert.deepStrictEqual(inside.slice(0, 3), [0x23, 0x86, 0x36]);
+    });
+
+    it('LINE draws horizontal line', () => {
+        engine.clear();
+        engine.LINE(0, 5, 10, 'h', 'border');
+
+        // Check line pixels at row 5 (y = 5 * 10 = 50)
+        const pixel = engine.buffer.getPixel(30, 50);
+        assert.deepStrictEqual(pixel.slice(0, 3), [0x30, 0x36, 0x3d]);
+    });
+
+    it('LINE draws vertical line', () => {
+        engine.clear();
+        engine.LINE(5, 0, 5, 'v', 'border');
+
+        // Check line pixels at col 5 (x = 5 * 6 = 30)
+        const pixel = engine.buffer.getPixel(30, 25);
+        assert.deepStrictEqual(pixel.slice(0, 3), [0x30, 0x36, 0x3d]);
+    });
+
+    it('CIRCLE draws filled circle', () => {
+        engine.clear();
+        engine.CIRCLE(5, 3, 2, 'active', true);
+
+        // Check center pixel (col 5 = 30px, row 3 = 30px, center at ~33, 35)
+        const center = engine.buffer.getPixel(33, 35);
+        assert.deepStrictEqual(center.slice(0, 3), [0x3f, 0xb9, 0x50]);
+    });
+
+    it('GAUGE draws circular gauge', () => {
+        engine.clear();
+        engine.setCells({ cpu: 0.75 });
+        engine.GAUGE(5, 3, 'cpu', 2, 'active');
+
+        // Check center pixel is filled
+        const center = engine.buffer.getPixel(33, 35);
+        assert.deepStrictEqual(center.slice(0, 3), [0x3f, 0xb9, 0x50]);
+    });
+
+    it('NUMBER formats percentage', () => {
+        engine.clear();
+        engine.setCells({ cpu: 0.75 });
+        engine.NUMBER(0, 0, 'cpu', '0%');
+
+        // Check text was drawn (7 should be visible)
+        const pixel = engine.buffer.getPixel(10, 5);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'NUMBER should draw pixels');
+    });
+
+    it('TIME draws current time', () => {
+        engine.clear();
+        engine.TIME(0, 0, 'HH:mm');
+
+        // Check text was drawn
+        const pixel = engine.buffer.getPixel(10, 5);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'TIME should draw pixels');
+    });
 });

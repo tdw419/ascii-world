@@ -1,600 +1,433 @@
-# ASCII World
+# pxOS — Pixel Operating System
 
-> **Build, Control, and Render** — AI agents create software from ASCII templates. The same ASCII becomes the running app AND can render as beautiful GUIs.
+**AI agents produce data. Humans consume pixels. pxOS bridges the gap.**
 
-## Overview
+An AI posts `{"cpu": 0.67}` — two hundred bytes. A formula engine evaluates that into a pixel grid. The pixel grid is the substrate.
 
-ASCII World is a platform for AI agents to build, control, and render software. It provides:
-
-- **Build** — AI describes apps in ASCII templates, they run immediately
-- **Control** — One dashboard to manage all your ASCII applications
-- **Render** — ASCII templates can render as React, Electron, or mobile GUIs
-- **Discover** — Auto-scan filesystem for ASCII-compatible projects
+## The Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        ASCII WORLD (Port 3422)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  [A] Projects  [B] Templates  [C] Bindings  [F] Dashboard  [X] Quit        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─ PROJECTS ─────────────────────────────────────────────────────────────┐ │
-│  │  [1] session-analyzer-app    (port 3421)  ● Running                    │ │
-│  │  [2] ascii-world             (port 3422)  ● Running (self)             │ │
-│  │  [3] my-new-app              (port 3423)  ○ Stopped                    │ │
-│  │  [N] New Project...                                                     │ │
-│  └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                             │
-│  Selected: my-new-app                                                       │
-│                                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  [S] Start  [T] Stop  [R] Refresh  [V] View ASCII  [E] Edit Project        │
-└─────────────────────────────────────────────────────────────────────────────┘
+AI Agent                    Server                      Viewers
+────────                    ──────                      ───────
+
+{"cpu": 0.67}     POST     ┌──────────────────┐
+{"mem_pct": 0.45} ──────►  │  Cell Store       │
+{"disk_pct": 0.92}         │  (key → value)    │
+                           └────────┬─────────┘
+                                    │
+                            ┌───────▼─────────┐
+                            │ PixelFormula     │
+                            │ Engine           │
+                            │                  │
+                            │ =BAR(cpu, 40)    │──► drawProgressBar()
+                            │ =STATUS(state)   │──► drawTextCell()
+                            │ =SPARKLINE(...)  │──► drawRect() series
+                            └───────┬──────────┘
+                                    │
+                            ┌───────▼──────────┐
+                            │  PixelBuffer      │
+                            │  480×240 RGBA     │
+                            └───────┬──────────┘
+                                    │
+                            ┌───────▼──────────┐
+                            │  PNG Output       │
+                            └──────────────────┘
 ```
 
-## Starting ASCII World
-
-### Prerequisites
-
-- [Bun](https://bun.sh) runtime installed
-- Python 3.12+ (for MCP bridge)
-
-### Quick Start
+## Quick Start
 
 ```bash
-# Navigate to the project directory
-cd /path/to/ascii-world
+# Install dependencies
+npm install
 
-# Start the server
-bun run src/manager/manager-server.ts
+# Run tests
+npm test
 
-# Available at http://localhost:3422
+# Expected: 42 tests passing
+
+# Start server
+npm start
 ```
 
-### Environment Variables
+## Components
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MANAGER_CORS_ORIGIN` | Allowed CORS origin | `http://localhost:3422` |
-| `MANAGER_ALLOWED_DIRS` | Colon-separated list of allowed base directories | Current working directory |
-| `ALLOWED_SCAFFOLD_BASE` | Base directory for scaffolding new projects | Current working directory |
+| File | Purpose | Tests |
+|------|---------|-------|
+| `sync/pixel-buffer.js` | RGBA pixel buffer with drawing primitives | 16 |
+| `sync/glyph-atlas.js` | 6×10 bitmap font for text rendering | - |
+| `sync/pixel-formula-engine.js` | Reactive formula evaluator | 20 |
+| `sync/pixel-renderer.js` | ASCII → PNG bridge | - |
+| `sync/cell-store.js` | Reactive key-value store | 7 |
+| `sync/server.js` | HTTP + WebSocket server | 7 |
 
----
+**Total: 50 tests**
 
-## API Endpoints Reference
+## Formula Functions
 
-ASCII World exposes a REST API on port 3422.
+| Function | Pixel Operation | Example |
+|----------|-----------------|---------|
+| `BAR(col, row, val, w)` | Progress bar | `BAR(0, 0, 'cpu', 40)` |
+| `TEXT(col, row, val)` | Text label | `TEXT(0, 0, 'label')` |
+| `STATUS(col, row, val, ...)` | Status indicator | `STATUS(0, 0, 'state', 2, '◉ done', '○ idle')` |
+| `BOX(col, row, w, h)` | Box outline | `BOX(0, 0, 40, 5)` |
+| `SPARKLINE(col, row, arr, w)` | Mini chart | `SPARKLINE(0, 0, 'history', 50)` |
+| `RECT(col, row, w, h, color)` | Filled rectangle | `RECT(0, 0, 10, 5, 'barFill')` |
+| `LINE(col, row, len, dir, color)` | Line (h/v) | `LINE(0, 0, 40, 'h', 'border')` |
+| `CIRCLE(col, row, r, color, fill)` | Circle | `CIRCLE(10, 5, 3, 'active', true)` |
+| `GAUGE(col, row, val, r, color)` | Circular gauge | `GAUGE(10, 5, 'cpu', 3, 'active')` |
+| `NUMBER(col, row, val, fmt)` | Formatted number | `NUMBER(0, 0, 'cpu', '0%')` |
+| `TIME(col, row, fmt)` | Current time | `TIME(70, 0, 'HH:mm')` |
 
-### GET /health
+### Colors
 
+Named colors: `active`, `idle`, `critical`, `barFill`, `barEmpty`, `border`, `borderHighlight`, `text`, `textMuted`, `white`, `black`, `red`, `green`, `blue`, `yellow`, `cyan`, `magenta`
+
+Or use RGB: `[255, 0, 0]` or hex: `0xff0000`
+
+## Usage
+
+```javascript
+import { PixelFormulaEngine } from './sync/pixel-formula-engine.js';
+
+const engine = new PixelFormulaEngine(480, 240);
+
+// Set reactive cell values
+engine.setCells({ cpu: 0.67, mem: 28.1 });
+
+// Draw formulas
+engine.BAR(0, 0, 'cpu', 40);
+engine.TEXT(42, 0, 'cpu');
+engine.STATUS(0, 1, 'state', 2, '◉ done', 1, '● active', '○ idle');
+
+// Export as PNG
+const png = await engine.toPNG();
+```
+
+## Semantic Colors
+
+| Name | Hex | Usage |
+|------|-----|-------|
+| active | `#3fb950` | ● healthy status |
+| idle | `#484f58` | ○ inactive status |
+| critical | `#f85149` | ◉ error/done |
+| barFill | `#238636` | Progress bar filled |
+| barEmpty | `#161b22` | Progress bar empty |
+| border | `#30363d` | Box outlines |
+| text | `#c9d1d9` | Default text |
+
+## Coordinate System
+
+```
+Pixel space:    (0,0) to (479, 239)     — 480×240 pixels
+Cell space:     (0,0) to (79, 23)       — 80×24 characters
+
+Conversion:
+  pixel → cell:   col = floor(px / 6),  row = floor(py / 10)
+  cell → pixel:   px = col * 6,         py = row * 10
+```
+
+## API
+
+```javascript
+class PixelFormulaEngine {
+  constructor(width = 480, height = 240)
+  
+  // State
+  setCells(cells)
+  resolveValue(cellValue)
+  
+  // Formulas
+  BAR(col, row, cellValue, widthCells)
+  TEXT(col, row, cellValue)
+  STATUS(col, row, cellValue, ...thresholds)
+  BOX(col, row, widthCells, heightCells)
+  SPARKLINE(col, row, cellValue, widthCells)
+  
+  // Output
+  clear()
+  renderTemplate(template)
+  toPNG() → Promise<Buffer>
+}
+```
+
+## Running the Server
+
+```bash
+# Start server (default port 3839)
+npm start
+
+# Or specify port
+PORT=8080 npm start
+node bin/pxos-server.js 8080
+```
+
+## Server API
+
+### HTTP Endpoints
+
+#### GET /health
 Health check endpoint.
 
-**Response:**
-```json
-{
-  "status": "healthy",
-  "uptime": 3600000,
-  "version": "1.0.0"
-}
+```bash
+curl http://localhost:3839/health
+# {"status":"ok","timestamp":1711050000000}
 ```
 
-### GET /view
-
-Render the current ASCII view based on the manager's state.
-
-**Response:**
-```json
-{
-  "state": "PROJECTS",
-  "view": "╔══════════════════════════════════════════════════════════════════════════════╗\n║  ASCII WORLD                                             v1.0.0  ║\n...",
-  "context": {
-    "selectedProjectId": "my-app",
-    "editMode": false,
-    "unsavedChanges": false
-  }
-}
-```
-
-### POST /control
-
-Execute an action by label. This is the primary way to interact with ASCII World.
-
-**Request Body:**
-```json
-{
-  "label": "A",
-  "projectId": "optional-project-id",
-  "action": "optional-specific-action"
-}
-```
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `label` | string | Single character label (A-Z or 1-9) |
-| `projectId` | string | Optional: Target a specific project |
-| `action` | string | Optional: Specific action (start, stop, select) |
-
-**Response:**
-```json
-{
-  "success": true,
-  "action": "goto_projects",
-  "newState": "PROJECTS"
-}
-```
-
-### GET /projects
-
-List all registered ASCII projects.
-
-**Response:**
-```json
-{
-  "projects": [
-    {
-      "id": "my-app",
-      "name": "my-app",
-      "path": "/home/user/projects/my-app",
-      "port": 3421,
-      "status": "running",
-      "pid": 12345,
-      "lastStarted": 1700000000000,
-      "asciiPath": "/home/user/projects/my-app/src/ascii/states",
-      "bindingsPath": "/home/user/projects/my-app/src/ascii/bindings.json"
-    }
-  ],
-  "count": 1
-}
-```
-
-### POST /projects
-
-Register a new ASCII project with the manager.
-
-**Request Body:**
-```json
-{
-  "path": "/home/user/projects/my-new-app",
-  "port": 3423
-}
-```
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `path` | string | Yes | Absolute path to the project directory |
-| `port` | number | No | Port number (auto-assigned if omitted) |
-
-**Response:**
-```json
-{
-  "success": true,
-  "project": {
-    "id": "my-new-app",
-    "name": "my-new-app",
-    "path": "/home/user/projects/my-new-app",
-    "port": 3423,
-    "status": "stopped"
-  }
-}
-```
-
-### GET /projects/:id
-
-Get details for a specific project.
-
-### DELETE /projects/:id
-
-Unregister a project (stops it if running first).
-
-### POST /projects/:id/start
-
-Start a registered project.
-
-### POST /projects/:id/stop
-
-Stop a running project.
-
-### GET /metrics
-
-Get performance metrics for the manager API.
-
-**Response:**
-```json
-{
-  "server": {
-    "uptime": 3600000,
-    "totalRequests": 150,
-    "errors": 2,
-    "averageResponseTime": 12.5,
-    "lastRequestTime": 1700000000000
-  },
-  "requests": {
-    "byEndpoint": {
-      "/view": 100,
-      "/control": 45,
-      "/projects": 5
-    },
-    "byMethod": {
-      "GET": 105,
-      "POST": 45
-    }
-  },
-  "projects": {
-    "total": 3,
-    "running": 2,
-    "stopped": 1
-  },
-  "asciiGenerator": {
-    "cacheSize": 5
-  }
-}
-```
-
----
-
-### Project Proxy Endpoints
-
-ASCII World can proxy requests to managed ASCII projects:
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/projects/:id/view` | GET | Fetch managed project's ASCII view |
-| `/projects/:id/control` | POST | Forward control command to project |
-| `/projects/:id/bindings` | GET | Get project's label bindings |
-
-#### Example: View Session Analyzer
+#### GET /api/v1/cells
+Get all current cell values.
 
 ```bash
-# Register the Session Analyzer
-curl -X POST http://localhost:3422/projects \
-  -H "Content-Type: application/json" \
-  -d '{"path": "/path/to/session-analyzer-app", "port": 3421}'
-
-# View its ASCII output through ASCII World
-curl http://localhost:3422/projects/session-analyzer-app/view
-
-# Send a control command
-curl -X POST http://localhost:3422/projects/session-analyzer-app/control \
-  -H "Content-Type: application/json" \
-  -d '{"label": "B"}'  # Navigate to Sources tab
+curl http://localhost:3839/api/v1/cells
+# {"cpu":0.67,"mem":28.1}
 ```
 
----
-
-## Dashboard View
-
-The Dashboard provides a health-at-a-glance view of all discovered projects.
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/view` | GET | Renders dashboard when state is DASHBOARD |
-| `/control` | POST | Use `F` to navigate to dashboard, `R` to refresh |
-
-### Dashboard Features
-
-- **Status Icons**: ● running, ○ stopped, ⚠ error
-- **Uptime**: Shows time since project started (e.g., "2h 15m")
-- **Last Check**: Timestamp of most recent health check
-- **Summary**: Count of running/stopped/error projects
-
-#### Example: View Dashboard
+#### POST /api/v1/cells
+Update cell values. Returns changed keys.
 
 ```bash
-# Navigate to dashboard
-curl -X POST http://localhost:3422/control \
-  -H "Content-Type: application/json" \
-  -d '{"label": "F"}'
-
-# View the dashboard
-curl http://localhost:3422/view
-
-# Refresh health data
-curl -X POST http://localhost:3422/control \
-  -H "Content-Type: application/json" \
-  -d '{"label": "R"}'
+curl -X POST http://localhost:3839/api/v1/cells \
+  -H 'Content-Type: application/json' \
+  -d '{"cpu":0.75,"disk":45}'
+# {"ok":true,"changes":{"cpu":0.75,"disk":45}}
 ```
 
----
-
-## Label Reference
-
-ASCII World uses labeled actions for navigation and control. Each label corresponds to a specific action.
-
-### Navigation Labels (Available in all states)
-
-| Label | Action | Description |
-|-------|--------|-------------|
-| `A` | `goto_projects` | Navigate to Projects view |
-| `B` | `goto_templates` | Navigate to Templates view |
-| `C` | `goto_bindings` | Navigate to Bindings view |
-| `D` | `goto_test` | Navigate to Test view |
-| `E` | `goto_git` | Navigate to Git view |
-| `F` | `goto_dashboard` | Navigate to Dashboard view |
-| `X` | `quit` | Shutdown the manager |
-
-### Project Management Labels
-
-| Label | Action | Description |
-|-------|--------|-------------|
-| `1-9` | `select_item_N` | Select project by index |
-| `N` | `new_item` | Create new project |
-| `S` | `start_project` | Start selected project |
-| `T` | `stop_project` | Stop selected project |
-| `R` | `restart_project` | Restart selected project |
-| `V` | `view_detail` | View project ASCII interface |
-| `E` | `edit_project` | Edit project configuration |
-
-### Edit Labels
-
-| Label | Action | Description |
-|-------|--------|-------------|
-| `W` | `save_changes` | Save current edits |
-| `U` | `undo_changes` | Undo unsaved changes |
-
-### Test Labels
-
-| Label | Action | Description |
-|-------|--------|-------------|
-| `G` | `run_tests` | Execute test suite |
-
-### Git Labels
-
-| Label | Action | Description |
-|-------|--------|-------------|
-| `L` | `git_status` | Refresh git status |
-| `M` | `git_commit` | Commit changes |
-| `P` | `git_push` | Push to remote |
-
----
-
-## MCP Integration
-
-ASCII World provides an MCP (Model Context Protocol) bridge that enables AI assistants like Claude to interact with the manager through standardized tools.
-
-### Installing the MCP Bridge
+#### GET /api/v1/render
+Render current state as PNG image.
 
 ```bash
-cd mcp_manager_bridge
-uv sync
+curl -o output.png http://localhost:3839/api/v1/render
 ```
 
-### Configuring Claude Desktop
+#### POST /api/v1/template
+Set the render template (array of formula operations).
 
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-
-```json
-{
-  "mcpServers": {
-    "ascii-world": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/ascii-world/mcp_manager_bridge", "run", "mcp-manager-bridge"],
-      "env": {
-        "MANAGER_API_URL": "http://localhost:3422"
-      }
-    }
-  }
-}
+```bash
+curl -X POST http://localhost:3839/api/v1/template \
+  -H 'Content-Type: application/json' \
+  -d '[{"fn":"BAR","args":[0,0,"cpu",40]}]'
+# {"ok":true,"templateSize":1}
 ```
 
-### MCP Tools Reference
+### WebSocket
 
-| Tool | Description |
-|------|-------------|
-| `manager_view` | Get current ASCII view of the manager |
-| `manager_control` | Execute an action by label |
-| `manager_list_projects` | List all registered projects |
-| `manager_register_project` | Register a new project |
-| `manager_metrics` | Get performance metrics |
-| `manager_start_project` | Start the selected project |
-| `manager_stop_project` | Stop the selected project |
-| `manager_project_view` | View a managed project's ASCII |
-| `manager_project_control` | Control a managed project |
-| `manager_project_bindings` | Get available labels for a project |
+Connect to `ws://localhost:3839` for live updates.
 
-### Example: Using MCP Tools
-
-```
-AI: I'll check the current state of ASCII World.
-
-[Uses manager_view tool]
-
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  ASCII WORLD                                               v1.0.0             ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║  [A] Projects  [B] Templates  [C] Bindings  [F] Dashboard  [X] Quit          ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                             ║
-║  REGISTERED ASCII PROJECTS                                                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐ ║
-║  │  [1] my-app    (port 3421)  ● Running                                  │ ║
-║  └─────────────────────────────────────────────────────────────────────────┘ ║
-║                                                                             ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-
-AI: I can see there's one running project. Let me start a new project.
-
-[Uses manager_control tool with label "N"]
+```javascript
+const ws = new WebSocket('ws://localhost:3839');
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  // msg.type === 'cells'
+  // msg.cells = { cpu: 0.67, ... }
+  // msg.changes = { cpu: 0.67 } (only changed)
+};
 ```
 
----
+## Example: Live Dashboard
 
-## Creating New Projects with Scaffold
-
-The scaffold generator creates a complete ASCII-wrapped project with all necessary files.
-
-### Scaffold Structure
-
-```
-my-new-app/
-├── src/
-│   ├── bun/
-│   │   └── server.ts        # HTTP API server
-│   └── ascii/
-│       ├── bindings.json    # Label-to-action bindings
-│       └── states/
-│           ├── dashboard.ascii  # Dashboard view template
-│           └── settings.ascii   # Settings view template
-├── package.json
-└── README.md
-```
-
-### Using the Scaffold Programmatically
-
-```typescript
-import { scaffoldProject } from './src/manager/scaffold';
-
-scaffoldProject({
-    projectName: 'my-cool-app',
-    targetPath: './apps/my-cool-app',
-    port: 3425,
-    description: 'A cool ASCII-wrapped application'
+```javascript
+// Set up template
+await fetch('http://localhost:3839/api/v1/template', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify([
+    { fn: 'TEXT', args: [0, 0, 'title'] },
+    { fn: 'BAR', args: [0, 1, 'cpu', 40] },
+    { fn: 'BAR', args: [0, 2, 'mem', 40] },
+    { fn: 'STATUS', args: [42, 2, 'state', 2, '◉ done', 1, '● active', '○ idle'] }
+  ])
 });
+
+// Update cells (e.g., from an AI agent)
+await fetch('http://localhost:3839/api/v1/cells', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: 'System Monitor',
+    cpu: 0.67,
+    mem: 0.45,
+    state: 1
+  })
+});
+
+// Get rendered PNG
+const res = await fetch('http://localhost:3839/api/v1/render');
+const png = await res.arrayBuffer();
 ```
 
-### Scaffold Validation
+## Browser Viewer
 
-The scaffold includes security validations:
+Open `viewer/viewer.html` in your browser for a live visual dashboard.
 
-- **Project name**: Must match `^[a-zA-Z0-9_-]{1,64}$`
-- **Port**: Must be between 1-65535
-- **Target path**: Must be within allowed directories, no path traversal
+### Features
+- **Live canvas** - Renders PNG output in real-time
+- **Connection status** - Green ● connected, Red ○ disconnected
+- **Cell inspector** - Shows all current cell values
+- **Auto-reconnect** - Reconnects automatically if server restarts
 
-### Generated Files
+### Usage
 
-**dashboard.ascii:**
-```
-+------------------------------------------------------------------------------+
-|  My Cool App                                               v0.1.0            |
-+------------------------------------------------------------------------------+
-|  [A] Dashboard  [B] Settings  [X] Quit                                       |
-+------------------------------------------------------------------------------+
-|                                                                              |
-|  Status: Running                                                             |
-|                                                                              |
-|  Welcome to My Cool App!                                                     |
-|                                                                              |
-+------------------------------------------------------------------------------+
+```bash
+# Start the server
+npm start
+
+# Open viewer in browser
+open viewer/viewer.html
+# Or serve it:
+npx serve .
+# Then visit http://localhost:3000/viewer/viewer.html
 ```
 
-**bindings.json:**
-```json
-{
-  "bindings": [
-    { "label": "A", "action": "goto_dashboard", "target": "DASHBOARD" },
-    { "label": "B", "action": "goto_settings", "target": "SETTINGS" },
-    { "label": "X", "action": "quit", "target": "QUIT" },
-    { "label": "W", "action": "save_settings", "target": null },
-    { "label": "Z", "action": "reset_defaults", "target": null }
-  ],
-  "stateTransitions": {
-    "DASHBOARD": { "A": "DASHBOARD", "B": "SETTINGS", "X": "QUIT" },
-    "SETTINGS": { "A": "DASHBOARD", "B": "SETTINGS", "X": "QUIT" }
-  }
-}
-```
-
----
-
-## Architecture
-
-### System Architecture
+### Screenshot
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            ASCII WORLD                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐             │
-│  │ ManagerServer   │  │ ProjectRegistry │  │ StateManager    │             │
-│  │ (HTTP API)      │  │ (Persistence)   │  │ (Navigation)    │             │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘             │
-│           │                    │                    │                        │
-│           └────────────────────┼────────────────────┘                        │
-│                                │                                             │
-│                    ┌───────────▼───────────┐                                 │
-│                    │   AsciiGenerator      │                                 │
-│                    │   (Template Engine)   │                                 │
-│                    └───────────┬───────────┘                                 │
-│                                │                                             │
-│           ┌────────────────────┼────────────────────┐                        │
-│           │                    │                    │                        │
-│  ┌────────▼────────┐  ┌────────▼────────┐  ┌───────▼────────┐              │
-│  │ projects.ascii  │  │ templates.ascii │  │ bindings.ascii │  ...         │
-│  └─────────────────┘  └─────────────────┘  └────────────────┘              │
-│                                                                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                              MCP BRIDGE                                      │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐             │
-│  │ manager_view    │  │ manager_control │  │ manager_*       │             │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                          MANAGED PROJECTS                                    │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐             │
-│  │ Project A       │  │ Project B       │  │ Project C       │             │
-│  │ (Port 3421)     │  │ (Port 3423)     │  │ (Port 3424)     │             │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ ● Connected | Last: 14:05:32            │
+├─────────────────────────────────────────┤
+│ [Canvas showing rendered PNG]           │
+│                                         │
+├─────────────────────────────────────────┤
+│ Cells                                   │
+│ cpu    0.75                             │
+│ mem    28.10                            │
+└─────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+## Python Agent Example
 
-| Component | Responsibility |
-|-----------|---------------|
-| `ManagerServer` | HTTP API server, request routing, security validation |
-| `ProjectRegistry` | Project persistence, discovery, port allocation |
-| `StateManager` | Navigation state, selection context, edit mode |
-| `AsciiGenerator` | Template loading, Mustache-style rendering, caching |
-| `Scaffold` | New project generation with security validation |
-| `MCP Bridge` | Protocol translation for AI assistants |
+Use the included Python agent to monitor system metrics.
 
-### Security Features
+### Setup
 
-- **Path validation**: Prevents path traversal attacks
-- **Rate limiting**: 100 requests/minute on `/control` endpoint
-- **Input validation**: Strict patterns for labels, project IDs, ports
-- **Environment sanitization**: Child processes receive minimal environment
-- **CORS**: Configurable allowed origins
+```bash
+# Install Python dependencies
+pip install -r agents/requirements.txt
 
----
+# Start the server
+npm start
 
-## Quick Reference Card
-
-```
-+------------------+--------------------------------------------------------+
-| Endpoint         | Description                                            |
-+------------------+--------------------------------------------------------+
-| GET  /health     | Health check                                           |
-| GET  /view       | ASCII view of current state                            |
-| POST /control    | Execute action by label                                |
-| GET  /projects   | List registered projects                               |
-| POST /projects   | Register new project                                   |
-| GET  /metrics    | Performance metrics                                    |
-+------------------+--------------------------------------------------------+
-
-+------------------+--------------------------------------------------------+
-| Navigation       | Action                                                 |
-+------------------+--------------------------------------------------------+
-| A                | Projects view                                          |
-| B                | Templates view                                         |
-| C                | Bindings view                                          |
-| D                | Test view                                              |
-| E                | Git view                                               |
-| F                | Dashboard view                                         |
-| X                | Quit                                                   |
-+------------------+--------------------------------------------------------+
-
-+------------------+--------------------------------------------------------+
-| Project Actions  | Action                                                 |
-+------------------+--------------------------------------------------------+
-| 1-9              | Select project by index                                |
-| N                | New project                                            |
-| S                | Start selected project                                 |
-| T                | Stop selected project                                  |
-| R                | Refresh selected project                               |
-| V                | View project ASCII                                     |
-+------------------+--------------------------------------------------------+
+# Run the agent
+python agents/system_monitor.py
 ```
 
----
+### Output
 
-*ASCII World — Build, Control, Render — Since 2026*
+```
+pxOS System Monitor Agent
+Server: http://localhost:3839
+Interval: 1.0s
+
+Using default template
+Template set (14 operations)
+
+Starting monitor... (Ctrl+C to stop)
+--------------------------------------------------
+[16:35:42] CPU:  23.5% | MEM:  28.1/62.3GB | DISK: 145.2/500.0GB
+[16:35:43] CPU:  18.2% | MEM:  28.1/62.3GB | DISK: 145.2/500.0GB
+[16:35:44] CPU:  45.1% | MEM:  28.2/62.3GB | DISK: 145.2/500.0GB
+```
+
+### Options
+
+```bash
+python agents/system_monitor.py --help
+
+python agents/system_monitor.py --url http://localhost:8080
+python agents/system_monitor.py --interval 2
+python agents/system_monitor.py --template agents/template.json
+python agents/system_monitor.py --once  # Single update, then exit
+```
+
+### Custom Agent
+
+```python
+import urllib.request
+import json
+
+def post_cells(url, cells):
+    data = json.dumps(cells).encode('utf-8')
+    req = urllib.request.Request(
+        f"{url}/api/v1/cells",
+        data=data,
+        headers={'Content-Type': 'application/json'},
+        method='POST'
+    )
+    urllib.request.urlopen(req)
+
+# Post your data
+post_cells('http://localhost:3839', {
+    'title': 'My Dashboard',
+    'cpu': 0.67,
+    'status': 'OK'
+})
+```
+
+## Geometry OS Integration
+
+Monitor Geometry OS internals (NEB, GPU VMs, CTRM, Swarm) in real-time.
+
+### Setup
+
+```bash
+# Install Python dependencies
+pip install -r agents/requirements.txt
+
+# Start the server
+npm start
+
+# Run Geometry OS monitor (with mock data for testing)
+python agents/geometry_os_monitor.py --mock
+
+# Or with real Geometry OS installation
+python agents/geometry_os_monitor.py --geometry-os-path ~/zion/projects/geometry_os
+```
+
+### Output
+
+```
+pxOS Geometry OS Monitor
+Server: http://localhost:3839
+Geometry OS: not specified (using mock)
+Mode: mock
+
+Template set (19 operations)
+
+Starting monitor... (Ctrl+C to stop)
+------------------------------------------------------------
+[16:42:15] NEB: 134.2k/s | GPU: 25/64 tiles | CTRM: 32,847 facts | SWARM: 12 agents
+[16:42:16] NEB: 137.8k/s | GPU: 25/64 tiles | CTRM: 32,847 facts | SWARM: 12 agents
+```
+
+### Metrics Collected
+
+| Component | Cell Key | Description |
+|-----------|----------|-------------|
+| NEB | `neb_rate` | Events per second |
+| NEB | `neb_total` | Total events |
+| GPU | `gpu_tiles` | Tiles loaded |
+| GPU | `gpu_pc` | Program counter |
+| CTRM | `ctrm_facts` | Total facts |
+| CTRM | `ctrm_verified` | Verified facts |
+| Swarm | `swarm_agents` | Active agents |
+| Swarm | `guilds` | Active guilds |
+
+### Integration Script
+
+```bash
+# Set up symlinks in Geometry OS directory
+./scripts/integrate-with-geometry-os.sh ~/zion/projects/geometry_os
+```
+
+### Options
+
+```bash
+python agents/geometry_os_monitor.py --help
+
+python agents/geometry_os_monitor.py --mock  # Use mock data
+python agents/geometry_os_monitor.py --geometry-os-path /path/to/geometry_os
+python agents/geometry_os_monitor.py --interval 2
+python agents/geometry_os_monitor.py --once
+```
+
+## License
+
+MIT

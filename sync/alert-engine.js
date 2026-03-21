@@ -129,6 +129,51 @@ export class AlertEngine {
                 console.error('Notifier error:', err);
             }
         }
+
+        // Send webhook if configured
+        if (rule.webhook) {
+            this.sendWebhook(alert, rule);
+        }
+    }
+
+    /**
+     * Send alert to webhook URL.
+     */
+    async sendWebhook(alert, rule) {
+        const payload = {
+            rule: alert.rule,
+            cell: alert.cell,
+            value: alert.value,
+            threshold: alert.threshold,
+            operator: alert.operator,
+            severity: alert.severity,
+            message: alert.message,
+            timestamp: alert.timestamp,
+        };
+
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000);
+
+            const response = await fetch(rule.webhook, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeout);
+
+            if (!response.ok) {
+                console.error(`Webhook failed: ${response.status} ${response.statusText}`);
+            }
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                console.error('Webhook timeout:', rule.webhook);
+            } else {
+                console.error('Webhook error:', err.message);
+            }
+        }
     }
 
     /**

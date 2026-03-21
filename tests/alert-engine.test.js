@@ -88,4 +88,36 @@ describe('AlertEngine', () => {
         const triggered = engine.check({ cpu: 0.9 });
         assert.strictEqual(triggered.length, 0);
     });
+
+    it('sendWebhook is called for rules with webhook', async () => {
+        let webhookCalled = false;
+        let webhookPayload = null;
+
+        // Mock fetch
+        const originalFetch = global.fetch;
+        global.fetch = async (url, options) => {
+            webhookCalled = true;
+            webhookPayload = JSON.parse(options.body);
+            return { ok: true, status: 200 };
+        };
+
+        engine.setRules([{
+            name: 'high_cpu',
+            cell: 'cpu',
+            operator: '>',
+            threshold: 0.8,
+            webhook: 'https://example.com/webhook'
+        }]);
+
+        engine.check({ cpu: 0.9 });
+
+        // Wait for async webhook
+        await new Promise(r => setTimeout(r, 100));
+
+        global.fetch = originalFetch;
+
+        assert.ok(webhookCalled, 'Webhook should be called');
+        assert.strictEqual(webhookPayload.rule, 'high_cpu');
+        assert.strictEqual(webhookPayload.value, 0.9);
+    });
 });

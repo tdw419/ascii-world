@@ -63,7 +63,7 @@ npm start
 | `sync/cell-store.js` | Reactive key-value store | 7 |
 | `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 79 tests**
+**Total: 80 tests**
 
 ## Formula Functions
 
@@ -274,9 +274,44 @@ curl http://localhost:3839/api/v1/alerts/history
   "severity": "critical",
   "message": "CPU usage above 80%",
   "cooldown": 60,
-  "enabled": true
+  "enabled": true,
+  "webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
 }
 ```
+
+### Webhook Notifications
+
+When an alert triggers and has a `webhook` URL configured, pxOS sends a POST request:
+
+```bash
+curl -X POST http://localhost:3839/api/v1/alerts \
+  -d '[{
+    "name": "high_cpu",
+    "cell": "cpu",
+    "operator": ">",
+    "threshold": 0.8,
+    "webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK"
+  }]'
+```
+
+**Webhook Payload:**
+```json
+{
+  "rule": "high_cpu",
+  "cell": "cpu",
+  "value": 0.85,
+  "threshold": 0.8,
+  "severity": "critical",
+  "message": "CPU above 80%",
+  "timestamp": 1711050000000
+}
+```
+
+**Supported:**
+- Slack incoming webhooks
+- Discord webhooks
+- PagerDuty Events API
+- Custom endpoints (any URL that accepts JSON POST)
 
 ### Time-Series API
 

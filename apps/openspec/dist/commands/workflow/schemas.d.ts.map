@@ -1,0 +1,1 @@
+{"version":3,"file":"schemas.d.ts","sourceRoot":"","sources":["../../../src/commands/workflow/schemas.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AASH,MAAM,WAAW,cAAc;IAC7B,IAAI,CAAC,EAAE,OAAO,CAAC;CAChB;AAMD,wBAAsB,cAAc,CAAC,OAAO,EAAE,cAAc,GAAG,OAAO,CAAC,IAAI,CAAC,CAwB3E"}

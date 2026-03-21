@@ -56,11 +56,14 @@ npm start
 | `sync/pixel-buffer.js` | RGBA pixel buffer with drawing primitives | 16 |
 | `sync/glyph-atlas.js` | 6×10 bitmap font for text rendering | - |
 | `sync/pixel-formula-engine.js` | Reactive formula evaluator | 28 |
+| `sync/cell-store.js` | Reactive key-value store | 7 |
+| `sync/server.js` | HTTP + WebSocket server | 7 |
+| `sync/alert-engine.js` | Threshold-based alerting | 10 |
 | `sync/pixel-renderer.js` | ASCII → PNG bridge | - |
 | `sync/cell-store.js` | Reactive key-value store | 7 |
 | `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 58 tests**
+**Total: 68 tests**
 
 ## Formula Functions
 
@@ -230,6 +233,49 @@ curl -X POST http://localhost:3839/api/v1/template \
   -H 'Content-Type: application/json' \
   -d '[{"fn":"BAR","args":[0,0,"cpu",40]}]'
 # {"ok":true,"templateSize":1}
+```
+
+### Alerting API
+
+#### GET /api/v1/alerts
+Get current alert rules.
+
+```bash
+curl http://localhost:3839/api/v1/alerts
+# [{"name":"high_cpu","cell":"cpu","operator":">","threshold":0.8,...}]
+```
+
+#### POST /api/v1/alerts
+Set alert rules.
+
+```bash
+curl -X POST http://localhost:3839/api/v1/alerts \
+  -H 'Content-Type: application/json' \
+  -d '[{"name":"high_cpu","cell":"cpu","operator":">","threshold":0.8,"severity":"critical","message":"CPU above 80%"}]'
+# {"ok":true,"ruleCount":1}
+```
+
+#### GET /api/v1/alerts/history
+Get alert history.
+
+```bash
+curl http://localhost:3839/api/v1/alerts/history
+# [{"rule":"high_cpu","cell":"cpu","value":0.9,"timestamp":1711050000000,...}]
+```
+
+### Alert Rule Format
+
+```json
+{
+  "name": "high_cpu",
+  "cell": "cpu",
+  "operator": ">",
+  "threshold": 0.8,
+  "severity": "critical",
+  "message": "CPU usage above 80%",
+  "cooldown": 60,
+  "enabled": true
+}
 ```
 
 ### WebSocket

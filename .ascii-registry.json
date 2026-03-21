@@ -1,0 +1,51 @@
+{
+  "projects": [
+    {
+      "id": "ascii-ref-app",
+      "name": "ascii-ref-app",
+      "path": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/ascii-ref-app",
+      "port": 3421,
+      "status": "running",
+      "asciiPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/ascii-ref-app/src/ascii/states",
+      "bindingsPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/ascii-ref-app/src/ascii/bindings.json",
+      "lastStarted": 1774030790792
+    },
+    {
+      "id": "ascii_world",
+      "name": "ascii_world",
+      "path": "/home/jericho/zion/projects/ascii_world/ascii_world",
+      "port": 3421,
+      "status": "running",
+      "asciiPath": "/home/jericho/zion/projects/ascii_world/ascii_world/src/ascii/states",
+      "bindingsPath": "/home/jericho/zion/projects/ascii_world/ascii_world/src/ascii/bindings.json",
+      "lastStarted": 1774030790792
+    },
+    {
+      "id": "wp-ascii-bridge",
+      "name": "wp-ascii-bridge",
+      "path": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/wp-ascii-bridge",
+      "port": 3450,
+      "status": "stopped",
+      "asciiPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/wp-ascii-bridge/src/ascii/states",
+      "bindingsPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/wp-ascii-bridge/src/ascii/bindings.json"
+    },
+    {
+      "id": "clawlauncher",
+      "name": "clawlauncher",
+      "path": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/clawlauncher",
+      "port": 3425,
+      "status": "stopped",
+      "asciiPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/clawlauncher/src/ascii/states",
+      "bindingsPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/clawlauncher/src/ascii/bindings.json"
+    },
+    {
+      "id": "cyber-ascii",
+      "name": "cyber-ascii",
+      "path": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/cyber-ascii",
+      "port": 3422,
+      "status": "stopped",
+      "asciiPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/cyber-ascii/src/ascii/states",
+      "bindingsPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/cyber-ascii/src/ascii/bindings.json"
+    }
+  ]
+}

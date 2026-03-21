@@ -5,16 +5,24 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { CellStore } from './cell-store.js';
 import { PixelFormulaEngine } from './pixel-formula-engine.js';
+import { AlertEngine } from './alert-engine.js';
 
 export class PxOSServer {
     constructor(port = 3839) {
         this.port = port;
         this.cellStore = new CellStore();
         this.engine = new PixelFormulaEngine(480, 240);
+        this.alertEngine = new AlertEngine();
         this.template = [];
         this.httpServer = null;
         this.wss = null;
         this.clients = new Set();
+
+        // Setup alert notifiers
+        this.alertEngine.addNotifier((alert, rule) => {
+            console.log(`[ALERT] ${alert.severity.toUpperCase()}: ${alert.message}`);
+            this.broadcast({ type: 'alert', alert });
+        });
     }
 
     async start() {
@@ -29,6 +37,10 @@ export class PxOSServer {
 
         // Subscribe to cell changes
         this.cellStore.subscribe((changes, cells) => {
+            // Check alerts
+            const alerts = this.alertEngine.check(cells);
+            
+            // Broadcast cell updates
             this.broadcast({ type: 'cells', changes, cells });
         });
 
@@ -93,6 +105,16 @@ export class PxOSServer {
                 } else {
                     this.sendError(res, 405, 'Method not allowed');
                 }
+            } else if (pathname === '/api/v1/alerts') {
+                if (req.method === 'GET') {
+                    this.handleGetAlerts(req, res);
+                } else if (req.method === 'POST') {
+                    await this.handlePostAlerts(req, res);
+                } else {
+                    this.sendError(res, 405, 'Method not allowed');
+                }
+            } else if (pathname === '/api/v1/alerts/history') {
+                this.handleGetAlertHistory(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -129,6 +151,21 @@ export class PxOSServer {
         const body = await this.readBody(req);
         this.template = JSON.parse(body);
         this.sendJSON(res, 200, { ok: true, templateSize: this.template.length });
+    }
+
+    handleGetAlerts(req, res) {
+        this.sendJSON(res, 200, this.alertEngine.getRules());
+    }
+
+    async handlePostAlerts(req, res) {
+        const body = await this.readBody(req);
+        const rules = JSON.parse(body);
+        this.alertEngine.setRules(rules);
+        this.sendJSON(res, 200, { ok: true, ruleCount: rules.length });
+    }
+
+    handleGetAlertHistory(req, res) {
+        this.sendJSON(res, 200, this.alertEngine.getHistory());
     }
 
     handleWebSocket(ws) {

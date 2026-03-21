@@ -1,0 +1,1 @@
+{"version":3,"file":"schema.d.ts","sourceRoot":"","sources":["../../../src/core/artifact-graph/schema.ts"],"names":[],"mappings":"AAEA,OAAO,EAAoB,KAAK,UAAU,EAAiB,MAAM,YAAY,CAAC;AAE9E,qBAAa,qBAAsB,SAAQ,KAAK;gBAClC,OAAO,EAAE,MAAM;CAI5B;AAED;;GAEG;AACH,wBAAgB,UAAU,CAAC,QAAQ,EAAE,MAAM,GAAG,UAAU,CAGvD;AAED;;GAEG;AACH,wBAAgB,WAAW,CAAC,WAAW,EAAE,MAAM,GAAG,UAAU,CAsB3D"}

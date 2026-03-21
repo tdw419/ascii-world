@@ -1,13 +1,26 @@
 // tests/dashboard-store.test.js
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
+import { existsSync, unlinkSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { DashboardStore } from '../sync/dashboard-store.js';
 
 describe('DashboardStore', () => {
     let store;
+    const testDir = '/tmp/pxos-test-dashboards';
+    const testFile = `${testDir}/dashboards.json`;
 
     beforeEach(() => {
         store = new DashboardStore();
+        // Clean up test directory
+        if (existsSync(testDir)) {
+            rmSync(testDir, { recursive: true });
+        }
+    });
+
+    afterEach(() => {
+        if (existsSync(testDir)) {
+            rmSync(testDir, { recursive: true });
+        }
     });
 
     it('starts empty', () => {
@@ -65,5 +78,56 @@ describe('DashboardStore', () => {
         store.clear();
         
         assert.strictEqual(store.list().length, 0);
+    });
+
+    // File persistence tests
+
+    it('saveToFile creates file', (t, done) => {
+        const fileStore = new DashboardStore({ 
+            filePath: testFile,
+            saveDelay: 10
+        });
+        fileStore.save('test', [{ fn: 'BAR', args: [] }]);
+        
+        setTimeout(() => {
+            assert.ok(existsSync(testFile), 'File should be created');
+            done();
+        }, 50);
+    });
+
+    it('loadFromFile restores dashboards', () => {
+        // Create file manually
+        mkdirSync(testDir, { recursive: true });
+        const data = {
+            version: 1,
+            dashboards: {
+                'saved': {
+                    name: 'saved',
+                    template: [{ fn: 'BAR', args: [] }],
+                    alerts: [],
+                    created: 1711050000000
+                }
+            }
+        };
+        writeFileSync(testFile, JSON.stringify(data));
+        
+        const fileStore = new DashboardStore({ filePath: testFile });
+        
+        assert.strictEqual(fileStore.list().length, 1);
+        assert.ok(fileStore.has('saved'));
+    });
+
+    it('persists across store instances', (t, done) => {
+        const store1 = new DashboardStore({ 
+            filePath: testFile,
+            saveDelay: 10
+        });
+        store1.save('persistent', [{ fn: 'TEST', args: [] }]);
+        
+        setTimeout(() => {
+            const store2 = new DashboardStore({ filePath: testFile });
+            assert.ok(store2.has('persistent'));
+            done();
+        }, 50);
     });
 });

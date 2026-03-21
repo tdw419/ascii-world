@@ -63,7 +63,7 @@ npm start
 | `sync/cell-store.js` | Reactive key-value store | 7 |
 | `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 88 tests**
+**Total: 91 tests**
 
 ## Formula Functions
 
@@ -315,7 +315,7 @@ curl -X POST http://localhost:3839/api/v1/alerts \
 
 ### Dashboard Management
 
-Save, load, and switch between visualization configurations.
+Save, load, and switch between visualization configurations. **Dashboards persist across server restarts** in `data/dashboards.json`.
 
 #### POST /api/v1/dashboards
 Save current template and alerts as a named dashboard.
@@ -334,6 +334,8 @@ List all saved dashboards.
 curl http://localhost:3839/api/v1/dashboards
 # [{"name":"system-monitor","created":1711050000000,"templateSize":5,"alertCount":2}]
 ```
+
+**Persistence:** Dashboards are automatically saved to `data/dashboards.json` and loaded on server startup.
 
 #### GET /api/v1/dashboards/:name
 Load a dashboard (applies template and alerts).

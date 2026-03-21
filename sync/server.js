@@ -16,7 +16,10 @@ export class PxOSServer {
         this.engine = new PixelFormulaEngine(480, 240);
         this.alertEngine = new AlertEngine();
         this.timeSeriesStore = new TimeSeriesStore({ maxPoints: 1000, minInterval: 1000 });
-        this.dashboardStore = new DashboardStore();
+        this.dashboardStore = new DashboardStore({ 
+            filePath: './data/dashboards.json',
+            saveDelay: 1000 
+        });
         this.template = [];
         this.httpServer = null;
         this.wss = null;

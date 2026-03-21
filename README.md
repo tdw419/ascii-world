@@ -612,6 +612,31 @@ python agents/geometry_os_monitor.py --interval 2
 python agents/geometry_os_monitor.py --once
 ```
 
+## Integration
+
+pxOS integrates with other systems:
+
+### OpenClaw
+
+Publish OpenClaw state to pxOS for visual monitoring:
+
+```javascript
+import { OpenClawPublisher } from './integrations/openclaw/publisher.js';
+
+const pxos = new OpenClawPublisher();
+await pxos.setTemplate();
+
+setInterval(() => pxos.publish({
+    agents: getActiveAgents(),
+    messageQueue: getQueueDepth(),
+    toolCalls: getToolCalls(),
+    memoryUsage: process.memoryUsage().heapUsed,
+    uptime: process.uptime(),
+}), 1000);
+```
+
+See [INTEGRATION.md](INTEGRATION.md) for full guide.
+
 ## License
 
 MIT

@@ -1,0 +1,15 @@
+[
+  {"fn": "TEXT", "args": [0, 0, "title"]},
+  {"fn": "TIME", "args": [70, 0, "HH:mm:ss"]},
+  {"fn": "LINE", "args": [0, 1, 80, "h", "borderHighlight"]},
+  {"fn": "TEXT", "args": [0, 2, "agents_label"]},
+  {"fn": "NUMBER", "args": [12, 2, "oc_agents", "0"]},
+  {"fn": "TEXT", "args": [0, 3, "messages_label"]},
+  {"fn": "NUMBER", "args": [12, 3, "oc_messages", "0"]},
+  {"fn": "TEXT", "args": [0, 4, "tools_label"]},
+  {"fn": "NUMBER", "args": [12, 4, "oc_tools", "0/min"]},
+  {"fn": "TEXT", "args": [40, 2, "memory_label"]},
+  {"fn": "NUMBER", "args": [52, 2, "oc_memory", "0.0 MB"]},
+  {"fn": "TEXT", "args": [40, 3, "uptime_label"]},
+  {"fn": "TEXT", "args": [52, 3, "oc_uptime"]}
+]

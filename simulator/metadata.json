@@ -1,5 +1,0 @@
-{
-  "name": "PixelOS Kernel Terminal",
-  "description": "A neural interface for the PixelOS Kernel, featuring simulated VRAM visualization, PixelISA register monitoring, and a WGSL/Python orchestration bridge.",
-  "requestFramePermissions": []
-}

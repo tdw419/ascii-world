@@ -63,7 +63,7 @@ npm start
 | `sync/cell-store.js` | Reactive key-value store | 7 |
 | `sync/server.js` | HTTP + WebSocket server | 7 |
 
-**Total: 68 tests**
+**Total: 79 tests**
 
 ## Formula Functions
 
@@ -277,6 +277,28 @@ curl http://localhost:3839/api/v1/alerts/history
   "enabled": true
 }
 ```
+
+### Time-Series API
+
+#### GET /api/v1/history/:cell
+Get historical values for a specific cell.
+
+```bash
+curl http://localhost:3839/api/v1/history/cpu?points=100
+# [{"t":1711050000000,"v":0.75},{"t":1711049999000,"v":0.72},...]
+```
+
+#### GET /api/v1/history
+Get history for all tracked cells.
+
+```bash
+curl http://localhost:3839/api/v1/history?points=50
+# {"cpu":[...],"mem":[...]}
+```
+
+**Configuration:**
+- `maxPoints`: 1000 (max points stored per cell)
+- `minInterval`: 1000ms (minimum time between recordings)
 
 ### WebSocket
 

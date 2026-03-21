@@ -6,6 +6,7 @@ import { WebSocketServer } from 'ws';
 import { CellStore } from './cell-store.js';
 import { PixelFormulaEngine } from './pixel-formula-engine.js';
 import { AlertEngine } from './alert-engine.js';
+import { TimeSeriesStore } from './time-series-store.js';
 
 export class PxOSServer {
     constructor(port = 3839) {
@@ -13,6 +14,7 @@ export class PxOSServer {
         this.cellStore = new CellStore();
         this.engine = new PixelFormulaEngine(480, 240);
         this.alertEngine = new AlertEngine();
+        this.timeSeriesStore = new TimeSeriesStore({ maxPoints: 1000, minInterval: 1000 });
         this.template = [];
         this.httpServer = null;
         this.wss = null;
@@ -37,6 +39,9 @@ export class PxOSServer {
 
         // Subscribe to cell changes
         this.cellStore.subscribe((changes, cells) => {
+            // Record to time series
+            this.timeSeriesStore.recordAll(changes);
+            
             // Check alerts
             const alerts = this.alertEngine.check(cells);
             
@@ -115,6 +120,10 @@ export class PxOSServer {
                 }
             } else if (pathname === '/api/v1/alerts/history') {
                 this.handleGetAlertHistory(req, res);
+            } else if (pathname.startsWith('/api/v1/history/')) {
+                this.handleGetCellHistory(req, res, url);
+            } else if (pathname === '/api/v1/history') {
+                this.handleGetAllHistory(req, res, url);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -166,6 +175,19 @@ export class PxOSServer {
 
     handleGetAlertHistory(req, res) {
         this.sendJSON(res, 200, this.alertEngine.getHistory());
+    }
+
+    handleGetCellHistory(req, res, url) {
+        const cell = url.pathname.replace('/api/v1/history/', '');
+        const points = parseInt(url.searchParams.get('points')) || 100;
+        const history = this.timeSeriesStore.getHistory(cell, points);
+        this.sendJSON(res, 200, history);
+    }
+
+    handleGetAllHistory(req, res, url) {
+        const points = parseInt(url.searchParams.get('points')) || 100;
+        const history = this.timeSeriesStore.getAllHistory(points);
+        this.sendJSON(res, 200, history);
     }
 
     handleWebSocket(ws) {

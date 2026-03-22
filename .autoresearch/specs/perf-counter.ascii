@@ -1,0 +1,8 @@
+┌──────────────────────────────────────────────────┐
+│ EXPERIMENT - Add performance counter              │
+├──────────────────────────────────────────────────┤
+│ H: add performance counter to track ops          │
+│ T: sync/synthetic-glyph-vm.js                    │
+│ M: tests pass                                    │
+│ B: 100 iterations                                │
+└──────────────────────────────────────────────────┘

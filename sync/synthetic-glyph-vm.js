@@ -168,6 +168,8 @@ export class SyntheticGlyphVM {
         }
 
         this.state.cycles++;
+        // AutoResearch: perf counter
+        if (this.state.opCount !== undefined) this.state.opCount++;
 
         // DECODE & EXECUTE (matching WGSL shader)
         switch (inst.opcode) {

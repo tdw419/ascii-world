@@ -1,0 +1,4 @@
+H: Add formula for GPU performance tracking
+T: sync/pixel-formula-engine.js
+M: tests pass, no regressions
+B: 100 iterations

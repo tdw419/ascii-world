@@ -12,6 +12,8 @@ const OP = {
     SHL: 224, SHR: 225, SAR: 226,
     AND_MEM: 227, OR_MEM: 228, XOR_MEM: 229,
     SHL_MEM: 230, SHR_MEM: 231, SPATIAL_SPAWN: 232
+    // AutoResearch: added opcode
+    OP_NOP2: 199, // Experimental nop variant
 };
 
 // Cached opcode name lookup (optimization)

@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "dashboard": {
+    "name": "TABLE Demo",
+    "template": [
+      {
+        "fn": "TEXT",
+        "args": [
+          0,
+          0,
+          "TABLE Formula Demo"
+        ]
+      },
+      {
+        "fn": "BOX",
+        "args": [
+          0,
+          2,
+          60,
+          15
+        ]
+      },
+      {
+        "fn": "TEXT",
+        "args": [
+          2,
+          3,
+          "User Table:"
+        ]
+      },
+      {
+        "fn": "TABLE",
+        "args": [
+          2,
+          4,
+          "users",
+          null
+        ]
+      }
+    ],
+    "cells": {
+      "users": [
+        {
+          "name": "Alice",
+          "role": "admin",
+          "status": "active"
+        },
+        {
+          "name": "Bob",
+          "role": "user",
+          "status": "idle"
+        },
+        {
+          "name": "Charlie",
+          "role": "user",
+          "status": "active"
+        }
+      ]
+    }
+  }
+}

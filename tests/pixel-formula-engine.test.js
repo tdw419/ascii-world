@@ -279,4 +279,52 @@ describe('PixelFormulaEngine', () => {
         const pixel = engine.buffer.getPixel(3, 5);
         assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'GRID should draw pixels');
     });
+
+    it('HEATMAP draws heatmap grid', () => {
+        engine.clear();
+        engine.setCells({
+            'data_0_0': 10,
+            'data_0_1': 50,
+            'data_0_2': 90,
+            'data_1_0': 30,
+            'data_1_1': 70,
+            'data_1_2': 60,
+        });
+        engine.HEATMAP(0, 0, 'data', 2, 3);
+
+        // Check that heatmap drew colored pixels (red-blue gradient)
+        const pixel = engine.buffer.getPixel(5, 5);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'HEATMAP should draw pixels');
+    });
+
+    it('TABLE draws table with headers and rows', () => {
+        engine.clear();
+        engine.setCells({
+            users: [
+                { name: 'Alice', role: 'admin' },
+                { name: 'Bob', role: 'user' },
+            ]
+        });
+        engine.TABLE(0, 0, 'users');
+
+        // Check that table drew pixels (header background should be visible)
+        const headerPixel = engine.buffer.getPixel(10, 5);
+        assert.ok(headerPixel[0] > 0 || headerPixel[1] > 0 || headerPixel[2] > 0, 'TABLE should draw pixels');
+    });
+
+    it('TABLE uses custom headers when provided', () => {
+        engine.clear();
+        engine.setCells({
+            data: [
+                { a: 1, b: 2 },
+                { a: 3, b: 4 },
+            ],
+            labels: ['Column A', 'Column B']
+        });
+        engine.TABLE(0, 0, 'data', 'labels');
+
+        // Check that table drew pixels with custom headers
+        const pixel = engine.buffer.getPixel(15, 5);
+        assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'TABLE should draw pixels');
+    });
 });

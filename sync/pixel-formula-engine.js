@@ -511,6 +511,127 @@ export class PixelFormulaEngine {
      * Evaluate a pixel template (array of formula calls).
      * Each entry: { fn: 'BAR', args: [col, row, 'cpu', 40] }
      */
+
+    /**
+     * Draw a heatmap grid of values.
+     * =HEATMAP(col, row, cellName, rows, cols)
+     */
+    HEATMAP(col, row, cellName, numRows = 3, numCols = 3) {
+        const px = col * this.atlas.glyphW;
+        const py = row * this.atlas.glyphH;
+        const cellWidth = this.atlas.glyphW;
+        const cellHeight = this.atlas.glyphH;
+        
+        // Get values from cells
+        const values = [];
+        for (let r = 0; r < numRows; r++) {
+            for (let c = 0; c < numCols; c++) {
+                const key = `${cellName}_${r}_${c}`;
+                values.push(this.cells[key] || 0);
+            }
+        }
+        
+        if (values.length === 0) return;
+        
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const range = maxVal - minVal || 1;
+        
+        // Draw each cell
+        for (let i = 0; i < values.length; i++) {
+            const r = Math.floor(i / numCols);
+            const c = i % numCols;
+            const x = px + c * cellWidth;
+            const y = py + r * cellHeight;
+            
+            // Color based on value (blue to red gradient)
+            const normalized = (values[i] - minVal) / range;
+            const rColor = Math.round(255 * normalized);
+            const bColor = Math.round(255 * (1 - normalized));
+            
+            // Fill cell with color
+            for (let bx = 0; bx < cellWidth - 1; bx++) {
+                for (let by = 0; by < cellHeight - 1; by++) {
+                    this.buffer.setPixel(x + bx, y + by, rColor, 50, bColor);
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw a table with headers and rows.
+     * =TABLE(col, row, dataCell, headerCell)
+     * dataCell: array of objects [{col1: 'val1', col2: 'val2'}, ...]
+     * headerCell: optional array of column names ['Col 1', 'Col 2']
+     */
+    TABLE(col, row, dataCell, headerCell = null) {
+        const data = this.resolveValue(dataCell);
+        if (!Array.isArray(data) || data.length === 0) return;
+
+        // Extract headers from first object or use provided headers
+        let headers = [];
+        if (headerCell && Array.isArray(this.resolveValue(headerCell))) {
+            headers = this.resolveValue(headerCell);
+        } else if (data[0] && typeof data[0] === 'object') {
+            headers = Object.keys(data[0]);
+        }
+
+        if (headers.length === 0) return;
+
+        const px = col * this.atlas.glyphW;
+        const py = row * this.atlas.glyphH;
+        const cellHeight = this.atlas.glyphH;
+        const headerHeight = this.atlas.glyphH;
+
+        // Calculate column widths based on content
+        const colWidths = headers.map(h => {
+            let maxLen = h.length;
+            for (const row of data) {
+                const val = String(row[h] ?? '');
+                if (val.length > maxLen) maxLen = val.length;
+            }
+            return Math.min(maxLen + 1, 12); // Cap at 12 chars
+        });
+
+        // Draw header row with background
+        const headerBg = [0x30, 0x36, 0x3d]; // border color
+        let currentX = px;
+        for (let i = 0; i < headers.length; i++) {
+            const colW = colWidths[i] * this.atlas.glyphW;
+            // Draw header background
+            this.buffer.drawRect(currentX, py, colW, headerHeight, ...headerBg);
+            // Draw header text
+            this.atlas.drawText(this.buffer, currentX + 3, py + 4, headers[i], COLORS.white);
+            currentX += colW;
+        }
+
+        // Draw horizontal separator line
+        const totalWidth = colWidths.reduce((a, b) => a + b, 0) * this.atlas.glyphW;
+        for (let x = px; x < px + totalWidth; x++) {
+            this.buffer.setPixel(x, py + headerHeight - 1, ...COLORS.border);
+        }
+
+        // Draw data rows with alternating colors
+        const rowBgEven = [0x0a, 0x0a, 0x0f]; // dark background
+        const rowBgOdd = [0x16, 0x1b, 0x22]; // slightly lighter
+
+        for (let r = 0; r < data.length; r++) {
+            const rowData = data[r];
+            const rowY = py + headerHeight + r * cellHeight;
+            const bgColor = r % 2 === 0 ? rowBgEven : rowBgOdd;
+
+            currentX = px;
+            for (let i = 0; i < headers.length; i++) {
+                const colW = colWidths[i] * this.atlas.glyphW;
+                // Draw cell background
+                this.buffer.drawRect(currentX, rowY, colW, cellHeight, ...bgColor);
+                // Draw cell text
+                const val = String(rowData[headers[i]] ?? '');
+                this.atlas.drawText(this.buffer, currentX + 3, rowY + 4, val, COLORS.textMuted);
+                currentX += colW;
+            }
+        }
+    }
     renderTemplate(template) {
         this.clear();
 

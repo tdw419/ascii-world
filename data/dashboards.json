@@ -1,6 +1,36 @@
 {
   "version": 1,
   "dashboards": {
+    "heatmap-demo": {
+      "name": "HEATMAP Demo",
+      "template": [
+        {
+          "fn": "TEXT",
+          "args": [0, 0, "HEATMAP Demo"]
+        },
+        {
+          "fn": "BOX",
+          "args": [0, 2, 20, 6]
+        },
+        {
+          "fn": "TEXT",
+          "args": [2, 3, "Data Grid:"]
+        },
+        {
+          "fn": "HEATMAP",
+          "args": [2, 4, "data", 2, 3]
+        }
+      ],
+      "cells": {
+        "data_0_0": 10,
+        "data_0_1": 50,
+        "data_0_2": 90,
+        "data_1_0": 30,
+        "data_1_1": 70,
+        "data_1_2": 60
+      },
+      "created": 1774258800000
+    },
     "autoresearch": {
       "name": "autoresearch",
       "template": [

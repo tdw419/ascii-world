@@ -1,0 +1,8 @@
+┌──────────────────────────────────────────────────┐
+│ GPU EXPERIMENT SPEC                              │
+├──────────────────────────────────────────────────┤
+│ H: GPU counter increment performance            │
+│ T: sync/synthetic-glyph-vm.js                   │
+│ M: ops/sec > 1M                                 │
+│ B: 1000 iterations, 80x24 grid                  │
+└──────────────────────────────────────────────────┘

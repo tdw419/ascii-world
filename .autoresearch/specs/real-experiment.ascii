@@ -1,0 +1,8 @@
+┌──────────────────────────────────────────────────┐
+│ REAL EXPERIMENT - Add experimental opcode         │
+├──────────────────────────────────────────────────┤
+│ H: implement new opcode for experimental features│
+│ T: sync/synthetic-glyph-vm.js                   │
+│ M: tests pass, ops/sec maintained              │
+│ B: 100 iterations                               │
+└──────────────────────────────────────────────────┘

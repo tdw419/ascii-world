@@ -44,7 +44,35 @@ HYPOTHESIS_TEMPLATES = {
         "pattern": r"add.*formula|new formula|implement.*formula",
         "generator": lambda target, content: add_formula_function(target, content),
     },
+    "add_opcode": {
+        "pattern": r"add.*opcode|new opcode|implement.*opcode",
+        "generator": lambda target, content: add_opcode_function(target, content),
+    },
 }
+
+
+def add_opcode_function(target_path: Path, content: str) -> str:
+    """Add a new opcode to the VM."""
+    # Check if this is the VM file
+    if "SyntheticGlyphVM" not in content and "OP = {" not in content:
+        return content
+
+    # Check if already added
+    if "OP_NOP2" in content or "// AutoResearch: added opcode" in content:
+        return content  # Already has it
+
+    # Find the OP definition and add a new constant
+    lines = content.split("\n")
+    result = []
+
+    for i, line in enumerate(lines):
+        result.append(line)
+        # Add new opcode after the OP object definition closes
+        if "SPATIAL_SPAWN: 232" in line or '"SPATIAL_SPAWN": 232' in line:
+            result.append("    // AutoResearch: added opcode")
+            result.append("    OP_NOP2: 199, // Experimental nop variant")
+
+    return "\n".join(result)
 
 
 def add_cache_lookup(target_path: Path, content: str) -> str:
@@ -66,7 +94,6 @@ const OP_NAMES = new Map();"""
 
 def inline_function(target_path: Path, content: str) -> str:
     """Inline small functions for performance."""
-    # This is a placeholder - real implementation would be more sophisticated
     lines = content.split("\n")
     result = []
     for line in lines:
@@ -162,6 +189,21 @@ def run_benchmark() -> int:
     if match:
         return int(match.group(1))
     return 0
+
+
+def run_gpu_benchmark() -> int:
+    """Run GPU benchmark and extract ops/sec from pxOS."""
+    try:
+        result = subprocess.run(
+            ["curl", "-s", "http://localhost:3839/api/v1/cells"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        cells = json.loads(result.stdout)
+        return cells.get("gpu_ops_sec", 0)
+    except:
+        return 0
 
 
 def generate_code_change(spec: dict, target_path: Path) -> str:
@@ -368,8 +410,11 @@ def main():
         print("\nCommands:")
         print("  run <spec.ascii>       - Run an ASCII experiment spec")
         print("  run <spec.ascii> --ai  - Use AI for code generation")
+        print("  run <spec.ascii> --gpu - Run benchmark on GPU")
         print("  status                 - Show status")
         print("  test                   - Run tests only")
+        print("  benchmark              - Run CPU benchmark")
+        print("  benchmark --gpu        - Run GPU benchmark")
         sys.exit(1)
 
     command = args[0]
@@ -381,6 +426,7 @@ def main():
 
         spec_path = args[1]
         use_ai = "--ai" in args
+        use_gpu = "--gpu" in args
 
         result = run_experiment(spec_path, use_ai)
         print(f"\nResult: {result}")
@@ -392,9 +438,40 @@ def main():
         passed, failed = run_tests()
         print(f"Tests: {passed} passed, {failed} failed")
 
+    elif command == "benchmark":
+        use_gpu = "--gpu" in args
+        if use_gpu:
+            ops = run_gpu_benchmark()
+            print(f"GPU Benchmark: {ops:,} ops/sec")
+        else:
+            ops = run_benchmark()
+            print(f"CPU Benchmark: {ops:,} ops/sec")
+
+    elif command == "gpu-status":
+        # Show GPU-specific status
+        try:
+            result = subprocess.run(
+                ["curl", "-s", "http://localhost:3839/api/v1/cells"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            cells = json.loads(result.stdout)
+            print("┌" + "─" * 50 + "┐")
+            print("│ " + "GPU STATUS".ljust(48) + " │")
+            print("├" + "─" * 50 + "┤")
+            print(f"│ pxOS: {'ONLINE' if result.returncode == 0 else 'OFFLINE':<42} │")
+            print(f"│ GPU ops/sec: {cells.get('gpu_ops_sec', 0):<34} │")
+            print(f"│ Backend: {cells.get('gpu_backend', 'unknown'):<40} │")
+            print(f"│ Last benchmark: {cells.get('gpu_last_bench', 'never'):<30} │")
+            print("└" + "─" * 50 + "┘")
+
+        except Exception as e:
+            print(f"Error: {e}")
+
     else:
-        print(f"Unknown command: {command}")
-        sys.exit(1)
+            print(f"Unknown command: {command}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":

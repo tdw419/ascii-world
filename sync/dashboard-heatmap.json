@@ -1,0 +1,16 @@
+{
+  "id": "heatmap-demo",
+  "title": "HEATMAP Demo Dashboard",
+  "cells": {
+    "data_0_0": 10,
+    "data_0_1": 50,
+    "data_0_2": 90,
+    "data_1_0": 30,
+    "data_1_1": 70,
+    "data_1_2": 60
+  },
+  "template": [
+    {"fn": "TEXT", "args": [0, 0, "HEATMAP Demo"]},
+    {"fn": "HEATMAP", "args": [0, 2, "data", 2, 3]}
+  ]
+}

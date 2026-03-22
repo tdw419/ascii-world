@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GPU Glyph VM Test</title>
+    <style>
+        body {
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+        }
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        h1 { color: #3fb950; }
+        h2 { color: #58a6ff; margin-top: 0; }
+        .status { font-size: 14px; }
+        .ok { color: #3fb950; }
+        .error { color: #f85149; }
+        .pending { color: #8b949e; }
+        pre {
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 4px;
+        }
+        button:hover { background: #2ea043; }
+        button:disabled { background: #484f58; cursor: not-allowed; }
+        .result {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        canvas {
+            border: 1px solid #30363d;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GPU Glyph VM Test</h1>
+
+    <div class="panel">
+        <h2>WebGPU Status</h2>
+        <div id="status" class="status pending">Checking...</div>
+    </div>
+
+    <div class="panel">
+        <h2>pxOS Dashboard</h2>
+        <div id="pxosStatus" class="status pending">Checking connection...</div>
+    </div>
+
+    <div class="panel">
+        <h2>Controls</h2>
+        <button id="initBtn" onclick="initGPU()">Initialize GPU</button>
+        <button id="loadBtn" onclick="loadCartridge()" disabled>Load Test Cartridge</button>
+        <button id="clickBtn" onclick="executeClick()" disabled>Execute Click (40, 12)</button>
+        <button id="frameBtn" onclick="executeFrame()" disabled>Execute Frame</button>
+        <button id="benchBtn" onclick="runBenchmark()" disabled>Run Benchmark</button>
+        <button id="batchBtn" onclick="runBatchBenchmark()" disabled>Batch Benchmark (1000 frames)</button>
+        <button id="reportBtn" onclick="reportToDashboard()" disabled>Report to Dashboard</button>
+    </div>
+
+    <div class="panel">
+        <h2>Grid Size</h2>
+        <select id="gridSize" onchange="changeGridSize()">
+            <option value="80x24">80x24 (1,920 ops) - Terminal</option>
+            <option value="160x48">160x48 (7,680 ops)</option>
+            <option value="320x96">320x96 (30,720 ops) - GPU crossover</option>
+            <option value="640x192">640x192 (122,880 ops)</option>
+            <option value="1280x384">1280x384 (491,520 ops) - Max</option>
+        </select>
+        <span id="gridInfo">Current: 80x24</span>
+    </div>
+
+    <div class="panel">
+        <h2>State</h2>
+        <canvas id="stateCanvas" width="320" height="20"></canvas>
+        <div id="stateValues" class="status"></div>
+    </div>
+
+    <div class="panel">
+        <h2>Benchmark Results</h2>
+        <div id="benchmark" class="result">-</div>
+    </div>
+
+    <div class="panel">
+        <h2>Log</h2>
+        <pre id="log"></pre>
+    </div>
+
+    <script type="module">
+        const SHADER_SOURCE = `
+// cartridge_executor.wgsl
+// GPU-native execution of Glyph VM opcodes
+
+const OP_NOP: u32 = 140u;
+const OP_DATA: u32 = 128u;
+const OP_LD: u32 = 204u;
+const OP_ADD: u32 = 142u;
+const OP_SUB: u32 = 143u;
+const OP_AND: u32 = 220u;
+const OP_OR: u32 = 221u;
+const OP_XOR: u32 = 222u;
+const OP_NOT: u32 = 223u;
+const OP_TOGGLE: u32 = 3u;
+const OP_INC: u32 = 8u;
+const OP_DEC: u32 = 9u;
+
+const MODE_CLICK: u32 = 0u;
+const MODE_FRAME: u32 = 1u;
+
+struct ExecParams {
+    click_x: u32,
+    click_y: u32,
+    exec_mode: u32,
+    grid_width: u32,
+    grid_height: u32,
+    state_count: u32,
+    _pad1: u32,
+    _pad2: u32,
+}
+
+@group(0) @binding(0) var sit_texture: texture_2d<u32>;
+@group(0) @binding(1) var state_texture: texture_storage_2d<rgba8uint, read_write>;
+@group(0) @binding(2) var<uniform> params: ExecParams;
+
+fn loadState(slot: u32) -> u32 {
+    let coord = vec2<i32>(i32(slot), 0);
+    return textureLoad(state_texture, coord).r;
+}
+
+fn storeState(slot: u32, value: u32) {
+    let coord = vec2<i32>(i32(slot), 0);
+    let old = textureLoad(state_texture, coord);
+    textureStore(state_texture, coord, vec4<u32>(value & 255u, old.g, old.b, old.a));
+}
+
+// OPTIMIZED: 8x8 workgroups for better cache utilization
+@compute @workgroup_size(8, 8, 1)
+fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+    let x = global_id.x;
+    let y = global_id.y;
+
+    // Early bounds check
+    let in_bounds = x < params.grid_width && y < params.grid_height;
+    if (!in_bounds) { return; }
+
+    // Click mode: early out for non-clicked cells
+    let is_click_mode = params.exec_mode == MODE_CLICK;
+    let is_click_target = x == params.click_x && y == params.click_y;
+    if (is_click_mode && !is_click_target) { return; }
+
+    let sit_pixel = textureLoad(sit_texture, vec2<i32>(i32(x), i32(y)));
+    let opcode = sit_pixel.r;
+    let target = sit_pixel.g;
+    let flags = sit_pixel.b;
+
+    // Fast path for NOP (most common in sparse grids)
+    if (opcode == OP_NOP) { return; }
+
+    switch (opcode) {
+        case OP_TOGGLE: {
+            let cur = loadState(target);
+            storeState(target, select(255u, 0u, cur > 128u));
+        }
+        case OP_INC: {
+            let cur = loadState(target);
+            storeState(target, (cur + 1u) & 255u);
+        }
+        case OP_DEC: {
+            let cur = loadState(target);
+            storeState(target, (cur - 1u) & 255u);
+        }
+        case OP_LD: {
+            storeState(target, flags);
+        }
+        case OP_ADD: {
+            let cur = loadState(target);
+            storeState(target, (cur + flags) & 255u);
+        }
+        case OP_SUB: {
+            let cur = loadState(target);
+            storeState(target, (cur - flags) & 255u);
+        }
+        case OP_AND: {
+            let cur = loadState(target);
+            storeState(target, cur & flags);
+        }
+        case OP_OR: {
+            let cur = loadState(target);
+            storeState(target, cur | flags);
+        }
+        case OP_XOR: {
+            let cur = loadState(target);
+            storeState(target, cur ^ flags);
+        }
+        default: { }
+    }
+}
+`;
+
+        let device, sitTexture, stateTexture, pipeline, bindGroup, uniformBuffer;
+        let initialized = false;
+
+        // Dynamic grid size
+        let GRID_W = 80, GRID_H = 24;
+        const STATE_COUNT = 320;
+
+        function log(msg) {
+            const el = document.getElementById('log');
+            el.textContent += msg + '\n';
+            el.scrollTop = el.scrollHeight;
+            console.log(msg);
+        }
+
+        function setStatus(msg, cls) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status ' + cls;
+        }
+
+        async function checkWebGPU() {
+            if (!navigator.gpu) {
+                setStatus('WebGPU NOT supported', 'error');
+                return false;
+            }
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                setStatus('WebGPU adapter NOT available', 'error');
+                return false;
+            }
+            setStatus('WebGPU available', 'ok');
+            return true;
+        }
+
+        window.initGPU = async function() {
+            try {
+                log('Initializing GPU...');
+
+                const adapter = await navigator.gpu.requestAdapter();
+                device = await adapter.requestDevice();
+
+                log('Device created');
+
+                // Create SIT texture
+                sitTexture = device.createTexture({
+                    size: [GRID_W, GRID_H],
+                    format: 'rgba8uint',
+                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+                });
+                log('SIT texture created (80x24)');
+
+                // Create state texture
+                stateTexture = device.createTexture({
+                    size: [STATE_COUNT, 1],
+                    format: 'rgba8uint',
+                    usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST,
+                });
+                log('State texture created (320 slots)');
+
+                // Create uniform buffer
+                uniformBuffer = device.createBuffer({
+                    size: 32,
+                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+                });
+
+                // Create shader
+                const shader = device.createShaderModule({ code: SHADER_SOURCE });
+                log('Shader compiled');
+
+                // Create pipeline
+                const bindGroupLayout = device.createBindGroupLayout({
+                    entries: [
+                        { binding: 0, visibility: GPUShaderStage.COMPUTE, texture: { sampleType: 'uint', viewDimension: '2d' } },
+                        { binding: 1, visibility: GPUShaderStage.COMPUTE, storageTexture: { access: 'read-write', format: 'rgba8uint', viewDimension: '2d' } },
+                        { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+                    ],
+                });
+
+                pipeline = device.createComputePipeline({
+                    layout: device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] }),
+                    compute: { module: shader, entryPoint: 'main' },
+                });
+
+                bindGroup = device.createBindGroup({
+                    layout: bindGroupLayout,
+                    entries: [
+                        { binding: 0, resource: sitTexture.createView() },
+                        { binding: 1, resource: stateTexture.createView() },
+                        { binding: 2, resource: { buffer: uniformBuffer } },
+                    ],
+                });
+
+                log('Pipeline created');
+                setStatus('GPU initialized', 'ok');
+                initialized = true;
+
+                document.getElementById('loadBtn').disabled = false;
+                document.getElementById('initBtn').disabled = true;
+
+            } catch (e) {
+                log('ERROR: ' + e.message);
+                setStatus('Init failed: ' + e.message, 'error');
+            }
+        };
+
+        window.loadCartridge = function() {
+            log('Loading test cartridge...');
+
+            // Create SIT data: simple counter at (40, 12)
+            const sitData = new Uint8Array(GRID_W * GRID_H * 4);
+
+            // Put INC at position (40, 12) targeting slot 0
+            const idx = (12 * GRID_W + 40) * 4;
+            sitData[idx] = 8;     // OP_INC
+            sitData[idx + 1] = 0; // target slot 0
+            sitData[idx + 2] = 0;
+            sitData[idx + 3] = 0;
+
+            // Put INC at (41, 12) targeting slot 1
+            const idx2 = (12 * GRID_W + 41) * 4;
+            sitData[idx2] = 8;
+            sitData[idx2 + 1] = 1;
+            sitData[idx2 + 2] = 0;
+            sitData[idx2 + 3] = 0;
+
+            // Upload to GPU
+            device.queue.writeTexture(
+                { texture: sitTexture },
+                sitData,
+                { bytesPerRow: GRID_W * 4 },
+                [GRID_W, GRID_H]
+            );
+
+            // Initialize state to zeros
+            const stateData = new Uint8Array(STATE_COUNT * 4);
+            device.queue.writeTexture(
+                { texture: stateTexture },
+                stateData,
+                { bytesPerRow: STATE_COUNT * 4 },
+                [STATE_COUNT, 1]
+            );
+
+            log('Cartridge loaded: INC at (40,12)->slot0, INC at (41,12)->slot1');
+            document.getElementById('clickBtn').disabled = false;
+            document.getElementById('frameBtn').disabled = false;
+            document.getElementById('benchBtn').disabled = false;
+            document.getElementById('batchBtn').disabled = false;
+            // Report button enabled after benchmark only
+        };
+
+        async function readState() {
+            const size = STATE_COUNT * 4;
+            const staging = device.createBuffer({
+                size,
+                usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+            });
+
+            const cmd = device.createCommandEncoder();
+            cmd.copyTextureToBuffer(
+                { texture: stateTexture },
+                { buffer: staging, bytesPerRow: STATE_COUNT * 4 },
+                [STATE_COUNT, 1, 1]
+            );
+            device.queue.submit([cmd.finish()]);
+
+            await staging.mapAsync(GPUMapMode.READ);
+            const data = new Uint8Array(staging.getMappedRange().slice(0));
+            staging.unmap();
+            staging.destroy();
+
+            return data;
+        }
+
+        function drawState(data) {
+            const canvas = document.getElementById('stateCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0d1117';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < STATE_COUNT; i++) {
+                const val = data[i * 4];
+                const r = Math.floor(val);
+                const g = Math.floor(val * 0.5);
+                ctx.fillStyle = `rgb(${r},${g},50)`;
+                ctx.fillRect(i, 0, 1, 20);
+            }
+
+            // Show first 10 values
+            const vals = [];
+            for (let i = 0; i < 10; i++) {
+                vals.push(data[i * 4]);
+            }
+            document.getElementById('stateValues').textContent = 'Slots 0-9: ' + vals.join(', ');
+        }
+
+        window.executeClick = async function() {
+            log('Executing click at (40, 12)...');
+
+            // Set uniform params
+            const params = new ArrayBuffer(32);
+            const view = new DataView(params);
+            view.setUint32(0, 40, true);    // click_x
+            view.setUint32(4, 12, true);    // click_y
+            view.setUint32(8, 0, true);     // MODE_CLICK
+            view.setUint32(12, GRID_W, true);
+            view.setUint32(16, GRID_H, true);
+            view.setUint32(20, STATE_COUNT, true);
+            device.queue.writeBuffer(uniformBuffer, 0, params);
+
+            // Dispatch
+            const cmd = device.createCommandEncoder();
+            const pass = cmd.beginComputePass();
+            pass.setPipeline(pipeline);
+            pass.setBindGroup(0, bindGroup);
+            pass.dispatchWorkgroups(1, 1, 1);
+            pass.end();
+            device.queue.submit([cmd.finish()]);
+
+            // Read back
+            const state = await readState();
+            drawState(state);
+            log('State updated: slot 0 = ' + state[0]);
+        };
+
+        window.executeFrame = async function() {
+            log('Executing full frame...');
+
+            const params = new ArrayBuffer(32);
+            const view = new DataView(params);
+            view.setUint32(0, 0, true);
+            view.setUint32(4, 0, true);
+            view.setUint32(8, 1, true);     // MODE_FRAME
+            view.setUint32(12, GRID_W, true);
+            view.setUint32(16, GRID_H, true);
+            view.setUint32(20, STATE_COUNT, true);
+            device.queue.writeBuffer(uniformBuffer, 0, params);
+
+            const cmd = device.createCommandEncoder();
+            const pass = cmd.beginComputePass();
+            pass.setPipeline(pipeline);
+            pass.setBindGroup(0, bindGroup);
+            pass.dispatchWorkgroups(Math.ceil(GRID_W / 8), Math.ceil(GRID_H / 8), 1);
+            pass.end();
+            device.queue.submit([cmd.finish()]);
+
+            const state = await readState();
+            drawState(state);
+            log('Frame executed: slot 0 = ' + state[0] + ', slot 1 = ' + state[4]);
+        };
+
+        window.runBenchmark = async function() {
+            log('Running benchmark (100 frames)...');
+            document.getElementById('benchBtn').disabled = true;
+
+            const iterations = 100;
+            const results = [];
+
+            for (let i = 0; i < iterations; i++) {
+                // Reset state
+                const emptyState = new Uint8Array(STATE_COUNT * 4);
+                device.queue.writeTexture({ texture: stateTexture }, emptyState, { bytesPerRow: STATE_COUNT * 4 }, [STATE_COUNT, 1]);
+
+                // Execute frame
+                const start = performance.now();
+
+                const cmd = device.createCommandEncoder();
+                const pass = cmd.beginComputePass();
+                pass.setPipeline(pipeline);
+                pass.setBindGroup(0, bindGroup);
+                pass.dispatchWorkgroups(Math.ceil(GRID_W / 8), Math.ceil(GRID_H / 8), 1);
+                pass.end();
+                device.queue.submit([cmd.finish()]);
+                await device.queue.onSubmittedWorkDone();
+
+                const elapsed = performance.now() - start;
+                results.push((GRID_W * GRID_H) / (elapsed / 1000));
+            }
+
+            results.sort((a, b) => a - b);
+            const median = results[Math.floor(results.length / 2)];
+            const opsPerSec = Math.round(median);
+
+            document.getElementById('benchmark').textContent = formatNumber(opsPerSec) + ' ops/sec';
+            log('Benchmark complete: ' + formatNumber(opsPerSec) + ' ops/sec (median of ' + iterations + ')');
+            document.getElementById('benchBtn').disabled = false;
+        };
+
+        window.runBatchBenchmark = async function() {
+            log('Running batch benchmark (1000 frames, single readback)...');
+            document.getElementById('batchBtn').disabled = true;
+
+            const BATCH_SIZE = 1000;
+            const TOTAL_OPS = BATCH_SIZE * GRID_W * GRID_H;
+
+            // Reset state once
+            const emptyState = new Uint8Array(STATE_COUNT * 4);
+            device.queue.writeTexture({ texture: stateTexture }, emptyState, { bytesPerRow: STATE_COUNT * 4 }, [STATE_COUNT, 1]);
+
+            // Set frame mode params
+            const params = new ArrayBuffer(32);
+            const view = new DataView(params);
+            view.setUint32(0, 0, true);
+            view.setUint32(4, 0, true);
+            view.setUint32(8, 1, true);     // MODE_FRAME
+            view.setUint32(12, GRID_W, true);
+            view.setUint32(16, GRID_H, true);
+            view.setUint32(20, STATE_COUNT, true);
+            device.queue.writeBuffer(uniformBuffer, 0, params);
+
+            // Time pure dispatch (no readback)
+            const start = performance.now();
+
+            for (let i = 0; i < BATCH_SIZE; i++) {
+                const cmd = device.createCommandEncoder();
+                const pass = cmd.beginComputePass();
+                pass.setPipeline(pipeline);
+                pass.setBindGroup(0, bindGroup);
+                pass.dispatchWorkgroups(Math.ceil(GRID_W / 8), Math.ceil(GRID_H / 8), 1);
+                pass.end();
+                device.queue.submit([cmd.finish()]);
+            }
+
+            await device.queue.onSubmittedWorkDone();
+            const elapsed = performance.now() - start;
+
+            // Read once at end
+            await readState();
+
+            const opsPerSec = TOTAL_OPS / (elapsed / 1000);
+
+            // Store result for dashboard reporting
+            lastBenchmarkResult = {
+                opsPerSec,
+                frames: BATCH_SIZE,
+                totalOps: TOTAL_OPS,
+                elapsed
+            };
+
+            document.getElementById('benchmark').textContent = formatNumber(opsPerSec) + ' ops/sec (batch)';
+            log('Batch complete: ' + formatNumber(opsPerSec) + ' ops/sec (' + BATCH_SIZE + ' frames, ' + formatNumber(TOTAL_OPS) + ' ops)');
+            document.getElementById('batchBtn').disabled = false;
+            document.getElementById('reportBtn').disabled = false;
+
+            // Auto-report to pxOS dashboard
+            await window.reportToDashboard();
+        };
+
+        let lastBenchmarkResult = null;
+
+        window.reportToDashboard = async function() {
+            if (!lastBenchmarkResult) {
+                log('No benchmark result to report');
+                return;
+            }
+
+            const PXOS_URL = 'http://localhost:3839/api/v1/cells';
+
+            const payload = {
+                gpu_ops_sec: lastBenchmarkResult.opsPerSec,
+                gpu_ops_sec_fmt: formatNumber(lastBenchmarkResult.opsPerSec),
+                gpu_frames: lastBenchmarkResult.frames || 1,
+                gpu_backend: 'WebGPU',
+                gpu_status: 'ACTIVE',
+                gpu_status_color: 'active',
+                gpu_last_bench: new Date().toLocaleTimeString(),
+                gpu_state_0: lastBenchmarkResult.state0 || 0,
+                gpu_state_1: lastBenchmarkResult.state1 || 0
+            };
+
+            try {
+                const resp = await fetch(PXOS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                log('Reported to pxOS: ' + JSON.stringify(payload));
+                log('Dashboard response: ' + JSON.stringify(data));
+            } catch (e) {
+                log('Failed to report: ' + e.message);
+            }
+        };
+
+        function formatNumber(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(2) + 'K';
+            return n.toFixed(0);
+        }
+
+        window.changeGridSize = async function() {
+            const select = document.getElementById('gridSize');
+            const [w, h] = select.value.split('x').map(Number);
+            GRID_W = w;
+            GRID_H = h;
+            document.getElementById('gridInfo').textContent = `Current: ${w}x${h} (${formatNumber(w*h)} ops)`;
+            log(`Grid size changed to ${w}x${h}`);
+
+            // Re-initialize GPU with new size
+            if (initialized) {
+                initialized = false;
+                document.getElementById('initBtn').disabled = false;
+                document.getElementById('loadBtn').disabled = true;
+                document.getElementById('benchBtn').disabled = true;
+                document.getElementById('batchBtn').disabled = true;
+                document.getElementById('reportBtn').disabled = true;
+                log('Please re-initialize GPU for new grid size');
+            }
+        };
+
+        async function checkPxOS() {
+            try {
+                const resp = await fetch('http://localhost:3839/health');
+                const data = await resp.json();
+                const el = document.getElementById('pxosStatus');
+                el.textContent = 'Connected to pxOS at localhost:3839';
+                el.className = 'status ok';
+            } catch (e) {
+                const el = document.getElementById('pxosStatus');
+                el.textContent = 'pxOS not running (start with: node server.js)';
+                el.className = 'status error';
+            }
+        }
+
+        // Check WebGPU and pxOS on load
+        checkWebGPU();
+        checkPxOS();
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+// Experiment Dashboard for AutoResearch
+// Load with: curl -X POST http://localhost:3839/api/v1/template -d @experiment-dashboard.ascii
+
+=BAR(10, 5, 'exp_metric', 60)
+=TEXT(80, 5, 'tests passing')
+=TEXT(10, 12, 'Status:')
+=TEXT(70, 12, 'exp_status')
+=TEXT(10, 19, 'Commit:')
+=TEXT(70, 19, 'exp_commit')
+=TEXT(10, 26, 'Hypothesis:')
+=TEXT(10, 33, 'exp_hypothesis')
+
+// Visual indicator based on status
+=IF(exp_status == "KEEP ✓", CIRCLE(450, 20, 10, 

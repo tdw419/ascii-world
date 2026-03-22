@@ -1,0 +1,4 @@
+H: Add SPARKLINE formula function for metric history
+T: sync/pixel-formula-engine.js
+M: tests >= baseline
+B: 2m

@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "dashboards": {
+    "autoresearch": {
+      "name": "autoresearch",
+      "template": [
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            0,
+            60,
+            3
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            2,
+            1,
+            "AUTORESEARCH DASHBOARD"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            4,
+            60,
+            7
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            2,
+            5,
+            "Experiment:"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            14,
+            5,
+            "exp_desc"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            2,
+            6,
+            "Commit:"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            14,
+            6,
+            "exp_commit"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            2,
+            7,
+            "Status:"
+          ]
+        },
+        {
+          "fn": "STATUS",
+          "args": [
+            14,
+            7,
+            "exp_status",
+            1,
+            "● KEEP",
+            0,
+            "○ DISCARD"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            2,
+            8,
+            "Tests:"
+          ]
+        },
+        {
+          "fn": "BAR",
+          "args": [
+            14,
+            8,
+            "exp_tests_passed",
+            30
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            2,
+            9,
+            "Time:"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            14,
+            9,
+            "exp_timestamp"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            12,
+            60,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            2,
+            13,
+            "Metric History:"
+          ]
+        },
+        {
+          "fn": "SPARKLINE",
+          "args": [
+            2,
+            15,
+            "exp_metric",
+            56
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            0,
+            18,
+            "pxOS + AutoResearch"
+          ]
+        }
+      ],
+      "alerts": [],
+      "created": 1774172009262
+    }
+  }
+}

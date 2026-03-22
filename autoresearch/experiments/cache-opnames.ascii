@@ -1,0 +1,4 @@
+H: Cache OP_NAMES lookup for faster opcode dispatch
+T: sync/synthetic-glyph-vm.js
+M: ops/sec > baseline
+B: 2m

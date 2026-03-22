@@ -1,0 +1,7 @@
+{
+  "Step": { "opcode": "INC", "target": 0 },
+  "Run": { "opcode": "SET", "target": 1 },
+  "Stop": { "opcode": "CLEAR", "target": 1 },
+  "Clear": { "opcode": "LDI", "target": 0, "flags": 0 },
+  "Random": { "opcode": "LDI", "target": 2, "flags": 255 }
+}

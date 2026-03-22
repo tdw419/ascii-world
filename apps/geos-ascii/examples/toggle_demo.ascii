@@ -1,0 +1,22 @@
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                     PIXELS MOVE PIXELS — TOGGLE DEMO                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Each button has an OPCODE baked into its pixel.                            │
+│  Click it. The pixel executes. State changes. Screen updates.               │
+│  No JavaScript handlers. No Python. No Rust. Just pixels.                   │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  [A] Light1    Status: ○                                                    │
+│  [B] Light2    Status: ○                                                    │
+│  [C] Light3    Status: ○                                                    │
+│                                                                              │
+│  [D] Counter+  [E] Counter-  Value: 0                                       │
+│                                                                              │
+│  [F] AllOn     [G] AllOff    [H] Quit                                       │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  The ○ indicators swap to ● when their state slot is active.                │
+│  Counter (state[3]) increments/decrements with INC/DEC opcodes.             │
+└──────────────────────────────────────────────────────────────────────────────┘

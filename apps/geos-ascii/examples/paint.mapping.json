@@ -1,0 +1,7 @@
+{
+  "Brush": { "opcode": "SET", "target": 0 },
+  "Eraser": { "opcode": "CLEAR", "target": 0 },
+  "Clear": { "opcode": "LDI", "target": 1, "flags": 1 },
+  "Fill": { "opcode": "LDI", "target": 1, "flags": 2 },
+  "Invert": { "opcode": "XOR", "target": 1, "flags": 255 }
+}

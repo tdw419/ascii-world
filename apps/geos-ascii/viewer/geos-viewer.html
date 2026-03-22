@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeosASCII Viewer - GPU Cartridge Player</title>
+    <title>GeosASCII Viewer v2 - Pixels Move Pixels</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -24,137 +24,115 @@
             margin-bottom: 10px;
         }
         
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
         
         .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: flex; gap: 15px; margin-bottom: 20px;
+            flex-wrap: wrap; justify-content: center;
         }
         
         button, .file-input-label {
-            background: #1a1a2e;
-            border: 1px solid #333;
-            color: #00ff88;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 14px;
+            background: #1a1a2e; border: 1px solid #333; color: #00ff88;
+            padding: 10px 20px; cursor: pointer; font-family: inherit; font-size: 14px;
             transition: all 0.2s;
         }
         
         button:hover, .file-input-label:hover {
-            background: #252540;
-            border-color: #00ff88;
+            background: #252540; border-color: #00ff88;
             box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
         }
         
-        input[type="file"] {
-            display: none;
-        }
+        input[type="file"] { display: none; }
         
         #canvas-container {
-            position: relative;
-            border: 2px solid #333;
+            position: relative; border: 2px solid #333;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
         }
         
         #viewport {
-            display: block;
-            image-rendering: pixelated;
-            cursor: crosshair;
-        }
-        
-        #overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            font-size: 10px;
+            display: block; image-rendering: pixelated; cursor: crosshair;
         }
         
         .info-panel {
-            margin-top: 20px;
-            padding: 15px;
-            background: #111118;
-            border: 1px solid #333;
-            max-width: 800px;
-            width: 100%;
+            margin-top: 20px; padding: 15px; background: #111118;
+            border: 1px solid #333; max-width: 800px; width: 100%;
         }
         
-        .info-panel h3 {
-            color: #00ff88;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
+        .info-panel h3 { color: #00ff88; margin-bottom: 10px; font-size: 14px; }
         
         .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid #222;
-            font-size: 13px;
+            display: flex; justify-content: space-between;
+            padding: 5px 0; border-bottom: 1px solid #222; font-size: 13px;
         }
         
         .info-label { color: #666; }
         .info-value { color: #00ff88; }
         
+        .state-panel {
+            margin-top: 10px; padding: 10px; background: #0d0d14;
+            border: 1px solid #222; max-width: 800px; width: 100%;
+        }
+        
+        .state-panel h3 { color: #ffaa00; margin-bottom: 8px; font-size: 13px; }
+        
+        .state-grid {
+            display: flex; flex-wrap: wrap; gap: 4px;
+        }
+        
+        .state-slot {
+            width: 20px; height: 20px; border: 1px solid #333;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 8px; transition: all 0.15s;
+        }
+        
+        .state-slot.active {
+            background: #00ff88; color: #000; border-color: #00ff88;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+        }
+        
+        .state-slot.inactive { background: #1a1a2e; color: #444; }
+        
         #console {
-            margin-top: 20px;
-            padding: 15px;
-            background: #0d0d12;
-            border: 1px solid #222;
-            max-width: 800px;
-            width: 100%;
-            height: 150px;
-            overflow-y: auto;
-            font-size: 12px;
-            font-family: 'JetBrains Mono', monospace;
+            margin-top: 15px; padding: 15px; background: #0d0d12;
+            border: 1px solid #222; max-width: 800px; width: 100%;
+            height: 150px; overflow-y: auto; font-size: 12px;
         }
         
         .console-line { margin: 2px 0; }
         .console-info { color: #666; }
         .console-action { color: #ffaa00; }
+        .console-exec { color: #ff44ff; }
         .console-error { color: #ff4444; }
         .console-success { color: #00ff88; }
         
         .drop-zone {
-            border: 2px dashed #333;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 20px;
-            transition: all 0.2s;
+            border: 2px dashed #333; padding: 40px; text-align: center;
+            margin-bottom: 20px; transition: all 0.2s;
         }
         
         .drop-zone.dragover {
-            border-color: #00ff88;
-            background: rgba(0, 255, 136, 0.05);
+            border-color: #00ff88; background: rgba(0, 255, 136, 0.05);
         }
         
         .drop-zone p { color: #666; }
     </style>
 </head>
 <body>
-    <h1>⟁ GeosASCII Viewer</h1>
-    <p class="subtitle">GPU Cartridge Player - Pixels Move Pixels</p>
+    <h1>⟁ GeosASCII Viewer v2</h1>
+    <p class="subtitle">Pixels Move Pixels — Click the cartridge, the pixels execute</p>
     
     <div class="controls">
         <label class="file-input-label">
             📂 Load Cartridge
-            <input type="file" id="fileInput" accept=".rts.png">
+            <input type="file" id="fileInput" accept=".png,.rts.png">
         </label>
-        <button id="loadExample">Load Example</button>
-        <button id="clearState">Clear State</button>
+        <button id="loadBuiltIn">▶ Built-in Demo</button>
+        <button id="clearState">⟲ Clear State</button>
+        <button id="exportCartridge">💾 Export</button>
     </div>
     
     <div class="drop-zone" id="dropZone">
-        <p>Drop .rts.png file here or use controls above</p>
+        <p>Drop .rts.png cartridge here</p>
     </div>
     
     <div id="canvas-container">
@@ -176,148 +154,559 @@
             <span class="info-value" id="patternCount">-</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Click:</span>
+            <span class="info-label">Last Click:</span>
             <span class="info-value" id="lastClick">-</span>
         </div>
+        <div class="info-row">
+            <span class="info-label">Last Exec:</span>
+            <span class="info-value" id="lastExec">-</span>
+        </div>
+    </div>
+    
+    <div class="state-panel">
+        <h3>▸ State Buffer (first 32 slots)</h3>
+        <div class="state-grid" id="stateGrid"></div>
     </div>
     
     <div id="console"></div>
 
     <script>
+// ═══════════════════════════════════════════════════════════
+// GeosASCII Viewer v2 — The Pixel Execution Runtime
+// ═══════════════════════════════════════════════════════════
+// 
+// This viewer doesn't just DISPLAY cartridges — it EXECUTES them.
+// When you click a pixel, the opcode embedded at that coordinate
+// runs, modifies state, and the screen re-renders.
+//
+// No JS event handlers. No Python. No Rust APIs.
+// The pixel color IS the logic.
+// ═══════════════════════════════════════════════════════════
+
 const WIDTH = 80;
 const HEIGHT = 24;
-const CELL_WIDTH = 8;
-const CELL_HEIGHT = 8;
-const SCALE = 8;
+const CELL_W = 8;
+const CELL_H = 8;
+const STATE_ROWS = 4;
+const BOOTSTRAP_ROWS = 2;
+const STATE_SLOTS = WIDTH * STATE_ROWS;  // 320
 
-const OPCODES = {
-    0: 'NOP',
-    1: 'JUMP',
-    2: 'CALL',
-    3: 'TOGGLE',
-    4: 'INPUT',
-    5: 'OUTPUT',
-    255: 'EXIT'
+// Cartridge segment offsets (in pixel rows)
+const SEG_GLYPH = 0;
+const SEG_SIT = HEIGHT;               // row 24
+const SEG_STATE = HEIGHT + HEIGHT;     // row 48
+const SEG_BOOT = HEIGHT + HEIGHT + STATE_ROWS; // row 52
+
+// Opcodes — same as compiler
+const OP = {
+    // UI Opcodes (GeosASCII extensions)
+    NOP: 0, JUMP: 1, CALL: 2, TOGGLE: 3, INPUT: 4, OUTPUT: 5,
+    SET: 6, CLEAR: 7, INC: 8, DEC: 9, COPY: 10, COMPARE: 11,
+    ADD_UI: 12, SUB_UI: 13, EXIT: 255,
+
+    // Core Glyph VM Opcodes (from glyph_microcode.wgsl)
+    LD: 3,      // Load from Memory (Hilbert address → register)
+    ST: 4,      // Store to Memory (register → Hilbert address)
+    ADD: 5,     // Addition
+    SUB: 6,     // Subtraction
+    JZ: 10,     // Jump if Zero
+    CALL_GLYPH: 11, // Call Subroutine
+    RET: 12,    // Return
+    HALT: 13,   // Halt
+    LDI: 204,   // Load Immediate
+    MOV: 206,   // Move between registers
+    JMP: 209,   // Unconditional Jump
+    CMP: 214,   // Compare
+    DRAW: 215,  // Substrate Write (direct pixel output)
+
+    // Bitwise Stratum (220-231)
+    AND: 220,   // Bitwise AND
+    OR: 221,    // Bitwise OR
+    XOR: 222,   // Bitwise XOR
+    NOT: 223,   // Bitwise NOT
+    SHL: 224,   // Shift Left
+    SHR: 225,   // Shift Right
+    AND_MEM: 227, OR_MEM: 228, XOR_MEM: 229, SHL_MEM: 230, SHR_MEM: 231
 };
 
-const FONT = [];
-const FONT_CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+const OP_NAMES = {};
+for (const [k, v] of Object.entries(OP)) OP_NAMES[v] = k;
 
+// Glyph flags (A channel of glyph grid)
+const GLYPH_NORMAL = 255;
+const GLYPH_SHOW_IF = 128;
+const GLYPH_HIDE_IF = 64;
+const GLYPH_SWAP_IF = 192;
+
+// ─────────────────────────────────────────────────────────
+// Simple bitmap font (5×7 monospace)
+// ─────────────────────────────────────────────────────────
+const FONT = [];
 function createFont() {
-    const charWidth = 5;
-    const charHeight = 7;
-    
     for (let i = 0; i < 128; i++) {
-        const canvas = document.createElement('canvas');
-        canvas.width = charWidth;
-        canvas.height = charHeight;
-        const ctx = canvas.getContext('2d');
-        
+        const c = document.createElement('canvas');
+        c.width = 5; c.height = 7;
+        const ctx = c.getContext('2d');
         ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, charWidth, charHeight);
-        
+        ctx.fillRect(0, 0, 5, 7);
         ctx.fillStyle = '#00ff88';
         ctx.font = '7px monospace';
         ctx.textBaseline = 'top';
-        
-        const char = String.fromCharCode(i);
-        ctx.fillText(char, 0, 0);
-        
-        FONT[i] = ctx.getImageData(0, 0, charWidth, charHeight);
+        ctx.fillText(String.fromCharCode(i), 0, 0);
+        FONT[i] = ctx.getImageData(0, 0, 5, 7);
     }
 }
 
+// ─────────────────────────────────────────────────────────
+// GeosViewer — The Runtime
+// ─────────────────────────────────────────────────────────
 class GeosViewer {
     constructor() {
         this.canvas = document.getElementById('viewport');
         this.ctx = this.canvas.getContext('2d');
-        this.cartridge = null;
-        this.state = new Uint8Array(1024 * 4);
         
+        // Cartridge data (null until loaded)
+        this.glyphGrid = null;  // Uint8Array[HEIGHT * WIDTH * 4] — R=char, G=alt, B=stateRef, A=flags
+        this.sit = null;        // Uint8Array[HEIGHT * WIDTH * 4] — R=op, G=targetLo, B=targetHi, A=flags
+        this.state = null;      // Uint8Array[STATE_SLOTS * 4]   — R=value, G=min, B=max, A=flags
+        this.bootstrap = null;
+        
+        // Runtime
+        this.loaded = false;
+        this.execCount = 0;
+        this.halted = false;
+        
+        // Event binding
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
         
         createFont();
-        this.log('GeosASCII Viewer initialized', 'info');
+        this.initStateGrid();
+        this.log('GeosASCII Viewer v2 initialized — Pixels Move Pixels', 'success');
     }
     
-    async loadCartridge(data) {
+    // ─────────────────────────────────────────────────────
+    // Cartridge Loading
+    // ─────────────────────────────────────────────────────
+    async loadCartridge(blob) {
         const img = new Image();
-        img.src = URL.createObjectURL(data);
+        img.src = URL.createObjectURL(blob);
+        await new Promise(r => img.onload = r);
         
-        await new Promise(resolve => img.onload = resolve);
+        const tc = document.createElement('canvas');
+        tc.width = img.width; tc.height = img.height;
+        const tctx = tc.getContext('2d');
+        tctx.drawImage(img, 0, 0);
+        const px = tctx.getImageData(0, 0, img.width, img.height).data;
         
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = img.width;
-        tempCanvas.height = img.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(img, 0, 0);
+        const W = img.width;
         
-        const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
-        const pixels = imageData.data;
-        
-        this.glyphGrid = new Uint8Array(WIDTH * HEIGHT * 4);
+        // Segment 1: Glyph Grid (rows 0–23)
+        this.glyphGrid = new Uint8Array(HEIGHT * WIDTH * 4);
         for (let y = 0; y < HEIGHT; y++) {
             for (let x = 0; x < WIDTH; x++) {
-                const srcIdx = (y * WIDTH + x) * 4;
-                const dstIdx = (y * WIDTH + x) * 4;
-                this.glyphGrid[dstIdx] = pixels[srcIdx];
-                this.glyphGrid[dstIdx + 1] = pixels[srcIdx + 1];
-                this.glyphGrid[dstIdx + 2] = pixels[srcIdx + 2];
-                this.glyphGrid[dstIdx + 3] = pixels[srcIdx + 3];
+                const src = ((SEG_GLYPH + y) * W + x) * 4;
+                const dst = (y * WIDTH + x) * 4;
+                this.glyphGrid[dst]     = px[src];
+                this.glyphGrid[dst + 1] = px[src + 1];
+                this.glyphGrid[dst + 2] = px[src + 2];
+                this.glyphGrid[dst + 3] = px[src + 3];
             }
         }
         
-        const sitOffset = HEIGHT * WIDTH * 4;
-        this.sit = new Uint8Array(256 * 4);
-        for (let i = 0; i < 256 * 4; i++) {
-            this.sit[i] = pixels[sitOffset + i];
+        // Segment 2: SIT (rows 24–47), same dimensions as glyph grid
+        this.sit = new Uint8Array(HEIGHT * WIDTH * 4);
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                const src = ((SEG_SIT + y) * W + x) * 4;
+                const dst = (y * WIDTH + x) * 4;
+                this.sit[dst]     = px[src];     // opcode
+                this.sit[dst + 1] = px[src + 1]; // target_low
+                this.sit[dst + 2] = px[src + 2]; // target_high
+                this.sit[dst + 3] = px[src + 3]; // flags
+            }
         }
         
-        const stateOffset = (HEIGHT + 256) * WIDTH * 4;
-        for (let i = 0; i < 1024 * 4; i++) {
-            this.state[i] = pixels[stateOffset + i];
+        // Segment 3: State Buffer (rows 48–51)
+        this.state = new Uint8Array(STATE_SLOTS * 4);
+        for (let row = 0; row < STATE_ROWS; row++) {
+            for (let x = 0; x < WIDTH; x++) {
+                const src = ((SEG_STATE + row) * W + x) * 4;
+                const dst = (row * WIDTH + x) * 4;
+                this.state[dst]     = px[src];     // value
+                this.state[dst + 1] = px[src + 1]; // min
+                this.state[dst + 2] = px[src + 2]; // max
+                this.state[dst + 3] = px[src + 3]; // flags
+            }
         }
         
-        const bootstrapOffset = (HEIGHT + 256 + 1024) * WIDTH * 4;
+        // Segment 4: Bootstrap (rows 52–53)
+        let name = '';
+        for (let i = 0; i < 40; i++) {
+            const code = px[((SEG_BOOT) * W + i) * 4];
+            if (code > 0) name += String.fromCharCode(code);
+        }
+        
+        const vRow = SEG_BOOT + 1;
+        const v0 = px[(vRow * W + 0) * 4];
+        const v1 = px[(vRow * W + 1) * 4];
+        const v2 = px[(vRow * W + 2) * 4];
+        const pCount = px[(vRow * W + 3) * 4] | (px[(vRow * W + 4) * 4] << 8);
+        const fmt = px[(vRow * W + 5) * 4];
+        
         this.bootstrap = {
-            name: '',
-            version: '1.0.0',
-            patterns: 0
+            name: name.trim() || 'unnamed',
+            version: `${v0}.${v1}.${v2}`,
+            patterns: pCount,
+            format: fmt
         };
         
-        for (let i = 0; i < 16; i++) {
-            const code = pixels[bootstrapOffset + i * 4];
-            if (code > 0) this.bootstrap.name += String.fromCharCode(code);
-        }
-        
-        const v0 = pixels[bootstrapOffset + (1 * 16 + 0) * 4];
-        const v1 = pixels[bootstrapOffset + (1 * 16 + 1) * 4];
-        const v2 = pixels[bootstrapOffset + (1 * 16 + 2) * 4];
-        this.bootstrap.version = `${v0}.${v1}.${v2}`;
-        
-        const p0 = pixels[bootstrapOffset + (2 * 16 + 0) * 4];
-        const p1 = pixels[bootstrapOffset + (2 * 16 + 1) * 4];
-        this.bootstrap.patterns = p0 | (p1 << 8);
-        
-        this.cartridge = {
-            name: this.bootstrap.name,
-            version: this.bootstrap.version,
-            patterns: this.bootstrap.patterns
-        };
+        this.loaded = true;
+        this.halted = false;
+        this.execCount = 0;
         
         this.updateInfo();
+        this.updateStateGrid();
         this.render();
         
-        this.log(`Loaded: ${this.bootstrap.name} v${this.bootstrap.version}`, 'success');
-        this.log(`Patterns: ${this.bootstrap.patterns}`, 'info');
+        this.log(`Loaded: ${this.bootstrap.name} v${this.bootstrap.version} (fmt=${fmt})`, 'success');
+        this.log(`${this.bootstrap.patterns} action patterns, ${STATE_SLOTS} state slots`, 'info');
     }
     
-    updateInfo() {
-        document.getElementById('cartridgeName').textContent = this.cartridge?.name || '-';
-        document.getElementById('cartridgeVersion').textContent = this.cartridge?.version || '-';
-        document.getElementById('patternCount').textContent = this.cartridge?.patterns || '-';
+    // ─────────────────────────────────────────────────────
+    // CLICK → READ SIT → EXECUTE → UPDATE STATE → RENDER
+    // This is the "Pixels Move Pixels" loop.
+    // ─────────────────────────────────────────────────────
+    handleClick(e) {
+        if (!this.loaded) {
+            this.log('No cartridge loaded', 'error');
+            return;
+        }
+        if (this.halted) {
+            this.log('Cartridge halted (EXIT). Clear state to restart.', 'error');
+            return;
+        }
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = Math.floor((e.clientX - rect.left) * scaleX / CELL_W);
+        const y = Math.floor((e.clientY - rect.top) * scaleY / CELL_H);
+        
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
+        
+        // READ the SIT at this coordinate
+        const idx = (y * WIDTH + x) * 4;
+        const opcode = this.sit[idx];
+        const targetLow = this.sit[idx + 1];
+        const targetHigh = this.sit[idx + 2];
+        const flags = this.sit[idx + 3];
+        const target = targetLow | (targetHigh << 8);
+        
+        document.getElementById('lastClick').textContent = 
+            `(${x}, ${y}) → ${OP_NAMES[opcode] || 'OP_' + opcode} target=${target}`;
+        
+        if (opcode === OP.NOP) {
+            this.log(`(${x},${y}): NOP — no instruction at this pixel`, 'info');
+            this.highlightCell(x, y, '#333');
+            return;
+        }
+        
+        // EXECUTE the opcode
+        this.execute(opcode, target, flags, x, y);
     }
     
+    // ─────────────────────────────────────────────────────
+    // Opcode Execution Engine
+    // The pixel told us what to do. Now we do it.
+    // ─────────────────────────────────────────────────────
+    execute(opcode, target, flags, x, y) {
+        const opName = OP_NAMES[opcode] || `OP_${opcode}`;
+        this.execCount++;
+        
+        // Check conditional flags
+        if (flags & 1) { // CONDITIONAL — only if state[target] != 0
+            if (this.getState(target) === 0) {
+                this.log(`(${x},${y}): ${opName} SKIPPED (state[${target}]=0)`, 'info');
+                return;
+            }
+        }
+        if (flags & 2) { // CONDITIONAL_NOT — only if state[target] == 0
+            if (this.getState(target) !== 0) {
+                this.log(`(${x},${y}): ${opName} SKIPPED (state[${target}]≠0)`, 'info');
+                return;
+            }
+        }
+        
+        switch (opcode) {
+            case OP.TOGGLE: {
+                const current = this.getState(target);
+                const newVal = current ? 0 : 255;
+                this.setState(target, newVal);
+                this.log(`(${x},${y}): TOGGLE state[${target}] ${current}→${newVal}`, 'exec');
+                this.highlightCell(x, y, '#ff44ff');
+                break;
+            }
+            
+            case OP.SET: {
+                this.setState(target, 255);
+                this.log(`(${x},${y}): SET state[${target}]=255`, 'exec');
+                this.highlightCell(x, y, '#00ff88');
+                break;
+            }
+            
+            case OP.CLEAR: {
+                this.setState(target, 0);
+                this.log(`(${x},${y}): CLEAR state[${target}]=0`, 'exec');
+                this.highlightCell(x, y, '#ffaa00');
+                break;
+            }
+            
+            case OP.INC: {
+                const cur = this.getState(target);
+                const max = this.state[target * 4 + 2] || 255;
+                this.setState(target, Math.min(cur + 1, max));
+                this.log(`(${x},${y}): INC state[${target}] → ${this.getState(target)}`, 'exec');
+                this.highlightCell(x, y, '#00ff88');
+                break;
+            }
+            
+            case OP.DEC: {
+                const cur = this.getState(target);
+                const min = this.state[target * 4 + 1] || 0;
+                this.setState(target, Math.max(cur - 1, min));
+                this.log(`(${x},${y}): DEC state[${target}] → ${this.getState(target)}`, 'exec');
+                this.highlightCell(x, y, '#ffaa00');
+                break;
+            }
+            
+            case OP.JUMP: {
+                // JUMP to a "page" — target is a state slot that stores page ID
+                this.log(`(${x},${y}): JUMP → target=${target}`, 'exec');
+                this.highlightCell(x, y, '#44aaff');
+                break;
+            }
+            
+            case OP.CALL: {
+                this.log(`(${x},${y}): CALL → target=${target}`, 'exec');
+                this.highlightCell(x, y, '#44aaff');
+                break;
+            }
+            
+            case OP.OUTPUT: {
+                const val = this.getState(target);
+                this.log(`(${x},${y}): OUTPUT state[${target}]=${val}`, 'exec');
+                this.highlightCell(x, y, '#00ff88');
+                break;
+            }
+
+            case OP.EXIT:
+            case OP.HALT: {
+                this.halted = true;
+                this.log(`(${x},${y}): ${opcode === OP.EXIT ? 'EXIT' : 'HALT'} — cartridge halted`, 'exec');
+                this.highlightCell(x, y, '#ff4444');
+                document.getElementById('lastExec').textContent = 'HALTED';
+                return;
+            }
+
+            // ─────────────────────────────────────────────
+            // Core Glyph VM Opcodes
+            // ─────────────────────────────────────────────
+
+            case OP.LD: { // Load: state[target] = state[state[src]]
+                const srcAddr = this.getState(target);
+                const val = this.getState(srcAddr);
+                this.setState(target, val);
+                this.log(`(${x},${y}): LD state[${target}] ← state[${srcAddr}]=${val}`, 'exec');
+                this.highlightCell(x, y, '#88ff88');
+                break;
+            }
+
+            case OP.ST: { // Store: state[dest] = state[src] (target is dest, flags has src)
+                const srcVal = this.getState(target);
+                const destAddr = flags; // Use flags byte as destination
+                this.setState(destAddr, srcVal);
+                this.log(`(${x},${y}): ST state[${destAddr}] ← ${srcVal}`, 'exec');
+                this.highlightCell(x, y, '#88ff88');
+                break;
+            }
+
+            case OP.ADD: { // ADD: state[target] += state[operand] (or immediate)
+                const operand = flags || 1;
+                const cur = this.getState(target);
+                const result = (cur + operand) & 0xFF;
+                this.setState(target, result);
+                this.log(`(${x},${y}): ADD state[${target}] ${cur}+${operand}=${result}`, 'exec');
+                this.highlightCell(x, y, '#00ff88');
+                break;
+            }
+
+            case OP.SUB: { // SUB: state[target] -= state[operand] (or immediate)
+                const operand = flags || 1;
+                const cur = this.getState(target);
+                const result = (cur - operand) & 0xFF;
+                this.setState(target, result);
+                this.log(`(${x},${y}): SUB state[${target}] ${cur}-${operand}=${result}`, 'exec');
+                this.highlightCell(x, y, '#ffaa00');
+                break;
+            }
+
+            case OP.JZ: { // Jump if Zero: if state[target] == 0, jump to address
+                const val = this.getState(target);
+                if (val === 0) {
+                    this.log(`(${x},${y}): JZ state[${target}]=0 → JUMP to ${flags}`, 'exec');
+                    this.highlightCell(x, y, '#44aaff');
+                } else {
+                    this.log(`(${x},${y}): JZ state[${target}]=${val} → no jump`, 'exec');
+                }
+                break;
+            }
+
+            case OP.RET: { // Return from subroutine
+                this.log(`(${x},${y}): RET`, 'exec');
+                this.highlightCell(x, y, '#44aaff');
+                break;
+            }
+
+            case OP.LDI: { // Load Immediate: state[target] = flags (immediate value)
+                this.setState(target, flags);
+                this.log(`(${x},${y}): LDI state[${target}] ← ${flags}`, 'exec');
+                this.highlightCell(x, y, '#88ff88');
+                break;
+            }
+
+            case OP.MOV: { // Move: state[dest] = state[src]
+                const src = target;
+                const dest = flags;
+                const val = this.getState(src);
+                this.setState(dest, val);
+                this.log(`(${x},${y}): MOV state[${dest}] ← state[${src}]=${val}`, 'exec');
+                this.highlightCell(x, y, '#88ff88');
+                break;
+            }
+
+            case OP.JMP: { // Unconditional Jump
+                this.log(`(${x},${y}): JMP → ${target}`, 'exec');
+                this.highlightCell(x, y, '#44aaff');
+                break;
+            }
+
+            case OP.CMP: { // Compare: set flags based on state[target] - state[operand]
+                const operand = flags;
+                const a = this.getState(target);
+                const b = this.getState(operand);
+                const result = a - b;
+                this.log(`(${x},${y}): CMP state[${target}]=${a} vs state[${operand}]=${b} → ${result}`, 'exec');
+                this.highlightCell(x, y, '#aaaaaa');
+                this.setState(319, result === 0 ? 0 : (result < 0 ? 255 : 1));
+                break;
+            }
+
+            case OP.DRAW: { // Draw: directly modify glyph grid at (x,y) with char
+                const drawX = target;
+                const drawY = flags;
+                const charVal = this.getState(0);
+                if (drawY < HEIGHT && drawX < WIDTH) {
+                    this.glyphGrid[drawY * WIDTH + drawX] = charVal;
+                    this.log(`(${x},${y}): DRAW (${drawX},${drawY}) ← char ${charVal}`, 'exec');
+                    this.highlightCell(x, y, '#ff44ff');
+                }
+                break;
+            }
+
+            // ─────────────────────────────────────────────
+            // Bitwise Stratum (220-231)
+            // ─────────────────────────────────────────────
+
+            case OP.AND: {
+                const operand = flags;
+                const cur = this.getState(target);
+                const result = cur & operand;
+                this.setState(target, result);
+                this.log(`(${x},${y}): AND state[${target}] ${cur}&${operand}=${result}`, 'exec');
+                this.highlightCell(x, y, '#8888ff');
+                break;
+            }
+
+            case OP.OR: {
+                const operand = flags;
+                const cur = this.getState(target);
+                const result = cur | operand;
+                this.setState(target, result);
+                this.log(`(${x},${y}): OR state[${target}] ${cur}|${operand}=${result}`, 'exec');
+                this.highlightCell(x, y, '#8888ff');
+                break;
+            }
+
+            case OP.XOR: {
+                const operand = flags;
+                const cur = this.getState(target);
+                const result = cur ^ operand;
+                this.setState(target, result);
+                this.log(`(${x},${y}): XOR state[${target}] ${cur}^${operand}=${result}`, 'exec');
+                this.highlightCell(x, y, '#8888ff');
+                break;
+            }
+
+            case OP.NOT: {
+                const cur = this.getState(target);
+                const result = (~cur) & 0xFF;
+                this.setState(target, result);
+                this.log(`(${x},${y}): NOT state[${target}] ${cur}→${result}`, 'exec');
+                this.highlightCell(x, y, '#8888ff');
+                break;
+            }
+
+            case OP.SHL: {
+                const shift = flags || 1;
+                const cur = this.getState(target);
+                const result = (cur << shift) & 0xFF;
+                this.setState(target, result);
+                this.log(`(${x},${y}): SHL state[${target}] ${cur}<<${shift}=${result}`, 'exec');
+                this.highlightCell(x, y, '#8888ff');
+                break;
+            }
+
+            case OP.SHR: {
+                const shift = flags || 1;
+                const cur = this.getState(target);
+                const result = cur >> shift;
+                this.setState(target, result);
+                this.log(`(${x},${y}): SHR state[${target}] ${cur}>>${shift}=${result}`, 'exec');
+                this.highlightCell(x, y, '#8888ff');
+                break;
+            }
+
+            default: {
+                this.log(`(${x},${y}): Unknown opcode ${opcode}`, 'error');
+                return;
+            }
+        }
+
+        document.getElementById('lastExec').textContent =
+            `#${this.execCount}: ${opName}(${target})`;
+
+        // After execution: update state display and re-render
+        this.updateStateGrid();
+        this.render();
+    }
+
+    // ─────────────────────────────────────────────────────
+    // State Buffer Access
+    // ─────────────────────────────────────────────────────
+    getState(slot) {
+        if (slot < 0 || slot >= STATE_SLOTS) return 0;
+        return this.state[slot * 4];  // R channel = value
+    }
+    
+    setState(slot, value) {
+        if (slot < 0 || slot >= STATE_SLOTS) return;
+        this.state[slot * 4] = value & 0xFF;
+    }
+    
+    // ─────────────────────────────────────────────────────
+    // Rendering — State-Aware
+    // Glyphs can change based on state buffer values.
+    // ─────────────────────────────────────────────────────
     render() {
         this.ctx.fillStyle = '#0a0a0f';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -327,137 +716,461 @@ class GeosViewer {
         for (let y = 0; y < HEIGHT; y++) {
             for (let x = 0; x < WIDTH; x++) {
                 const idx = (y * WIDTH + x) * 4;
-                const charCode = this.glyphGrid[idx];
+                let charCode = this.glyphGrid[idx];       // R = primary char
+                const altChar = this.glyphGrid[idx + 1];  // G = alternate char
+                const stateRef = this.glyphGrid[idx + 2]; // B = state slot ref
+                const glyphFlags = this.glyphGrid[idx + 3]; // A = flags
                 
-                if (charCode > 0 && FONT[charCode]) {
+                // State-conditional rendering
+                if (glyphFlags !== GLYPH_NORMAL && stateRef < STATE_SLOTS) {
+                    const stateVal = this.getState(stateRef);
+                    
+                    if (glyphFlags === GLYPH_SHOW_IF && stateVal === 0) {
+                        continue; // Don't render — state is off
+                    }
+                    if (glyphFlags === GLYPH_HIDE_IF && stateVal !== 0) {
+                        continue; // Don't render — state is on
+                    }
+                    if (glyphFlags === GLYPH_SWAP_IF && stateVal !== 0 && altChar > 0) {
+                        charCode = altChar; // Swap to alternate character
+                    }
+                }
+                
+                if (charCode > 0 && charCode < 128 && FONT[charCode]) {
+                    // Check if this cell has an opcode (for visual hint)
+                    const sitIdx = (y * WIDTH + x) * 4;
+                    const hasOp = this.sit && this.sit[sitIdx] !== OP.NOP;
+                    
+                    if (hasOp) {
+                        // Tint clickable cells slightly brighter
+                        this.ctx.globalAlpha = 1.0;
+                    }
+                    
                     this.ctx.putImageData(
                         FONT[charCode],
-                        x * CELL_WIDTH + 1,
-                        y * CELL_HEIGHT + 1
+                        x * CELL_W + 1,
+                        y * CELL_H + 1
                     );
+                    this.ctx.globalAlpha = 1.0;
                 }
             }
         }
         
-        this.ctx.strokeStyle = '#00ff8833';
-        this.ctx.lineWidth = 1;
+        // Draw subtle grid
+        this.ctx.strokeStyle = '#00ff8811';
+        this.ctx.lineWidth = 0.5;
         for (let y = 0; y <= HEIGHT; y++) {
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y * CELL_HEIGHT);
-            this.ctx.lineTo(this.canvas.width, y * CELL_HEIGHT);
+            this.ctx.moveTo(0, y * CELL_H);
+            this.ctx.lineTo(this.canvas.width, y * CELL_H);
             this.ctx.stroke();
         }
         for (let x = 0; x <= WIDTH; x++) {
             this.ctx.beginPath();
-            this.ctx.moveTo(x * CELL_WIDTH, 0);
-            this.ctx.lineTo(x * CELL_WIDTH, this.canvas.height);
+            this.ctx.moveTo(x * CELL_W, 0);
+            this.ctx.lineTo(x * CELL_W, this.canvas.height);
             this.ctx.stroke();
         }
+        
+        // Highlight cells that have opcodes (subtle underline)
+        if (this.sit) {
+            this.ctx.fillStyle = '#ff44ff22';
+            for (let y = 0; y < HEIGHT; y++) {
+                for (let x = 0; x < WIDTH; x++) {
+                    const sitIdx = (y * WIDTH + x) * 4;
+                    if (this.sit[sitIdx] !== OP.NOP) {
+                        this.ctx.fillRect(
+                            x * CELL_W, (y + 1) * CELL_H - 2,
+                            CELL_W, 2
+                        );
+                    }
+                }
+            }
+        }
     }
     
-    handleClick(e) {
-        if (!this.cartridge) {
-            this.log('No cartridge loaded', 'error');
-            return;
-        }
+    highlightCell(x, y, color) {
+        this.render(); // Re-render first (state may have changed)
         
-        const rect = this.canvas.getBoundingClientRect();
-        const x = Math.floor((e.clientX - rect.left) / CELL_WIDTH);
-        const y = Math.floor((e.clientY - rect.top) / CELL_HEIGHT);
-        
-        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
-        
-        const idx = y * WIDTH + x;
-        const sitIdx = idx * 4;
-        
-        const opcode = this.sit[sitIdx];
-        const targetLow = this.sit[sitIdx + 1];
-        const targetMid = this.sit[sitIdx + 2];
-        const targetHigh = this.sit[sitIdx + 3];
-        
-        const targetInt = targetLow | (targetMid << 8);
-        const target = String.fromCharCode(targetLow, targetMid & 0x7F);
-        
-        document.getElementById('lastClick').textContent = `(${x}, ${y}) → ${OPCODES[opcode] || '?'} ${target}`;
-        
-        if (opcode === 0) {
-            this.log(`Click at (${x}, ${y}): NOP`, 'info');
-        } else if (opcode === 255) {
-            this.log(`Click at (${x}, ${y}): EXIT`, 'action');
-        } else {
-            this.log(`Click at (${x}, ${y}): ${OPCODES[opcode] || opcode} → "${target}"`, 'action');
-        }
-        
-        this.highlightCell(x, y);
-    }
-    
-    highlightCell(x, y) {
-        this.render();
-        
-        this.ctx.strokeStyle = '#ffaa00';
+        this.ctx.strokeStyle = color;
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(
-            x * CELL_WIDTH + 1,
-            y * CELL_HEIGHT + 1,
-            CELL_WIDTH - 2,
-            CELL_HEIGHT - 2
+            x * CELL_W + 1, y * CELL_H + 1,
+            CELL_W - 2, CELL_H - 2
         );
     }
     
+    // ─────────────────────────────────────────────────────
+    // State Grid UI
+    // ─────────────────────────────────────────────────────
+    initStateGrid() {
+        const grid = document.getElementById('stateGrid');
+        for (let i = 0; i < 32; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'state-slot inactive';
+            slot.id = `state-${i}`;
+            slot.title = `State slot ${i}`;
+            slot.textContent = i;
+            grid.appendChild(slot);
+        }
+    }
+    
+    updateStateGrid() {
+        for (let i = 0; i < 32; i++) {
+            const el = document.getElementById(`state-${i}`);
+            if (!el) continue;
+            const val = this.state ? this.getState(i) : 0;
+            el.className = 'state-slot ' + (val ? 'active' : 'inactive');
+            el.textContent = val || i;
+        }
+    }
+    
+    updateInfo() {
+        document.getElementById('cartridgeName').textContent = this.bootstrap?.name || '-';
+        document.getElementById('cartridgeVersion').textContent = this.bootstrap?.version || '-';
+        document.getElementById('patternCount').textContent = this.bootstrap?.patterns || '-';
+    }
+    
     clearState() {
-        this.state.fill(0);
-        this.log('State cleared', 'info');
+        if (this.state) {
+            // Reset values but keep min/max
+            for (let i = 0; i < STATE_SLOTS; i++) {
+                this.state[i * 4] = 0;
+            }
+        }
+        this.halted = false;
+        this.execCount = 0;
+        this.updateStateGrid();
+        this.render();
+        document.getElementById('lastExec').textContent = '-';
+        this.log('State cleared, execution resumed', 'success');
+    }
+    
+    // ─────────────────────────────────────────────────────
+    // Built-in Demo Cartridge
+    // Creates a cartridge entirely in-memory (no file needed)
+    // ─────────────────────────────────────────────────────
+    loadBuiltInDemo() {
+        const ascii = [
+            '┌──────────────────────────────────────────────────────────────────────────────┐',
+            '│                        PIXELS MOVE PIXELS - DEMO                             │',
+            '├──────────────────────────────────────────────────────────────────────────────┤',
+            '│                                                                              │',
+            '│   Click the buttons below. Each [X] has an opcode embedded in its pixel.    │',
+            '│   The viewer reads the opcode and EXECUTES it — no JS handlers involved.    │',
+            '│                                                                              │',
+            '├──────────────────────────────────────────────────────────────────────────────┤',
+            '│                                                                              │',
+            '│   [A] Toggle0    [B] Toggle1    [C] Toggle2    [D] Toggle3                  │',
+            '│                                                                              │',
+            '│   [E] Inc4       [F] Dec4       State4: ○                                   │',
+            '│                                                                              │',
+            '│   [G] SetAll     [H] ClearAll                                               │',
+            '│                                                                              │',
+            '│   [I] Exit                                                                   │',
+            '│                                                                              │',
+            '├──────────────────────────────────────────────────────────────────────────────┤',
+            '│   Watch the state buffer below. Pixels are controlling pixels.              │',
+            '│   The ○ next to State4 changes to ● when state[4] > 0                       │',
+            '└──────────────────────────────────────────────────────────────────────────────┘',
+            '                                                                                ',
+            '                                                                                ',
+            '                                                                                ',
+        ];
+        
+        // Build glyph grid
+        this.glyphGrid = new Uint8Array(HEIGHT * WIDTH * 4);
+        for (let y = 0; y < HEIGHT; y++) {
+            const line = ascii[y] || '';
+            for (let x = 0; x < WIDTH; x++) {
+                const idx = (y * WIDTH + x) * 4;
+                const ch = x < line.length ? line.charCodeAt(x) : 0;
+                this.glyphGrid[idx] = ch;       // R = char
+                this.glyphGrid[idx + 1] = 0;    // G = alt char
+                this.glyphGrid[idx + 2] = 0;    // B = state ref
+                this.glyphGrid[idx + 3] = GLYPH_NORMAL; // A = flags
+            }
+        }
+        
+        // Set up state-reactive glyph: the ○ at row 11 that shows ● when state[4] > 0
+        // "State4: ○" — the ○ is at approximately x=42, y=11
+        const statusX = ascii[11].indexOf('○');
+        if (statusX >= 0) {
+            const idx = (11 * WIDTH + statusX) * 4;
+            this.glyphGrid[idx] = '○'.charCodeAt(0);      // R = primary (○)
+            this.glyphGrid[idx + 1] = '●'.charCodeAt(0);   // G = alternate (●)
+            this.glyphGrid[idx + 2] = 4;                    // B = state slot 4
+            this.glyphGrid[idx + 3] = GLYPH_SWAP_IF;       // A = swap if state
+        }
+        
+        // Build SIT — embed opcodes at button coordinates
+        this.sit = new Uint8Array(HEIGHT * WIDTH * 4);
+        
+        const buttons = [
+            // [label, row, opcode, target]
+            ['A', 9, OP.TOGGLE, 0],
+            ['B', 9, OP.TOGGLE, 1],
+            ['C', 9, OP.TOGGLE, 2],
+            ['D', 9, OP.TOGGLE, 3],
+            ['E', 11, OP.INC, 4],
+            ['F', 11, OP.DEC, 4],
+            ['G', 13, OP.SET, 0],    // We'll set multiple in execute
+            ['H', 13, OP.CLEAR, 0],
+            ['I', 15, OP.EXIT, 0],
+        ];
+        
+        for (const [label, row, opcode, target] of buttons) {
+            const line = ascii[row];
+            const bx = line.indexOf(`[${label}]`);
+            if (bx < 0) continue;
+            
+            // Set opcode on [, letter, ] (3 cells)
+            for (let dx = 0; dx < 3; dx++) {
+                const sitIdx = (row * WIDTH + bx + dx) * 4;
+                this.sit[sitIdx] = opcode;
+                this.sit[sitIdx + 1] = target & 0xFF;
+                this.sit[sitIdx + 2] = (target >> 8) & 0xFF;
+                this.sit[sitIdx + 3] = 0; // no flags
+            }
+            
+            // Also make the text after ] clickable (up to next space-space)
+            const afterBracket = bx + 3;
+            const labelEnd = line.indexOf('  ', afterBracket);
+            const end = labelEnd > 0 ? labelEnd : afterBracket + 10;
+            for (let dx = afterBracket; dx < end && dx < WIDTH; dx++) {
+                const sitIdx = (row * WIDTH + dx) * 4;
+                this.sit[sitIdx] = opcode;
+                this.sit[sitIdx + 1] = target & 0xFF;
+                this.sit[sitIdx + 2] = (target >> 8) & 0xFF;
+                this.sit[sitIdx + 3] = 0;
+            }
+        }
+        
+        // For [G] SetAll — override execute to set slots 0-3
+        // We'll handle this special case in execute()
+        
+        // Build state buffer
+        this.state = new Uint8Array(STATE_SLOTS * 4);
+        for (let i = 0; i < STATE_SLOTS; i++) {
+            this.state[i * 4 + 2] = 255; // max = 255
+        }
+        
+        this.bootstrap = { name: 'pixel-demo', version: '2.0.0', patterns: 9, format: 2 };
+        this.loaded = true;
+        this.halted = false;
+        this.execCount = 0;
+        
+        this.updateInfo();
+        this.updateStateGrid();
+        this.render();
+        
+        this.log('Built-in demo loaded — click the buttons!', 'success');
+        this.log('Each [X] has an opcode embedded in its pixel data', 'info');
+        this.log('TOGGLE flips state 0↔255, INC/DEC adjust, SET/CLEAR batch', 'info');
+    }
+    
+    // Override for SetAll/ClearAll
+    execute(opcode, target, flags, x, y) {
+        // Special handling for "SetAll" and "ClearAll" buttons
+        const sitIdx = (y * WIDTH + x) * 4;
+        const charAtClick = this.glyphGrid ? this.glyphGrid[(y * WIDTH + x) * 4] : 0;
+        
+        // Check if this is part of SetAll/ClearAll by looking at label text
+        // SetAll sets slots 0-4, ClearAll clears slots 0-4
+        if (opcode === OP.SET) {
+            for (let i = 0; i <= 4; i++) this.setState(i, 255);
+            this.log(`(${x},${y}): SET ALL state[0..4]=255`, 'exec');
+            this.execCount++;
+            this.highlightCell(x, y, '#00ff88');
+            document.getElementById('lastExec').textContent = `#${this.execCount}: SET_ALL`;
+            this.updateStateGrid();
+            this.render();
+            return;
+        }
+        
+        if (opcode === OP.CLEAR) {
+            for (let i = 0; i <= 4; i++) this.setState(i, 0);
+            this.log(`(${x},${y}): CLEAR ALL state[0..4]=0`, 'exec');
+            this.execCount++;
+            this.highlightCell(x, y, '#ffaa00');
+            document.getElementById('lastExec').textContent = `#${this.execCount}: CLEAR_ALL`;
+            this.updateStateGrid();
+            this.render();
+            return;
+        }
+        
+        // Default execution from prototype
+        const opName = OP_NAMES[opcode] || `OP_${opcode}`;
+        this.execCount++;
+        
+        switch (opcode) {
+            case OP.TOGGLE: {
+                const current = this.getState(target);
+                const newVal = current ? 0 : 255;
+                this.setState(target, newVal);
+                this.log(`(${x},${y}): TOGGLE state[${target}] ${current}→${newVal}`, 'exec');
+                this.highlightCell(x, y, '#ff44ff');
+                break;
+            }
+            
+            case OP.INC: {
+                const cur = this.getState(target);
+                const max = this.state[target * 4 + 2] || 255;
+                this.setState(target, Math.min(cur + 1, max));
+                this.log(`(${x},${y}): INC state[${target}] → ${this.getState(target)}`, 'exec');
+                this.highlightCell(x, y, '#00ff88');
+                break;
+            }
+            
+            case OP.DEC: {
+                const cur = this.getState(target);
+                const min = this.state[target * 4 + 1] || 0;
+                this.setState(target, Math.max(cur - 1, min));
+                this.log(`(${x},${y}): DEC state[${target}] → ${this.getState(target)}`, 'exec');
+                this.highlightCell(x, y, '#ffaa00');
+                break;
+            }
+            
+            case OP.JUMP: {
+                this.log(`(${x},${y}): JUMP → target=${target}`, 'exec');
+                this.highlightCell(x, y, '#44aaff');
+                break;
+            }
+            
+            case OP.CALL: {
+                this.log(`(${x},${y}): CALL → target=${target}`, 'exec');
+                this.highlightCell(x, y, '#44aaff');
+                break;
+            }
+            
+            case OP.OUTPUT: {
+                const val = this.getState(target);
+                this.log(`(${x},${y}): OUTPUT state[${target}]=${val}`, 'exec');
+                this.highlightCell(x, y, '#00ff88');
+                break;
+            }
+            
+            case OP.EXIT: {
+                this.halted = true;
+                this.log(`(${x},${y}): EXIT — cartridge halted`, 'exec');
+                this.highlightCell(x, y, '#ff4444');
+                document.getElementById('lastExec').textContent = 'HALTED';
+                return;
+            }
+            
+            default: {
+                this.log(`(${x},${y}): Unknown opcode ${opcode}`, 'error');
+                return;
+            }
+        }
+        
+        document.getElementById('lastExec').textContent = 
+            `#${this.execCount}: ${opName}(${target})`;
+        
+        this.updateStateGrid();
+        this.render();
+    }
+    
+    // ─────────────────────────────────────────────────────
+    // Export current cartridge (with modified state)
+    // ─────────────────────────────────────────────────────
+    exportCartridge() {
+        if (!this.loaded) {
+            this.log('Nothing to export', 'error');
+            return;
+        }
+        
+        const totalH = HEIGHT + HEIGHT + STATE_ROWS + BOOTSTRAP_ROWS;
+        const canvas = document.createElement('canvas');
+        canvas.width = WIDTH;
+        canvas.height = totalH;
+        const ctx = canvas.getContext('2d');
+        const imgData = ctx.createImageData(WIDTH, totalH);
+        const px = imgData.data;
+        
+        // Write glyph grid
+        for (let i = 0; i < HEIGHT * WIDTH * 4; i++) {
+            px[i] = this.glyphGrid[i];
+        }
+        
+        // Write SIT
+        const sitOff = HEIGHT * WIDTH * 4;
+        for (let i = 0; i < HEIGHT * WIDTH * 4; i++) {
+            px[sitOff + i] = this.sit[i];
+        }
+        
+        // Write state
+        const stateOff = (HEIGHT + HEIGHT) * WIDTH * 4;
+        for (let i = 0; i < STATE_SLOTS * 4; i++) {
+            px[stateOff + i] = this.state[i];
+        }
+        
+        // Write bootstrap
+        const bootOff = (HEIGHT + HEIGHT + STATE_ROWS) * WIDTH * 4;
+        const nameBytes = new TextEncoder().encode(this.bootstrap.name);
+        for (let i = 0; i < Math.min(nameBytes.length, 40); i++) {
+            px[bootOff + i * 4] = nameBytes[i];
+            px[bootOff + i * 4 + 3] = 255;
+        }
+        const vParts = this.bootstrap.version.split('.');
+        const vOff = bootOff + WIDTH * 4;
+        px[vOff] = parseInt(vParts[0]) || 0;
+        px[vOff + 4] = parseInt(vParts[1]) || 0;
+        px[vOff + 8] = parseInt(vParts[2]) || 0;
+        px[vOff + 12] = this.bootstrap.patterns & 0xFF;
+        px[vOff + 16] = (this.bootstrap.patterns >> 8) & 0xFF;
+        px[vOff + 20] = 2; // format
+        for (let x = 0; x < WIDTH; x++) px[vOff + x * 4 + 3] = 255;
+        
+        ctx.putImageData(imgData, 0, 0);
+        
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${this.bootstrap.name}.rts.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            this.log(`Exported: ${this.bootstrap.name}.rts.png (with current state)`, 'success');
+        }, 'image/png');
     }
     
     log(message, type = 'info') {
-        const consoleEl = document.getElementById('console');
+        const el = document.getElementById('console');
         const line = document.createElement('div');
         line.className = `console-line console-${type}`;
-        line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-        consoleEl.appendChild(line);
-        consoleEl.scrollTop = consoleEl.scrollHeight;
+        const ts = new Date().toLocaleTimeString();
+        line.textContent = `[${ts}] ${message}`;
+        el.appendChild(line);
+        el.scrollTop = el.scrollHeight;
+        
+        // Keep console manageable
+        while (el.children.length > 200) {
+            el.removeChild(el.firstChild);
+        }
     }
 }
 
+// ═══════════════════════════════════════════════════════════
+// Wire up
+// ═══════════════════════════════════════════════════════════
 const viewer = new GeosViewer();
 
 document.getElementById('fileInput').addEventListener('change', async (e) => {
     const file = e.target.files[0];
-    if (file) {
-        await viewer.loadCartridge(file);
-    }
+    if (file) await viewer.loadCartridge(file);
 });
 
-document.getElementById('loadExample').addEventListener('click', async () => {
-    const example = `┌──────────────────────────────────────────────────────────────┐
-│                    GEOSASCII DEMO                            │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│   Welcome to the Pixels Move Pixels demo!                   │
-│                                                              │
-│   [A] Run    [B] Stop    [C] Reset                          │
-│                                                              │
-│   [D] Menu   [E] Config  [F] Help                          │
-│                                                              │
-├──────────────────────────────────────────────────────────────┤
-│   Status: Ready                    │ Actions: 6 detected    │
-└──────────────────────────────────────────────────────────────┘`;
-
-    const blob = new Blob([example], { type: 'text/plain' });
-    const response = await fetch('compiler/geos_ascii_compiler.py');
-    const compilerCode = await response.text();
-    
-    const tempLink = document.createElement('a');
-    tempLink.download = 'demo.ascii';
-    tempLink.href = URL.createObjectURL(blob);
-    tempLink.click();
-    
-    viewer.log('Example ASCII downloaded - run compiler to generate cartridge', 'info');
-    viewer.log('Or load the dashboard.rts.png from examples/', 'info');
+document.getElementById('loadBuiltIn').addEventListener('click', () => {
+    viewer.loadBuiltInDemo();
 });
 
 document.getElementById('clearState').addEventListener('click', () => {
     viewer.clearState();
+});
+
+document.getElementById('exportCartridge').addEventListener('click', () => {
+    viewer.exportCartridge();
 });
 
 const dropZone = document.getElementById('dropZone');
@@ -471,12 +1184,11 @@ dropZone.addEventListener('dragleave', () => {
 dropZone.addEventListener('drop', async (e) => {
     e.preventDefault();
     dropZone.classList.remove('dragover');
-    
     const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith('.rts.png')) {
+    if (file) {
         await viewer.loadCartridge(file);
     } else {
-        viewer.log('Please drop a .rts.png file', 'error');
+        viewer.log('Drop a .rts.png file', 'error');
     }
 });
     </script>

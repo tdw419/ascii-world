@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeosASCII Benchmark - WebGPU vs JS Comparison</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        h1 { color: #00ff88; margin-bottom: 10px; }
+        h2 { color: #88ff88; margin: 20px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        h3 { color: #aaffaa; margin: 15px 0 8px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .controls {
+            background: #1a1a1f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            background: #2a2a3f;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        button:hover { background: #3a3a4f; }
+        button:active { background: #4a4a5f; }
+        button.primary { background: #00aa66; border-color: #00ff88; }
+        button.primary:hover { background: #00cc77; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        select, input {
+            background: #1a1a1f;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        .results {
+            background: #1a1a1f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th { color: #00ff88; background: #0f0f14; }
+        .metric-good { color: #00ff88; }
+        .metric-warn { color: #ffaa00; }
+        .metric-bad { color: #ff4444; }
+        .metric-speedup { color: #00ffaa; font-weight: bold; }
+        .metric-slowdown { color: #ff6644; font-weight: bold; }
+        .log {
+            background: #0f0f14;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        .log-entry { margin: 2px 0; }
+        .log-info { color: #88ff88; }
+        .log-warn { color: #ffaa00; }
+        .log-error { color: #ff4444; }
+        .log-metric { color: #44aaff; }
+        .log-webgpu { color: #ff44ff; }
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            background: #1a1a1f;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .status-item { display: flex; gap: 5px; }
+        .status-label { color: #888; }
+        .status-value { color: #00ff88; }
+        .status-value.available { color: #00ff88; }
+        .status-value.unavailable { color: #ffaa00; }
+        #cartridgeInput { display: none; }
+        .hidden { display: none !important; }
+        .canvas-container {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #testCanvas { image-rendering: pixelated; }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .comparison-panel {
+            background: #1a1a1f;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .comparison-panel h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .comparison-panel.js { border-top: 3px solid #00ff88; }
+        .comparison-panel.webgpu { border-top: 3px solid #ff44ff; }
+        .comparison-panel.webgpu.disabled { opacity: 0.5; }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+        }
+        .metric-label { color: #888; }
+        .metric-value { font-weight: bold; }
+        .summary-box {
+            background: #1a1a2f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        .summary-box h3 { color: #ffaa00; margin-bottom: 10px; }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .summary-stat {
+            text-align: center;
+            padding: 10px;
+            background: #0f0f14;
+            border-radius: 4px;
+        }
+        .summary-stat .value { font-size: 24px; font-weight: bold; }
+        .summary-stat .label { font-size: 12px; color: #888; margin-top: 5px; }
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            background: #0f0f14;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 2px; }
+        .legend-dot.js { background: #00ff88; }
+        .legend-dot.webgpu { background: #ff44ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GeosASCII Benchmark</h1>
+        <p>WebGPU vs JavaScript Comparison - "Pixels Move Pixels" Execution Pipeline</p>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">Portability:</span>
+                <span class="status-value" id="portabilityScore">--</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">WebGPU:</span>
+                <span class="status-value" id="webgpuStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Memory API:</span>
+                <span class="status-value" id="memoryApiStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Active Mode:</span>
+                <span class="status-value" id="activeMode">--</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="file" id="cartridgeInput" accept=".png">
+            <button onclick="document.getElementById('cartridgeInput').click()">Load Cartridge</button>
+            <button class="primary" onclick="runComparison()" id="runBtn">Run Comparison</button>
+            <button onclick="runJSOnly()" id="jsBtn">JS Only</button>
+            <button onclick="runWebGPUOnly()" id="webgpuBtn">WebGPU Only</button>
+            <button onclick="exportResults()">Export JSON</button>
+            <span style="margin-left: auto; color: #888;">Cartridge: <span id="cartridgeName">None</span></span>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><div class="legend-dot js"></div> JavaScript (CPU)</div>
+            <div class="legend-item"><div class="legend-dot webgpu"></div> WebGPU (GPU)</div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="testCanvas" width="640" height="192"></canvas>
+        </div>
+
+        <div class="summary-box">
+            <h3>Comparison Summary</h3>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="value" id="summarySpeedup">--</div>
+                    <div class="label">Avg Speedup</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="value" id="summaryJSThroughput">--</div>
+                    <div class="label">JS Throughput</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="value" id="summaryWebGPUThroughput">--</div>
+                    <div class="label">WebGPU Throughput</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="value" id="summaryAccuracy">--</div>
+                    <div class="label">Accuracy Match</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="comparison-panel js">
+                <h3>JavaScript (CPU) Results</h3>
+                <div id="jsResults">
+                    <div class="metric-row"><span class="metric-label">No results yet</span></div>
+                </div>
+            </div>
+            <div class="comparison-panel webgpu" id="webgpuPanel">
+                <h3>WebGPU (GPU) Results</h3>
+                <div id="webgpuResults">
+                    <div class="metric-row"><span class="metric-label">No results yet</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results">
+            <h2>Detailed Comparison Table</h2>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Test</th>
+                        <th>JS p50</th>
+                        <th>WebGPU p50</th>
+                        <th>Speedup</th>
+                        <th>JS ops/s</th>
+                        <th>WebGPU ops/s</th>
+                        <th>JS Mem</th>
+                        <th>WebGPU Mem</th>
+                        <th>Accuracy</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <tr><td colspan="9" style="text-align:center; color:#888;">No results yet</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="log" id="logPanel">
+            <div class="log-entry log-info">Benchmark harness initialized</div>
+        </div>
+    </div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS & OPCODES
+// ─────────────────────────────────────────────────────────────────────────────
+
+const WIDTH = 80;
+const HEIGHT = 24;
+const STATE_SLOTS = 320;
+
+const OP = {
+    NOP: 0, TOGGLE: 3, SET: 6, CLEAR: 7, INC: 8, DEC: 9,
+    LD: 3, ST: 4, ADD: 5, SUB: 6, JZ: 10, RET: 12, HALT: 13,
+    LDI: 204, MOV: 206, JMP: 209, CMP: 214, DRAW: 215,
+    AND: 220, OR: 221, XOR: 222, NOT: 223, SHL: 224, SHR: 225
+};
+
+const OP_NAMES = {};
+for (const [k, v] of Object.entries(OP)) OP_NAMES[v] = k;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BENCHMARK HARNESS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class BenchmarkHarness {
+    constructor() {
+        this.results = [];
+        this.warmupIterations = 10;
+        this.jsResults = [];
+        this.webgpuResults = [];
+    }
+
+    log(message, type = 'info') {
+        const panel = document.getElementById('logPanel');
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        panel.appendChild(entry);
+        panel.scrollTop = panel.scrollHeight;
+    }
+
+    measureLatency(fn, iterations = 100) {
+        const times = [];
+        for (let i = 0; i < this.warmupIterations; i++) fn();
+        for (let i = 0; i < iterations; i++) {
+            const start = performance.now();
+            fn();
+            times.push(performance.now() - start);
+        }
+        times.sort((a, b) => a - b);
+        return {
+            p50: this.percentile(times, 50),
+            p95: this.percentile(times, 95),
+            p99: this.percentile(times, 99),
+            min: times[0],
+            max: times[times.length - 1],
+            avg: times.reduce((a, b) => a + b, 0) / times.length
+        };
+    }
+
+    measureThroughput(fn, targetOps = 100) {
+        const start = performance.now();
+        for (let i = 0; i < targetOps; i++) fn();
+        const duration = performance.now() - start;
+        return {
+            totalMs: duration,
+            ops: targetOps,
+            opsPerSec: (targetOps / duration) * 1000
+        };
+    }
+
+    measureMemory() {
+        if (performance.memory) {
+            return {
+                used: performance.memory.usedJSHeapSize,
+                total: performance.memory.totalJSHeapSize,
+                limit: performance.memory.jsHeapSizeLimit,
+                available: true
+            };
+        }
+        return { used: 0, total: 0, limit: 0, available: false };
+    }
+
+    percentile(sortedArray, p) {
+        const idx = Math.ceil((p / 100) * sortedArray.length) - 1;
+        return sortedArray[Math.max(0, idx)];
+    }
+
+    formatDuration(ms) {
+        if (ms < 0.001) return `${(ms * 1000000).toFixed(1)}ns`;
+        if (ms < 1) return `${(ms * 1000).toFixed(2)}us`;
+        if (ms < 1000) return `${ms.toFixed(3)}ms`;
+        return `${(ms / 1000).toFixed(2)}s`;
+    }
+
+    formatBytes(bytes) {
+        if (bytes < 1024) return `${bytes}B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)}MB`;
+    }
+
+    formatSpeedup(ratio) {
+        if (ratio > 1) return `${ratio.toFixed(2)}x faster`;
+        if (ratio < 1) return `${(1/ratio).toFixed(2)}x slower`;
+        return 'same';
+    }
+
+    calculatePortability() {
+        let score = 50;
+        if (document.createElement('canvas').getContext) score += 20;
+        if (performance.now) score += 10;
+        if (performance.memory) score += 10;
+        if (navigator.gpu) score += 10;
+        return Math.min(100, score);
+    }
+
+    addComparisonResult(testName, jsData, webgpuData) {
+        const tbody = document.getElementById('resultsBody');
+        if (tbody.children.length === 1 && tbody.children[0].children.length === 9) {
+            tbody.innerHTML = '';
+        }
+
+        const speedup = jsData.latency.p50 / Math.max(webgpuData.latency.p50, 0.000001);
+        const throughputRatio = webgpuData.throughput.opsPerSec / Math.max(jsData.throughput.opsPerSec, 1);
+        const accuracy = this.compareStateBuffers(jsData.finalState, webgpuData.finalState);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${testName}</td>
+            <td class="${jsData.latency.p50 < 5 ? 'metric-good' : jsData.latency.p50 < 20 ? 'metric-warn' : 'metric-bad'}">${this.formatDuration(jsData.latency.p50)}</td>
+            <td class="${webgpuData.latency.p50 < 5 ? 'metric-good' : webgpuData.latency.p50 < 20 ? 'metric-warn' : 'metric-bad'}">${this.formatDuration(webgpuData.latency.p50)}</td>
+            <td class="${speedup > 1 ? 'metric-speedup' : speedup < 1 ? 'metric-slowdown' : ''}">${this.formatSpeedup(speedup)}</td>
+            <td>${jsData.throughput.opsPerSec.toFixed(0)}</td>
+            <td>${webgpuData.throughput.opsPerSec.toFixed(0)}</td>
+            <td>${this.formatBytes(jsData.memoryDelta)}</td>
+            <td>${this.formatBytes(webgpuData.memoryDelta)}</td>
+            <td class="${accuracy === 100 ? 'metric-good' : accuracy > 95 ? 'metric-warn' : 'metric-bad'}">${accuracy.toFixed(1)}%</td>
+        `;
+        tbody.appendChild(row);
+
+        this.jsResults.push({ test: testName, ...jsData });
+        this.webgpuResults.push({ test: testName, ...webgpuData });
+
+        return { speedup, throughputRatio, accuracy };
+    }
+
+    compareStateBuffers(stateA, stateB) {
+        if (!stateA || !stateB) return 100;
+        let matches = 0;
+        const len = Math.min(stateA.length, stateB.length);
+        for (let i = 0; i < len; i++) {
+            if (stateA[i] === stateB[i]) matches++;
+        }
+        return (matches / len) * 100;
+    }
+
+    updatePanel(panelId, data) {
+        const panel = document.getElementById(panelId);
+        panel.innerHTML = `
+            <div class="metric-row">
+                <span class="metric-label">p50 Latency</span>
+                <span class="metric-value ${data.latency.p50 < 5 ? 'metric-good' : ''}">${this.formatDuration(data.latency.p50)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">p95 Latency</span>
+                <span class="metric-value">${this.formatDuration(data.latency.p95)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">p99 Latency</span>
+                <span class="metric-value">${this.formatDuration(data.latency.p99)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Throughput</span>
+                <span class="metric-value">${data.throughput.opsPerSec.toFixed(0)} ops/s</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Memory Delta</span>
+                <span class="metric-value">${this.formatBytes(data.memoryDelta)}</span>
+            </div>
+        `;
+    }
+
+    updateSummary(stats) {
+        document.getElementById('summarySpeedup').textContent = stats.avgSpeedup.toFixed(2) + 'x';
+        document.getElementById('summarySpeedup').className = 'value ' + (stats.avgSpeedup > 1 ? 'metric-speedup' : 'metric-slowdown');
+        document.getElementById('summaryJSThroughput').textContent = this.formatNumber(stats.avgJSThroughput);
+        document.getElementById('summaryWebGPUThroughput').textContent = this.formatNumber(stats.avgWebGPUThroughput);
+        document.getElementById('summaryAccuracy').textContent = stats.avgAccuracy.toFixed(1) + '%';
+        document.getElementById('summaryAccuracy').className = 'value ' + (stats.avgAccuracy === 100 ? 'metric-good' : stats.avgAccuracy > 95 ? 'metric-warn' : 'metric-bad');
+    }
+
+    formatNumber(n) {
+        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+        return n.toFixed(0);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WEBGPU COMPUTE SHADER (WGSL)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const WGSL_COMPUTE_SHADER = `
+struct OpcodeParams {
+    x: u32,
+    y: u32,
+    count: u32,
+    padding: u32,
+}
+
+struct StateBuffer {
+    values: array<u32, ${STATE_SLOTS}>,
+}
+
+struct SITEntry {
+    opcode: u32,
+    target: u32,
+    flags: u32,
+    padding: u32,
+}
+
+struct SITBuffer {
+    entries: array<SITEntry, ${WIDTH * HEIGHT}>,
+}
+
+struct ResultBuffer {
+    results: array<u32, ${WIDTH * HEIGHT}>,
+}
+
+@group(0) @binding(0) var<uniform> params: OpcodeParams;
+@group(0) @binding(1) var<storage, read_write> state: StateBuffer;
+@group(0) @binding(2) var<storage, read> sit: SITBuffer;
+@group(0) @binding(3) var<storage, read_write> results: ResultBuffer;
+
+const OP_NOP: u32 = 0u;
+const OP_TOGGLE: u32 = 3u;
+const OP_SET: u32 = 6u;
+const OP_CLEAR: u32 = 7u;
+const OP_INC: u32 = 8u;
+const OP_DEC: u32 = 9u;
+const OP_ADD: u32 = 5u;
+const OP_SUB: u32 = 6u;
+const OP_LDI: u32 = 204u;
+
+@compute @workgroup_size(64)
+fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+    let idx = global_id.x;
+    if (idx >= params.count) {
+        return;
+    }
+
+    let sit_idx = params.y * ${WIDTH}u + params.x;
+    let entry = sit.entries[sit_idx];
+
+    let opcode = entry.opcode;
+    let target = entry.target;
+    let flags = entry.flags;
+
+    var result: u32 = 0u;
+
+    // Check conditional flags
+    if ((flags & 1u) != 0u && state.values[target] == 0u) {
+        results.results[idx] = 0u;
+        return;
+    }
+    if ((flags & 2u) != 0u && state.values[target] != 0u) {
+        results.results[idx] = 0u;
+        return;
+    }
+
+    switch (opcode) {
+        case OP_TOGGLE: {
+            let current = state.values[target];
+            state.values[target] = select(255u, 0u, current != 0u);
+            result = state.values[target];
+        }
+        case OP_SET: {
+            state.values[target] = 255u;
+            result = 255u;
+        }
+        case OP_CLEAR: {
+            state.values[target] = 0u;
+            result = 0u;
+        }
+        case OP_INC: {
+            let cur = state.values[target];
+            state.values[target] = min(cur + 1u, 255u);
+            result = state.values[target];
+        }
+        case OP_DEC: {
+            let cur = state.values[target];
+            state.values[target] = select(cur - 1u, 0u, cur > 0u);
+            result = state.values[target];
+        }
+        case OP_ADD: {
+            let cur = state.values[target];
+            let add_val = select(flags, 1u, flags == 0u);
+            state.values[target] = (cur + add_val) & 255u;
+            result = state.values[target];
+        }
+        case OP_SUB: {
+            let cur = state.values[target];
+            let sub_val = select(flags, 1u, flags == 0u);
+            state.values[target] = select(cur - sub_val, 0u, cur >= sub_val);
+            result = state.values[target];
+        }
+        case OP_LDI: {
+            state.values[target] = flags;
+            result = flags;
+        }
+        default: {
+            result = 0u;
+        }
+    }
+
+    results.results[idx] = result;
+}
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WEBGPU RENDERER
+// ─────────────────────────────────────────────────────────────────────────────
+
+class WebGPURenderer {
+    constructor() {
+        this.device = null;
+        this.initialized = false;
+        this.stateBuffer = null;
+        this.sitBuffer = null;
+        this.resultBuffer = null;
+        this.paramsBuffer = null;
+        this.pipeline = null;
+        this.bindGroup = null;
+        this.state = new Uint8Array(STATE_SLOTS * 4);
+    }
+
+    async init() {
+        if (!navigator.gpu) {
+            return false;
+        }
+
+        try {
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) return false;
+
+            this.device = await adapter.requestDevice();
+            this.initialized = true;
+
+            // Create buffers
+            this.stateBuffer = this.device.createBuffer({
+                size: STATE_SLOTS * 4,
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_READ | GPUBufferUsage.COPY_WRITE,
+            });
+
+            this.sitBuffer = this.device.createBuffer({
+                size: WIDTH * HEIGHT * 16,
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+            });
+
+            this.resultBuffer = this.device.createBuffer({
+                size: WIDTH * HEIGHT * 4,
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+            });
+
+            this.paramsBuffer = this.device.createBuffer({
+                size: 16,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            });
+
+            // Create pipeline
+            const module = this.device.createShaderModule({ code: WGSL_COMPUTE_SHADER });
+
+            const bindGroupLayout = this.device.createBindGroupLayout({
+                entries: [
+                    { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+                    { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+                    { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+                    { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+                ]
+            });
+
+            this.pipeline = this.device.createComputePipeline({
+                layout: this.device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] }),
+                compute: { module, entryPoint: 'main' }
+            });
+
+            this.bindGroupLayout = bindGroupLayout;
+
+            return true;
+        } catch (e) {
+            console.error('WebGPU init failed:', e);
+            return false;
+        }
+    }
+
+    loadCartridge(sit, state) {
+        if (!this.initialized) return;
+
+        this.sit = sit;
+        this.state = new Uint8Array(state);
+
+        // Upload SIT to GPU
+        const sitData = new Uint32Array(WIDTH * HEIGHT * 4);
+        for (let i = 0; i < WIDTH * HEIGHT; i++) {
+            const idx = i * 4;
+            sitData[idx] = sit[idx];         // opcode
+            sitData[idx + 1] = sit[idx + 1]; // target
+            sitData[idx + 2] = sit[idx + 2]; // flags
+            sitData[idx + 3] = sit[idx + 3]; // padding
+        }
+        this.device.queue.writeBuffer(this.sitBuffer, 0, sitData);
+
+        // Upload state to GPU
+        this.device.queue.writeBuffer(this.stateBuffer, 0, this.state);
+    }
+
+    async executeOpcode(x, y, batchCount = 1) {
+        if (!this.initialized) return null;
+
+        const idx = (y * WIDTH + x) * 4;
+        const opcode = this.sit[idx];
+        const target = this.sit[idx + 1];
+        const flags = this.sit[idx + 2];
+
+        if (opcode === OP.NOP) {
+            return { opcode, target, flags, result: 0 };
+        }
+
+        // Update params
+        const params = new Uint32Array([x, y, batchCount, 0]);
+        this.device.queue.writeBuffer(this.paramsBuffer, 0, params);
+
+        // Create bind group
+        const bindGroup = this.device.createBindGroup({
+            layout: this.bindGroupLayout,
+            entries: [
+                { binding: 0, resource: { buffer: this.paramsBuffer } },
+                { binding: 1, resource: { buffer: this.stateBuffer } },
+                { binding: 2, resource: { buffer: this.sitBuffer } },
+                { binding: 3, resource: { buffer: this.resultBuffer } },
+            ]
+        });
+
+        // Dispatch
+        const commandEncoder = this.device.createCommandEncoder();
+        const passEncoder = commandEncoder.beginComputePass();
+        passEncoder.setPipeline(this.pipeline);
+        passEncoder.setBindGroup(0, bindGroup);
+        passEncoder.dispatchWorkgroups(Math.ceil(batchCount / 64));
+        passEncoder.end();
+
+        // Read back results
+        const readBuffer = this.device.createBuffer({
+            size: batchCount * 4,
+            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+        });
+        commandEncoder.copyBufferToBuffer(this.resultBuffer, 0, readBuffer, 0, batchCount * 4);
+
+        this.device.queue.submit([commandEncoder.finish()]);
+
+        await readBuffer.mapAsync(GPUMapMode.READ);
+        const results = new Uint32Array(readBuffer.getMappedRange().slice(0));
+        readBuffer.unmap();
+        readBuffer.destroy();
+
+        // Read back state for accuracy comparison
+        const stateReadBuffer = this.device.createBuffer({
+            size: STATE_SLOTS * 4,
+            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+        });
+
+        const stateCommandEncoder = this.device.createCommandEncoder();
+        stateCommandEncoder.copyBufferToBuffer(this.stateBuffer, 0, stateReadBuffer, 0, STATE_SLOTS * 4);
+        this.device.queue.submit([stateCommandEncoder.finish()]);
+
+        await stateReadBuffer.mapAsync(GPUMapMode.READ);
+        const gpuState = new Uint8Array(stateReadBuffer.getMappedRange().slice(0));
+        stateReadBuffer.unmap();
+        stateReadBuffer.destroy();
+
+        this.state = new Uint8Array(gpuState);
+
+        return { opcode, target, flags, result: results[0], state: this.state };
+    }
+
+    getState() {
+        return this.state;
+    }
+
+    resetState() {
+        this.state.fill(0);
+        if (this.initialized) {
+            this.device.queue.writeBuffer(this.stateBuffer, 0, this.state);
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JS RENDERER (Reference Implementation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class JSRenderer {
+    constructor() {
+        this.sit = null;
+        this.state = new Uint8Array(STATE_SLOTS * 4);
+        this.loaded = false;
+    }
+
+    loadCartridge(sit, state) {
+        this.sit = sit;
+        this.state = new Uint8Array(state);
+        this.loaded = true;
+    }
+
+    getState(slot) {
+        return this.state[slot * 4] || 0;
+    }
+
+    setState(slot, value) {
+        this.state[slot * 4] = value & 0xFF;
+    }
+
+    executeOpcode(x, y) {
+        if (!this.loaded) return null;
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return null;
+
+        const idx = (y * WIDTH + x) * 4;
+        const opcode = this.sit[idx];
+        const target = this.sit[idx + 1];
+        const flags = this.sit[idx + 2];
+
+        if (opcode === OP.NOP) {
+            return { opcode, target, flags, result: 0 };
+        }
+
+        // Execute
+        switch (opcode) {
+            case OP.TOGGLE: {
+                const current = this.getState(target);
+                this.setState(target, current ? 0 : 255);
+                break;
+            }
+            case OP.SET: this.setState(target, 255); break;
+            case OP.CLEAR: this.setState(target, 0); break;
+            case OP.INC: {
+                const cur = this.getState(target);
+                this.setState(target, Math.min(cur + 1, 255));
+                break;
+            }
+            case OP.DEC: {
+                const cur = this.getState(target);
+                this.setState(target, Math.max(cur - 1, 0));
+                break;
+            }
+            case OP.LDI: this.setState(target, flags); break;
+            case OP.ADD: {
+                const cur = this.getState(target);
+                this.setState(target, (cur + (flags || 1)) & 0xFF);
+                break;
+            }
+            case OP.SUB: {
+                const cur = this.getState(target);
+                this.setState(target, (cur - (flags || 1)) & 0xFF);
+                break;
+            }
+        }
+
+        return { opcode, target, flags, result: this.getState(target), state: this.state };
+    }
+
+    getState() {
+        return this.state;
+    }
+
+    resetState() {
+        this.state.fill(0);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARTRIDGE LOADER
+// ─────────────────────────────────────────────────────────────────────────────
+
+class CartridgeLoader {
+    constructor() {
+        this.sit = null;
+        this.state = null;
+        this.glyphGrid = null;
+    }
+
+    async load(buffer) {
+        const view = new DataView(buffer);
+        const pixels = new Uint8Array(buffer);
+
+        this.glyphGrid = new Uint8Array(WIDTH * HEIGHT * 4);
+        let offset = 0;
+        for (let i = 0; i < WIDTH * HEIGHT; i++) {
+            this.glyphGrid[i] = pixels[offset];
+            offset += 4;
+        }
+
+        this.sit = new Uint8Array(WIDTH * HEIGHT * 4);
+        for (let i = 0; i < WIDTH * HEIGHT * 4; i++) {
+            this.sit[i] = pixels[offset + i];
+        }
+        offset += WIDTH * HEIGHT * 4;
+
+        this.state = new Uint8Array(STATE_SLOTS * 4);
+        for (let i = 0; i < STATE_SLOTS * 4; i++) {
+            this.state[i] = pixels[offset + i];
+        }
+
+        return { sit: this.sit, state: this.state, glyphGrid: this.glyphGrid };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANVAS RENDERER
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderCanvas(canvas, glyphGrid) {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const cellW = canvas.width / WIDTH;
+    const cellH = canvas.height / HEIGHT;
+    ctx.font = `${Math.min(cellH, cellW * 1.5) | 0}px monospace`;
+    ctx.textBaseline = 'top';
+
+    for (let y = 0; y < HEIGHT; y++) {
+        for (let x = 0; x < WIDTH; x++) {
+            const charCode = glyphGrid[y * WIDTH + x];
+            if (charCode > 32) {
+                ctx.fillStyle = '#00ff88';
+                ctx.fillText(String.fromCharCode(charCode), x * cellW, y * cellH);
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN APPLICATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+const harness = new BenchmarkHarness();
+const jsRenderer = new JSRenderer();
+let webgpuRenderer = null;
+const cartridgeLoader = new CartridgeLoader();
+const canvas = document.getElementById('testCanvas');
+
+let currentCartridge = null;
+let webgpuAvailable = false;
+
+// Initialize
+async function init() {
+    document.getElementById('portabilityScore').textContent = harness.calculatePortability() + '/100';
+    document.getElementById('memoryApiStatus').textContent = performance.memory ? 'Available' : 'Not available';
+    document.getElementById('memoryApiStatus').className = 'status-value ' + (performance.memory ? 'available' : 'unavailable');
+
+    // Check WebGPU
+    if (navigator.gpu) {
+        webgpuRenderer = new WebGPURenderer();
+        webgpuAvailable = await webgpuRenderer.init();
+        document.getElementById('webgpuStatus').textContent = webgpuAvailable ? 'Available' : 'Init failed';
+        document.getElementById('webgpuStatus').className = 'status-value ' + (webgpuAvailable ? 'available' : 'unavailable');
+        document.getElementById('webgpuBtn').disabled = !webgpuAvailable;
+
+        if (!webgpuAvailable) {
+            document.getElementById('webgpuPanel').classList.add('disabled');
+        }
+    } else {
+        document.getElementById('webgpuStatus').textContent = 'Not supported';
+        document.getElementById('webgpuStatus').className = 'status-value unavailable';
+        document.getElementById('webgpuBtn').disabled = true;
+        document.getElementById('webgpuPanel').classList.add('disabled');
+    }
+
+    document.getElementById('activeMode').textContent = webgpuAvailable ? 'Comparison' : 'JS Only';
+}
+
+// File input handler
+document.getElementById('cartridgeInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const buffer = await file.arrayBuffer();
+    const data = await cartridgeLoader.load(buffer);
+
+    jsRenderer.loadCartridge(data.sit, data.state);
+    if (webgpuAvailable) {
+        webgpuRenderer.loadCartridge(data.sit, data.state);
+    }
+
+    renderCanvas(canvas, data.glyphGrid);
+    currentCartridge = file.name;
+    document.getElementById('cartridgeName').textContent = file.name;
+    harness.log(`Loaded cartridge: ${file.name}`, 'info');
+});
+
+// Run comparison benchmark
+async function runComparison() {
+    if (!jsRenderer.loaded) {
+        harness.log('Please load a cartridge first', 'error');
+        return;
+    }
+
+    if (!webgpuAvailable) {
+        harness.log('WebGPU not available, running JS only', 'warn');
+        await runJSOnly();
+        return;
+    }
+
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+
+    document.getElementById('resultsBody').innerHTML = '';
+
+    const speedups = [];
+    const jsThroughputs = [];
+    const webgpuThroughputs = [];
+    const accuracies = [];
+
+    try {
+        // Test 1: Single Opcode
+        harness.log('Running: Single Opcode Comparison', 'info');
+        const test1Stats = await runSingleTest('Single Opcode', 3, 10, 100);
+        speedups.push(test1Stats.speedup);
+        jsThroughputs.push(test1Stats.jsThroughput);
+        webgpuThroughputs.push(test1Stats.webgpuThroughput);
+        accuracies.push(test1Stats.accuracy);
+
+        await sleep(100);
+
+        // Test 2: Batch 10
+        harness.log('Running: Batch 10 Comparison', 'info');
+        const test2Stats = await runBatchTest('Batch 10', 10);
+        speedups.push(test2Stats.speedup);
+        jsThroughputs.push(test2Stats.jsThroughput);
+        webgpuThroughputs.push(test2Stats.webgpuThroughput);
+        accuracies.push(test2Stats.accuracy);
+
+        await sleep(100);
+
+        // Test 3: Batch 100
+        harness.log('Running: Batch 100 Comparison', 'info');
+        const test3Stats = await runBatchTest('Batch 100', 100);
+        speedups.push(test3Stats.speedup);
+        jsThroughputs.push(test3Stats.jsThroughput);
+        webgpuThroughputs.push(test3Stats.webgpuThroughput);
+        accuracies.push(test3Stats.accuracy);
+
+        await sleep(100);
+
+        // Test 4: State Saturation
+        harness.log('Running: State Saturation Comparison', 'info');
+        const test4Stats = await runStateTest('State Saturation', 320);
+        speedups.push(test4Stats.speedup);
+        jsThroughputs.push(test4Stats.jsThroughput);
+        webgpuThroughputs.push(test4Stats.webgpuThroughput);
+        accuracies.push(test4Stats.accuracy);
+
+        // Update summary
+        harness.updateSummary({
+            avgSpeedup: speedups.reduce((a, b) => a + b, 0) / speedups.length,
+            avgJSThroughput: jsThroughputs.reduce((a, b) => a + b, 0) / jsThroughputs.length,
+            avgWebGPUThroughput: webgpuThroughputs.reduce((a, b) => a + b, 0) / webgpuThroughputs.length,
+            avgAccuracy: accuracies.reduce((a, b) => a + b, 0) / accuracies.length
+        });
+
+        harness.log('Comparison complete!', 'success');
+
+    } catch (e) {
+        harness.log(`Error: ${e.message}`, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Run Comparison';
+}
+
+async function runSingleTest(name, x, y, iterations) {
+    // JS
+    jsRenderer.resetState();
+    const jsMemBefore = harness.measureMemory().used;
+    const jsLat = harness.measureLatency(() => jsRenderer.executeOpcode(x, y), iterations);
+    const jsTp = harness.measureThroughput(() => jsRenderer.executeOpcode(x, y), iterations);
+    const jsMemAfter = harness.measureMemory().used;
+    const jsFinalState = new Uint8Array(jsRenderer.getState());
+
+    const jsData = {
+        latency: jsLat,
+        throughput: jsTp,
+        memoryDelta: jsMemAfter - jsMemBefore,
+        finalState: jsFinalState
+    };
+
+    // WebGPU
+    webgpuRenderer.resetState();
+    const webgpuMemBefore = harness.measureMemory().used;
+    const webgpuLat = await measureWebGPULatency(webgpuRenderer, x, y, iterations);
+    const webgpuTp = await measureWebGPUThroughput(webgpuRenderer, x, y, iterations);
+    const webgpuMemAfter = harness.measureMemory().used;
+    const webgpuFinalState = new Uint8Array(webgpuRenderer.getState());
+
+    const webgpuData = {
+        latency: webgpuLat,
+        throughput: webgpuTp,
+        memoryDelta: webgpuMemAfter - webgpuMemBefore,
+        finalState: webgpuFinalState
+    };
+
+    harness.updatePanel('jsResults', jsData);
+    harness.updatePanel('webgpuResults', webgpuData);
+
+    const stats = harness.addComparisonResult(name, jsData, webgpuData);
+    harness.log(`${name}: JS=${harness.formatDuration(jsLat.p50)}, WebGPU=${harness.formatDuration(webgpuLat.p50)}, speedup=${stats.speedup.toFixed(2)}x`, 'metric');
+
+    return {
+        speedup: stats.speedup,
+        jsThroughput: jsTp.opsPerSec,
+        webgpuThroughput: webgpuTp.opsPerSec,
+        accuracy: stats.accuracy
+    };
+}
+
+async function runBatchTest(name, batchSize) {
+    jsRenderer.resetState();
+    const jsMemBefore = harness.measureMemory().used;
+
+    const jsTimes = [];
+    for (let i = 0; i < batchSize; i++) {
+        const start = performance.now();
+        jsRenderer.executeOpcode(3 + (i % 5), 10 + (i % 5));
+        jsTimes.push(performance.now() - start);
+    }
+    jsTimes.sort((a, b) => a - b);
+    const jsLat = {
+        p50: harness.percentile(jsTimes, 50),
+        p95: harness.percentile(jsTimes, 95),
+        p99: harness.percentile(jsTimes, 99),
+        min: jsTimes[0],
+        max: jsTimes[jsTimes.length - 1],
+        avg: jsTimes.reduce((a, b) => a + b, 0) / jsTimes.length
+    };
+    const jsTp = { totalMs: jsTimes.reduce((a, b) => a + b, 0), ops: batchSize, opsPerSec: batchSize / (jsTimes.reduce((a, b) => a + b, 0) / 1000) };
+    const jsMemAfter = harness.measureMemory().used;
+    const jsFinalState = new Uint8Array(jsRenderer.getState());
+
+    const jsData = { latency: jsLat, throughput: jsTp, memoryDelta: jsMemAfter - jsMemBefore, finalState: jsFinalState };
+
+    // WebGPU batch
+    webgpuRenderer.resetState();
+    const webgpuMemBefore = harness.measureMemory().used;
+
+    const webgpuTimes = [];
+    for (let i = 0; i < batchSize; i++) {
+        const start = performance.now();
+        await webgpuRenderer.executeOpcode(3 + (i % 5), 10 + (i % 5), 1);
+        webgpuTimes.push(performance.now() - start);
+    }
+    webgpuTimes.sort((a, b) => a - b);
+    const webgpuLat = {
+        p50: harness.percentile(webgpuTimes, 50),
+        p95: harness.percentile(webgpuTimes, 95),
+        p99: harness.percentile(webgpuTimes, 99),
+        min: webgpuTimes[0],
+        max: webgpuTimes[webgpuTimes.length - 1],
+        avg: webgpuTimes.reduce((a, b) => a + b, 0) / webgpuTimes.length
+    };
+    const webgpuTp = { totalMs: webgpuTimes.reduce((a, b) => a + b, 0), ops: batchSize, opsPerSec: batchSize / (webgpuTimes.reduce((a, b) => a + b, 0) / 1000) };
+    const webgpuMemAfter = harness.measureMemory().used;
+    const webgpuFinalState = new Uint8Array(webgpuRenderer.getState());
+
+    const webgpuData = { latency: webgpuLat, throughput: webgpuTp, memoryDelta: webgpuMemAfter - webgpuMemBefore, finalState: webgpuFinalState };
+
+    harness.updatePanel('jsResults', jsData);
+    harness.updatePanel('webgpuResults', webgpuData);
+
+    const stats = harness.addComparisonResult(name, jsData, webgpuData);
+    harness.log(`${name}: JS=${harness.formatDuration(jsLat.p50)}, WebGPU=${harness.formatDuration(webgpuLat.p50)}, speedup=${stats.speedup.toFixed(2)}x`, 'metric');
+
+    return {
+        speedup: stats.speedup,
+        jsThroughput: jsTp.opsPerSec,
+        webgpuThroughput: webgpuTp.opsPerSec,
+        accuracy: stats.accuracy
+    };
+}
+
+async function runStateTest(name, slots) {
+    jsRenderer.resetState();
+    const jsMemBefore = harness.measureMemory().used;
+
+    const jsTimes = [];
+    for (let i = 0; i < slots; i++) {
+        const start = performance.now();
+        jsRenderer.setState(i, 255);
+        jsTimes.push(performance.now() - start);
+    }
+    jsTimes.sort((a, b) => a - b);
+    const jsLat = {
+        p50: harness.percentile(jsTimes, 50),
+        p95: harness.percentile(jsTimes, 95),
+        p99: harness.percentile(jsTimes, 99),
+        min: jsTimes[0],
+        max: jsTimes[jsTimes.length - 1],
+        avg: jsTimes.reduce((a, b) => a + b, 0) / jsTimes.length
+    };
+    const jsTp = { totalMs: jsTimes.reduce((a, b) => a + b, 0), ops: slots, opsPerSec: slots / (jsTimes.reduce((a, b) => a + b, 0) / 1000) };
+    const jsMemAfter = harness.measureMemory().used;
+    const jsFinalState = new Uint8Array(jsRenderer.getState());
+
+    const jsData = { latency: jsLat, throughput: jsTp, memoryDelta: jsMemAfter - jsMemBefore, finalState: jsFinalState };
+
+    // WebGPU - execute SET opcodes for each slot
+    webgpuRenderer.resetState();
+    const webgpuMemBefore = harness.measureMemory().used;
+
+    // For state test, we use JS to set and then sync to GPU
+    const webgpuTimes = [];
+    for (let i = 0; i < slots; i++) {
+        const start = performance.now();
+        webgpuRenderer.state[i * 4] = 255;
+        webgpuTimes.push(performance.now() - start);
+    }
+    // Sync to GPU
+    await webgpuRenderer.device.queue.writeBuffer(webgpuRenderer.stateBuffer, 0, webgpuRenderer.state);
+
+    webgpuTimes.sort((a, b) => a - b);
+    const webgpuLat = {
+        p50: harness.percentile(webgpuTimes, 50),
+        p95: harness.percentile(webgpuTimes, 95),
+        p99: harness.percentile(webgpuTimes, 99),
+        min: webgpuTimes[0],
+        max: webgpuTimes[webgpuTimes.length - 1],
+        avg: webgpuTimes.reduce((a, b) => a + b, 0) / webgpuTimes.length
+    };
+    const webgpuTp = { totalMs: webgpuTimes.reduce((a, b) => a + b, 0), ops: slots, opsPerSec: slots / (webgpuTimes.reduce((a, b) => a + b, 0) / 1000) };
+    const webgpuMemAfter = harness.measureMemory().used;
+    const webgpuFinalState = new Uint8Array(webgpuRenderer.getState());
+
+    const webgpuData = { latency: webgpuLat, throughput: webgpuTp, memoryDelta: webgpuMemAfter - webgpuMemBefore, finalState: webgpuFinalState };
+
+    harness.updatePanel('jsResults', jsData);
+    harness.updatePanel('webgpuResults', webgpuData);
+
+    const stats = harness.addComparisonResult(name, jsData, webgpuData);
+    harness.log(`${name}: JS=${harness.formatDuration(jsLat.p50)}, WebGPU=${harness.formatDuration(webgpuLat.p50)}`, 'metric');
+
+    return {
+        speedup: stats.speedup,
+        jsThroughput: jsTp.opsPerSec,
+        webgpuThroughput: webgpuTp.opsPerSec,
+        accuracy: stats.accuracy
+    };
+}
+
+async function measureWebGPULatency(renderer, x, y, iterations) {
+    const times = [];
+    for (let i = 0; i < iterations; i++) {
+        renderer.resetState();
+        const start = performance.now();
+        await renderer.executeOpcode(x, y, 1);
+        times.push(performance.now() - start);
+    }
+    times.sort((a, b) => a - b);
+    return {
+        p50: harness.percentile(times, 50),
+        p95: harness.percentile(times, 95),
+        p99: harness.percentile(times, 99),
+        min: times[0],
+        max: times[times.length - 1],
+        avg: times.reduce((a, b) => a + b, 0) / times.length
+    };
+}
+
+async function measureWebGPUThroughput(renderer, x, y, iterations) {
+    const start = performance.now();
+    for (let i = 0; i < iterations; i++) {
+        await renderer.executeOpcode(x, y, 1);
+    }
+    const duration = performance.now() - start;
+    return {
+        totalMs: duration,
+        ops: iterations,
+        opsPerSec: (iterations / duration) * 1000
+    };
+}
+
+async function runJSOnly() {
+    if (!jsRenderer.loaded) {
+        harness.log('Please load a cartridge first', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('jsBtn');
+    btn.disabled = true;
+
+    document.getElementById('resultsBody').innerHTML = '';
+
+    try {
+        // Test 1
+        harness.log('Running: Single Opcode (JS)', 'info');
+        jsRenderer.resetState();
+        const mem1Before = harness.measureMemory().used;
+        const lat1 = harness.measureLatency(() => jsRenderer.executeOpcode(3, 10), 100);
+        const tp1 = harness.measureThroughput(() => jsRenderer.executeOpcode(3, 10), 100);
+        const mem1After = harness.measureMemory().used;
+
+        const jsData1 = { latency: lat1, throughput: tp1, memoryDelta: mem1After - mem1Before, finalState: jsRenderer.getState() };
+        harness.updatePanel('jsResults', jsData1);
+        harness.log(`Single Opcode: p50=${harness.formatDuration(lat1.p50)}, throughput=${tp1.opsPerSec.toFixed(0)} ops/s`, 'metric');
+
+        await sleep(100);
+
+        // Test 2
+        harness.log('Running: 100 Rapid Clicks (JS)', 'info');
+        jsRenderer.resetState();
+        const mem2Before = harness.measureMemory().used;
+        const clicks100 = [];
+        for (let i = 0; i < 100; i++) {
+            const start = performance.now();
+            jsRenderer.executeOpcode(3 + (i % 5), 10 + (i % 10));
+            clicks100.push(performance.now() - start);
+        }
+        clicks100.sort((a, b) => a - b);
+        const lat2 = {
+            p50: harness.percentile(clicks100, 50),
+            p95: harness.percentile(clicks100, 95),
+            p99: harness.percentile(clicks100, 99),
+            min: clicks100[0],
+            max: clicks100[clicks100.length - 1],
+            avg: clicks100.reduce((a, b) => a + b, 0) / clicks100.length
+        };
+        const tp2 = { totalMs: clicks100.reduce((a, b) => a + b, 0), ops: 100, opsPerSec: 100 / (clicks100.reduce((a, b) => a + b, 0) / 1000) };
+        const mem2After = harness.measureMemory().used;
+
+        const jsData2 = { latency: lat2, throughput: tp2, memoryDelta: mem2After - mem2Before, finalState: jsRenderer.getState() };
+        harness.updatePanel('jsResults', jsData2);
+        harness.log(`100 Clicks: p50=${harness.formatDuration(lat2.p50)}, throughput=${tp2.opsPerSec.toFixed(0)} ops/s`, 'metric');
+
+        harness.log('JS tests complete!', 'success');
+
+    } catch (e) {
+        harness.log(`Error: ${e.message}`, 'error');
+    }
+
+    btn.disabled = false;
+}
+
+async function runWebGPUOnly() {
+    if (!webgpuAvailable) {
+        harness.log('WebGPU not available', 'error');
+        return;
+    }
+
+    if (!jsRenderer.loaded) {
+        harness.log('Please load a cartridge first', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('webgpuBtn');
+    btn.disabled = true;
+
+    document.getElementById('resultsBody').innerHTML = '';
+
+    try {
+        // Test 1
+        harness.log('Running: Single Opcode (WebGPU)', 'webgpu');
+        webgpuRenderer.resetState();
+        const mem1Before = harness.measureMemory().used;
+        const lat1 = await measureWebGPULatency(webgpuRenderer, 3, 10, 100);
+        const tp1 = await measureWebGPUThroughput(webgpuRenderer, 3, 10, 100);
+        const mem1After = harness.measureMemory().used;
+
+        const webgpuData1 = { latency: lat1, throughput: tp1, memoryDelta: mem1After - mem1Before, finalState: webgpuRenderer.getState() };
+        harness.updatePanel('webgpuResults', webgpuData1);
+        harness.log(`Single Opcode: p50=${harness.formatDuration(lat1.p50)}, throughput=${tp1.opsPerSec.toFixed(0)} ops/s`, 'webgpu');
+
+        await sleep(100);
+
+        // Test 2
+        harness.log('Running: 100 Rapid Clicks (WebGPU)', 'webgpu');
+        webgpuRenderer.resetState();
+        const mem2Before = harness.measureMemory().used;
+        const clicks100 = [];
+        for (let i = 0; i < 100; i++) {
+            const start = performance.now();
+            await webgpuRenderer.executeOpcode(3 + (i % 5), 10 + (i % 10), 1);
+            clicks100.push(performance.now() - start);
+        }
+        clicks100.sort((a, b) => a - b);
+        const lat2 = {
+            p50: harness.percentile(clicks100, 50),
+            p95: harness.percentile(clicks100, 95),
+            p99: harness.percentile(clicks100, 99),
+            min: clicks100[0],
+            max: clicks100[clicks100.length - 1],
+            avg: clicks100.reduce((a, b) => a + b, 0) / clicks100.length
+        };
+        const tp2 = { totalMs: clicks100.reduce((a, b) => a + b, 0), ops: 100, opsPerSec: 100 / (clicks100.reduce((a, b) => a + b, 0) / 1000) };
+        const mem2After = harness.measureMemory().used;
+
+        const webgpuData2 = { latency: lat2, throughput: tp2, memoryDelta: mem2After - mem2Before, finalState: webgpuRenderer.getState() };
+        harness.updatePanel('webgpuResults', webgpuData2);
+        harness.log(`100 Clicks: p50=${harness.formatDuration(lat2.p50)}, throughput=${tp2.opsPerSec.toFixed(0)} ops/s`, 'webgpu');
+
+        harness.log('WebGPU tests complete!', 'success');
+
+    } catch (e) {
+        harness.log(`Error: ${e.message}`, 'error');
+    }
+
+    btn.disabled = false;
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function exportResults() {
+    if (harness.jsResults.length === 0 && harness.webgpuResults.length === 0) {
+        harness.log('No results to export', 'warn');
+        return;
+    }
+
+    const report = {
+        timestamp: new Date().toISOString(),
+        browser: {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            webgpu: webgpuAvailable,
+            memoryApi: !!performance.memory
+        },
+        portability: harness.calculatePortability(),
+        cartridge: currentCartridge,
+        jsResults: harness.jsResults.map(r => ({
+            test: r.test,
+            latency: r.latency,
+            throughput: r.throughput,
+            memoryDelta: r.memoryDelta
+        })),
+        webgpuResults: harness.webgpuResults.map(r => ({
+            test: r.test,
+            latency: r.latency,
+            throughput: r.throughput,
+            memoryDelta: r.memoryDelta
+        }))
+    };
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `benchmark-webgpu-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    harness.log('Exported results to JSON', 'info');
+}
+
+// Initialize on load
+init();
+</script>
+</body>
+</html>

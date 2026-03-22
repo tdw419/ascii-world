@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeosASCII Benchmark - Pixels Move Pixels</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        h1 { color: #00ff88; margin-bottom: 10px; }
+        h2 { color: #88ff88; margin: 20px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .controls {
+            background: #1a1a1f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            background: #2a2a3f;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        button:hover { background: #3a3a4f; }
+        button:active { background: #4a4a5f; }
+        button.primary { background: #00aa66; border-color: #00ff88; }
+        button.primary:hover { background: #00cc77; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        select, input {
+            background: #1a1a1f;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        .results {
+            background: #1a1a1f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th { color: #00ff88; }
+        .metric-good { color: #00ff88; }
+        .metric-warn { color: #ffaa00; }
+        .metric-bad { color: #ff4444; }
+        .log {
+            background: #0f0f14;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        .log-entry { margin: 2px 0; }
+        .log-info { color: #88ff88; }
+        .log-warn { color: #ffaa00; }
+        .log-error { color: #ff4444; }
+        .log-metric { color: #44aaff; }
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            background: #1a1a1f;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .status-item { display: flex; gap: 5px; }
+        .status-label { color: #888; }
+        .status-value { color: #00ff88; }
+        #cartridgeInput { display: none; }
+        .hidden { display: none !important; }
+        .canvas-container {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #testCanvas { image-rendering: pixelated; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GeosASCII Benchmark</h1>
+        <p>Performance testing for the "Pixels Move Pixels" execution pipeline</p>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">Portability:</span>
+                <span class="status-value" id="portabilityScore">--</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">WebGPU:</span>
+                <span class="status-value" id="webgpuStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Memory API:</span>
+                <span class="status-value" id="memoryApiStatus">Checking...</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="file" id="cartridgeInput" accept=".png">
+            <button onclick="document.getElementById('cartridgeInput').click()">Load Cartridge</button>
+            <button class="primary" onclick="runAllTests()" id="runBtn">Run All Tests</button>
+            <button onclick="exportResults()">Export JSON</button>
+            <span style="margin-left: auto; color: #888;">Cartridge: <span id="cartridgeName">None</span></span>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="testCanvas" width="640" height="192"></canvas>
+        </div>
+
+        <div class="results">
+            <h2>Benchmark Results</h2>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Test</th>
+                        <th>p50 (ms)</th>
+                        <th>p95 (ms)</th>
+                        <th>p99 (ms)</th>
+                        <th>Throughput</th>
+                        <th>Memory Δ</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <tr><td colspan="7" style="text-align:center; color:#888;">No results yet</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="log" id="logPanel">
+            <div class="log-entry log-info">Benchmark harness initialized</div>
+        </div>
+    </div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// BENCHMARK HARNESS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class BenchmarkHarness {
+    constructor() {
+        this.results = [];
+        this.warmupIterations = 10;
+    }
+
+    log(message, type = 'info') {
+        const panel = document.getElementById('logPanel');
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        panel.appendChild(entry);
+        panel.scrollTop = panel.scrollHeight;
+    }
+
+    // Measure latency distribution over N iterations
+    measureLatency(fn, iterations = 100) {
+        const times = [];
+
+        // Warmup
+        for (let i = 0; i < this.warmupIterations; i++) {
+            fn();
+        }
+
+        // Measure
+        for (let i = 0; i < iterations; i++) {
+            const start = performance.now();
+            fn();
+            const end = performance.now();
+            times.push(end - start);
+        }
+
+        times.sort((a, b) => a - b);
+        return {
+            p50: this.percentile(times, 50),
+            p95: this.percentile(times, 95),
+            p99: this.percentile(times, 99),
+            min: times[0],
+            max: times[times.length - 1],
+            avg: times.reduce((a, b) => a + b, 0) / times.length
+        };
+    }
+
+    // Measure throughput (ops/sec)
+    measureThroughput(fn, targetOps = 100) {
+        const start = performance.now();
+        for (let i = 0; i < targetOps; i++) {
+            fn();
+        }
+        const end = performance.now();
+        const duration = end - start;
+        return {
+            totalMs: duration,
+            ops: targetOps,
+            opsPerSec: (targetOps / duration) * 1000
+        };
+    }
+
+    // Memory measurement
+    measureMemory() {
+        if (performance.memory) {
+            return {
+                used: performance.memory.usedJSHeapSize,
+                total: performance.memory.totalJSHeapSize,
+                limit: performance.memory.jsHeapSizeLimit,
+                available: true
+            };
+        }
+        return { used: 0, total: 0, limit: 0, available: false };
+    }
+
+    // Percentile calculation
+    percentile(sortedArray, p) {
+        const idx = Math.ceil((p / 100) * sortedArray.length) - 1;
+        return sortedArray[Math.max(0, idx)];
+    }
+
+    // Format helpers
+    formatDuration(ms) {
+        if (ms < 1) return `${(ms * 1000).toFixed(2)}μs`;
+        if (ms < 1000) return `${ms.toFixed(3)}ms`;
+        return `${(ms / 1000).toFixed(2)}s`;
+    }
+
+    formatBytes(bytes) {
+        if (bytes < 1024) return `${bytes}B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)}MB`;
+    }
+
+    // Portability score
+    calculatePortability() {
+        let score = 50; // Base score for any browser
+
+        // Canvas support
+        if (document.createElement('canvas').getContext) score += 20;
+
+        // Performance API
+        if (performance.now) score += 10;
+
+        // Memory API
+        if (performance.memory) score += 10;
+
+        // WebGPU
+        if (navigator.gpu) score += 10;
+
+        return Math.min(100, score);
+    }
+
+    // Add result to table
+    addResult(testName, latency, throughput, memoryDelta, status = '✓') {
+        const tbody = document.getElementById('resultsBody');
+        if (tbody.children.length === 1 && tbody.children[0].children.length === 7) {
+            tbody.innerHTML = '';
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${testName}</td>
+            <td class="${latency.p50 < 5 ? 'metric-good' : latency.p50 < 20 ? 'metric-warn' : 'metric-bad'}">${this.formatDuration(latency.p50)}</td>
+            <td class="${latency.p95 < 10 ? 'metric-good' : latency.p95 < 50 ? 'metric-warn' : 'metric-bad'}">${this.formatDuration(latency.p95)}</td>
+            <td class="${latency.p99 < 20 ? 'metric-good' : latency.p99 < 100 ? 'metric-warn' : 'metric-bad'}">${this.formatDuration(latency.p99)}</td>
+            <td>${throughput.opsPerSec.toFixed(0)} ops/s</td>
+            <td>${this.formatBytes(memoryDelta)}</td>
+            <td>${status}</td>
+        `;
+        tbody.appendChild(row);
+
+        this.results.push({
+            test: testName,
+            latency,
+            throughput,
+            memoryDelta,
+            timestamp: Date.now()
+        });
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MINIMAL GEOS VIEWER (for testing)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const WIDTH = 80;
+const HEIGHT = 24;
+const STATE_SLOTS = 320;
+
+const OP = {
+    NOP: 0, TOGGLE: 3, SET: 6, CLEAR: 7, INC: 8, DEC: 9,
+    LD: 3, ST: 4, ADD: 5, SUB: 6, JZ: 10, RET: 12, HALT: 13,
+    LDI: 204, MOV: 206, JMP: 209, CMP: 214, DRAW: 215,
+    AND: 220, OR: 221, XOR: 222, NOT: 223, SHL: 224, SHR: 225
+};
+
+class GeosViewer {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.glyphGrid = new Uint8Array(WIDTH * HEIGHT);
+        this.sit = new Uint8Array(WIDTH * HEIGHT * 4);
+        this.state = new Uint8Array(STATE_SLOTS * 4);
+        this.loaded = false;
+    }
+
+    loadCartridge(buffer) {
+        const view = new DataView(buffer);
+        const pixels = new Uint8Array(buffer);
+
+        // Read glyph grid (first 80x24 pixels = 80*24*4 bytes)
+        let offset = 0;
+        for (let i = 0; i < WIDTH * HEIGHT; i++) {
+            this.glyphGrid[i] = pixels[offset];
+            offset += 4;
+        }
+
+        // Read SIT (next 80x24 pixels)
+        for (let i = 0; i < WIDTH * HEIGHT * 4; i++) {
+            this.sit[i] = pixels[offset + i];
+        }
+        offset += WIDTH * HEIGHT * 4;
+
+        // Read state buffer (next 80x4 pixels = 320 slots)
+        for (let i = 0; i < STATE_SLOTS * 4; i++) {
+            this.state[i] = pixels[offset + i];
+        }
+
+        this.loaded = true;
+        this.render();
+    }
+
+    getState(slot) {
+        return this.state[slot * 4] || 0;
+    }
+
+    setState(slot, value) {
+        this.state[slot * 4] = value & 0xFF;
+    }
+
+    executeOpcode(x, y) {
+        if (!this.loaded) return;
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
+
+        const idx = (y * WIDTH + x) * 4;
+        const opcode = this.sit[idx];
+        const target = this.sit[idx + 1];
+        const flags = this.sit[idx + 2];
+
+        // Execute
+        switch (opcode) {
+            case OP.TOGGLE: {
+                const current = this.getState(target);
+                this.setState(target, current ? 0 : 255);
+                break;
+            }
+            case OP.SET: this.setState(target, 255); break;
+            case OP.CLEAR: this.setState(target, 0); break;
+            case OP.INC: {
+                const cur = this.getState(target);
+                this.setState(target, Math.min(cur + 1, 255));
+                break;
+            }
+            case OP.DEC: {
+                const cur = this.getState(target);
+                this.setState(target, Math.max(cur - 1, 0));
+                break;
+            }
+            case OP.LDI: this.setState(target, flags); break;
+            case OP.ADD: {
+                const cur = this.getState(target);
+                this.setState(target, (cur + (flags || 1)) & 0xFF);
+                break;
+            }
+            case OP.SUB: {
+                const cur = this.getState(target);
+                this.setState(target, (cur - (flags || 1)) & 0xFF);
+                break;
+            }
+        }
+
+        this.render();
+        return { opcode, target, flags };
+    }
+
+    render() {
+        this.ctx.fillStyle = '#0a0a0f';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const cellW = this.canvas.width / WIDTH;
+        const cellH = this.canvas.height / HEIGHT;
+        this.ctx.font = `${Math.min(cellH, cellW * 1.5) | 0}px monospace`;
+        this.ctx.textBaseline = 'top';
+
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                const charCode = this.glyphGrid[y * WIDTH + x];
+                if (charCode > 32) {
+                    this.ctx.fillStyle = '#00ff88';
+                    this.ctx.fillText(String.fromCharCode(charCode), x * cellW, y * cellH);
+                }
+            }
+        }
+    }
+
+    resetState() {
+        this.state.fill(0);
+        this.render();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST RUNNER
+// ─────────────────────────────────────────────────────────────────────────────
+
+const harness = new BenchmarkHarness();
+const viewer = new GeosViewer(document.getElementById('testCanvas'));
+let currentCartridge = null;
+
+// Initialize status
+document.getElementById('portabilityScore').textContent = harness.calculatePortability() + '/100';
+document.getElementById('webgpuStatus').textContent = navigator.gpu ? 'Available' : 'Not available';
+document.getElementById('webgpuStatus').style.color = navigator.gpu ? '#00ff88' : '#ffaa00';
+document.getElementById('memoryApiStatus').textContent = performance.memory ? 'Available' : 'Not available';
+document.getElementById('memoryApiStatus').style.color = performance.memory ? '#00ff88' : '#ffaa00';
+
+// File input handler
+document.getElementById('cartridgeInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const buffer = await file.arrayBuffer();
+    viewer.loadCartridge(buffer);
+    currentCartridge = file.name;
+    document.getElementById('cartridgeName').textContent = file.name;
+    harness.log(`Loaded cartridge: ${file.name}`, 'info');
+});
+
+// Run all tests
+async function runAllTests() {
+    if (!viewer.loaded) {
+        harness.log('Please load a cartridge first', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+
+    document.getElementById('resultsBody').innerHTML = '';
+
+    try {
+        // Test 1: Single opcode
+        harness.log('Running: Single Opcode Test', 'info');
+        viewer.resetState();
+        const mem1Before = harness.measureMemory().used;
+        const lat1 = harness.measureLatency(() => viewer.executeOpcode(3, 10), 100);
+        const tp1 = harness.measureThroughput(() => viewer.executeOpcode(3, 10), 100);
+        const mem1After = harness.measureMemory().used;
+        harness.addResult('Single Opcode', lat1, tp1, mem1After - mem1Before);
+        harness.log(`Single Opcode: p50=${harness.formatDuration(lat1.p50)}, throughput=${tp1.opsPerSec.toFixed(0)} ops/s`, 'metric');
+
+        await sleep(100);
+
+        // Test 2: 10 rapid clicks
+        harness.log('Running: 10 Rapid Clicks', 'info');
+        viewer.resetState();
+        const mem2Before = harness.measureMemory().used;
+        const clicks10 = [];
+        for (let i = 0; i < 10; i++) {
+            const start = performance.now();
+            viewer.executeOpcode(3 + (i % 3), 10 + (i % 5));
+            clicks10.push(performance.now() - start);
+        }
+        clicks10.sort((a, b) => a - b);
+        const lat2 = {
+            p50: harness.percentile(clicks10, 50),
+            p95: harness.percentile(clicks10, 95),
+            p99: harness.percentile(clicks10, 99),
+            min: clicks10[0],
+            max: clicks10[clicks10.length - 1],
+            avg: clicks10.reduce((a, b) => a + b, 0) / clicks10.length
+        };
+        const tp2 = { totalMs: clicks10.reduce((a, b) => a + b, 0), ops: 10, opsPerSec: 10 / (clicks10.reduce((a, b) => a + b, 0) / 1000) };
+        const mem2After = harness.measureMemory().used;
+        harness.addResult('10 Rapid Clicks', lat2, tp2, mem2After - mem2Before);
+        harness.log(`10 Clicks: p50=${harness.formatDuration(lat2.p50)}, throughput=${tp2.opsPerSec.toFixed(0)} ops/s`, 'metric');
+
+        await sleep(100);
+
+        // Test 3: 100 rapid clicks
+        harness.log('Running: 100 Rapid Clicks', 'info');
+        viewer.resetState();
+        const mem3Before = harness.measureMemory().used;
+        const clicks100 = [];
+        for (let i = 0; i < 100; i++) {
+            const start = performance.now();
+            viewer.executeOpcode(3 + (i % 5), 10 + (i % 10));
+            clicks100.push(performance.now() - start);
+        }
+        clicks100.sort((a, b) => a - b);
+        const lat3 = {
+            p50: harness.percentile(clicks100, 50),
+            p95: harness.percentile(clicks100, 95),
+            p99: harness.percentile(clicks100, 99),
+            min: clicks100[0],
+            max: clicks100[clicks100.length - 1],
+            avg: clicks100.reduce((a, b) => a + b, 0) / clicks100.length
+        };
+        const tp3 = { totalMs: clicks100.reduce((a, b) => a + b, 0), ops: 100, opsPerSec: 100 / (clicks100.reduce((a, b) => a + b, 0) / 1000) };
+        const mem3After = harness.measureMemory().used;
+        harness.addResult('100 Rapid Clicks', lat3, tp3, mem3After - mem3Before);
+        harness.log(`100 Clicks: p50=${harness.formatDuration(lat3.p50)}, p99=${harness.formatDuration(lat3.p99)}, throughput=${tp3.opsPerSec.toFixed(0)} ops/s`, 'metric');
+
+        await sleep(100);
+
+        // Test 4: State buffer saturation
+        harness.log('Running: State Buffer Saturation', 'info');
+        viewer.resetState();
+        const mem4Before = harness.measureMemory().used;
+        const stateTimes = [];
+        for (let i = 0; i < STATE_SLOTS; i++) {
+            const start = performance.now();
+            viewer.setState(i, 255);
+            stateTimes.push(performance.now() - start);
+        }
+        viewer.render();
+        stateTimes.sort((a, b) => a - b);
+        const lat4 = {
+            p50: harness.percentile(stateTimes, 50),
+            p95: harness.percentile(stateTimes, 95),
+            p99: harness.percentile(stateTimes, 99),
+            min: stateTimes[0],
+            max: stateTimes[stateTimes.length - 1],
+            avg: stateTimes.reduce((a, b) => a + b, 0) / stateTimes.length
+        };
+        const tp4 = { totalMs: stateTimes.reduce((a, b) => a + b, 0), ops: STATE_SLOTS, opsPerSec: STATE_SLOTS / (stateTimes.reduce((a, b) => a + b, 0) / 1000) };
+        const mem4After = harness.measureMemory().used;
+        harness.addResult('State Buffer (320)', lat4, tp4, mem4After - mem4Before);
+        harness.log(`State Buffer: total=${harness.formatDuration(tp4.totalMs)}, avg=${harness.formatDuration(lat4.avg)} per slot`, 'metric');
+
+        harness.log('All tests complete!', 'info');
+
+    } catch (e) {
+        harness.log(`Error: ${e.message}`, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Run All Tests';
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function exportResults() {
+    if (harness.results.length === 0) {
+        harness.log('No results to export', 'warn');
+        return;
+    }
+
+    const report = {
+        timestamp: new Date().toISOString(),
+        browser: {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            webgpu: !!navigator.gpu,
+            memoryApi: !!performance.memory
+        },
+        portability: harness.calculatePortability(),
+        cartridge: currentCartridge,
+        results: harness.results
+    };
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `benchmark-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    harness.log('Exported results to JSON', 'info');
+}
+</script>
+</body>
+</html>

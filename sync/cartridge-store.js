@@ -20,7 +20,7 @@ for (const [k, v] of Object.entries(OP)) OP_NAMES[v] = k;
 
 export class CartridgeStore {
     constructor(options = {}) {
-        this.cartridgesDir = options.cartridgesDir || '../apps/geos-ascii/examples';
+        this.cartridgesDir = options.cartridgesDir || join(process.cwd(), 'apps/geos-ascii/examples');
         this.cartridges = new Map();
         this.activeCartridge = null;
         this.state = new Uint8Array(STATE_SLOTS * 4);

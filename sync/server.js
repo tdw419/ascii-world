@@ -8,6 +8,8 @@ import { PixelFormulaEngine } from './pixel-formula-engine.js';
 import { AlertEngine } from './alert-engine.js';
 import { TimeSeriesStore } from './time-series-store.js';
 import { DashboardStore } from './dashboard-store.js';
+import { GpuBridge } from './gpu-bridge.js';
+import { CartridgeStore } from './cartridge-store.js';
 
 export class PxOSServer {
     constructor(port = 3839) {
@@ -19,6 +21,10 @@ export class PxOSServer {
         this.dashboardStore = new DashboardStore({ 
             filePath: './data/dashboards.json',
             saveDelay: 1000 
+        });
+        this.gpuBridge = new GpuBridge(this.cellStore);
+        this.cartridgeStore = new CartridgeStore({
+            cartridgesDir: '../apps/geos-ascii/examples'
         });
         this.template = [];
         this.httpServer = null;
@@ -48,6 +54,18 @@ export class PxOSServer {
         this.wss = new WebSocketServer({ server: this.httpServer });
         this.wss.on('connection', (ws) => this.handleWebSocket(ws));
 
+        // Start GPU Bridge
+        this.gpuBridge.start(500);
+
+        // Load cartridges
+        const cartridges = this.cartridgeStore.loadAll();
+        console.log(`Loaded ${cartridges.length} cartridges`);
+
+        // Subscribe to cartridge state changes
+        this.cartridgeStore.subscribe((event) => {
+            this.broadcast({ type: 'cartridge', event });
+        });
+
         // Subscribe to cell changes
         this.cellStore.subscribe((changes, cells) => {
             // Record to time series
@@ -69,6 +87,9 @@ export class PxOSServer {
     }
 
     async stop() {
+        // Stop GPU Bridge
+        this.gpuBridge.stop();
+
         return new Promise((resolve) => {
             if (this.wss) {
                 for (const client of this.clients) {
@@ -148,6 +169,16 @@ export class PxOSServer {
                 this.handleLoadDashboard(req, res, url);
             } else if (pathname.startsWith('/api/v1/dashboards/') && req.method === 'DELETE') {
                 this.handleDeleteDashboard(req, res, url);
+            } else if (pathname === '/api/v1/cartridges' && req.method === 'GET') {
+                this.handleListCartridges(req, res);
+            } else if (pathname.startsWith('/api/v1/cartridges/') && req.method === 'GET') {
+                this.handleGetCartridge(req, res, url);
+            } else if (pathname === '/api/v1/cartridge/active' && req.method === 'GET') {
+                this.handleGetActiveCartridge(req, res);
+            } else if (pathname === '/api/v1/cartridge/state' && req.method === 'GET') {
+                this.handleGetCartridgeState(req, res);
+            } else if (pathname === '/api/v1/cartridge/execute' && req.method === 'POST') {
+                await this.handleExecuteOpcode(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -280,6 +311,7 @@ export class PxOSServer {
         const alerts = this.alertEngine.getRules();
         
         return {
+            ...cells,
             title: 'pxOS Status',
             uptime_label: 'Uptime',
             uptime: uptimeStr,
@@ -293,6 +325,8 @@ export class PxOSServer {
             memory: `${memMB} MB`,
             requests_label: 'Requests',
             requests: `${this.requestCountPerMinute}/min`,
+            gpu_label: 'GPU',
+            vms_label: 'VMS',
         };
     }
 
@@ -316,6 +350,14 @@ export class PxOSServer {
             { fn: 'TEXT', args: [52, 2, 'memory'] },
             { fn: 'TEXT', args: [40, 3, 'requests_label'] },
             { fn: 'TEXT', args: [52, 3, 'requests'] },
+
+            // GPU Monitor Section
+            { fn: 'LINE', args: [0, 7, 80, 'h', 'border'] },
+            { fn: 'TEXT', args: [0, 8, 'gpu_label'] },
+            { fn: 'TEXT', args: [12, 8, 'gpu_status'] },
+            { fn: 'TEXT', args: [0, 9, 'vms_label'] },
+            { fn: 'BAR', args: [12, 9, 'gpu_vms_pct', 20] },
+            { fn: 'NUMBER', args: [35, 9, 'gpu_vms', '0'] },
         ];
         
         this.engine.renderTemplate(template);
@@ -372,5 +414,40 @@ export class PxOSServer {
 
     sendError(res, status, message) {
         this.sendJSON(res, status, { error: message });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Cartridge Handlers
+    // ─────────────────────────────────────────────────────
+
+    handleListCartridges(req, res) {
+        const cartridges = this.cartridgeStore.list();
+        this.sendJSON(res, 200, { cartridges, count: cartridges.length });
+    }
+
+    handleGetCartridge(req, res, url) {
+        const name = url.pathname.split('/').pop();
+        const cart = this.cartridgeStore.get(name);
+        if (!cart) {
+            return this.sendError(res, 404, 'Cartridge not found');
+        }
+        this.sendJSON(res, 200, { name: cart.name, size: cart.size, path: cart.path });
+    }
+
+    handleGetActiveCartridge(req, res) {
+        const active = this.cartridgeStore.activeCartridge;
+        this.sendJSON(res, 200, { active: active ? active.name : null });
+    }
+
+    handleGetCartridgeState(req, res) {
+        const state = this.cartridgeStore.getAllState();
+        this.sendJSON(res, 200, { state });
+    }
+
+    async handleExecuteOpcode(req, res) {
+        const body = await this.readBody(req);
+        const { opcode, target, flags } = JSON.parse(body);
+        const result = this.cartridgeStore.executeOpcode(opcode, target, flags);
+        this.sendJSON(res, 200, result);
     }
 }

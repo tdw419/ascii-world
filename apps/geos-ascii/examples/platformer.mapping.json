@@ -1,0 +1,6 @@
+{
+  "Left": { "opcode": "LDI", "target": 20, "flags": 2, "comment": "Move paddle left (-1 in X)" },
+  "Right": { "opcode": "LDI", "target": 20, "flags": 4, "comment": "Move paddle right (+1 in X)" },
+  "Launch": { "opcode": "LDI", "target": 21, "flags": 1, "comment": "Launch ball (set velocity to 1)" },
+  "Pause": { "opcode": "LDI", "target": 21, "flags": 0, "comment": "Pause game" }
+}

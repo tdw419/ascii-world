@@ -1,0 +1,8 @@
+{
+  "Up": { "opcode": "LDI", "target": 10, "flags": 1, "comment": "Set direction UP=1" },
+  "Left": { "opcode": "LDI", "target": 10, "flags": 2, "comment": "Set direction LEFT=2" },
+  "Down": { "opcode": "LDI", "target": 10, "flags": 3, "comment": "Set direction DOWN=3" },
+  "Right": { "opcode": "LDI", "target": 10, "flags": 4, "comment": "Set direction RIGHT=4" },
+  "Restart": { "opcode": "LDI", "target": 11, "flags": 1, "comment": "Reset game state" },
+  "Pause": { "opcode": "TOGGLE", "target": 12, "comment": "Toggle pause state" }
+}

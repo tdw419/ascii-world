@@ -1,0 +1,9 @@
+{
+  "Counter+": { "opcode": "INC", "target": 0, "render_target": { "x": 11, "y": 6, "alt_char": "0123456789" } },
+  "Counter-": { "opcode": "DEC", "target": 0, "render_target": { "x": 11, "y": 6, "alt_char": "9876543210" } },
+  "Toggle": { "opcode": "TOGGLE", "target": 1, "render_target": { "x": 21, "y": 6, "alt_char": "X" } },
+  "Cycle": { "opcode": "INC", "target": 2, "render_target": { "x": 27, "y": 6, "alt_char": "ABC" } },
+  "Next": { "opcode": "INC", "target": 3 },
+  "Reset": { "opcode": "LDI", "target": 0, "flags": 0 },
+  "Exit": { "opcode": "EXIT", "target": 0 }
+}

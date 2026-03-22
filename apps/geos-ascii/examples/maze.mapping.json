@@ -1,0 +1,8 @@
+{
+  "Up": { "opcode": "LDI", "target": 20, "flags": 1, "comment": "Move UP" },
+  "Left": { "opcode": "LDI", "target": 20, "flags": 2, "comment": "Move LEFT" },
+  "Down": { "opcode": "LDI", "target": 20, "flags": 3, "comment": "Move DOWN" },
+  "Right": { "opcode": "LDI", "target": 20, "flags": 4, "comment": "Move RIGHT" },
+  "New": { "opcode": "LDI", "target": 21, "flags": 1, "comment": "Generate new maze" },
+  "Exit": { "opcode": "EXIT", "target": 0, "comment": "Exit game" }
+}

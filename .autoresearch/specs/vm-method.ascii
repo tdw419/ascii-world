@@ -1,0 +1,8 @@
+┌──────────────────────────────────────────────────┐
+│ EXPERIMENT - Add VM utility method                    │
+├──────────────────────────────────────────────────┤
+│ H: add utility method to VMState for tracking    │
+│ T: sync/synthetic-glyph-vm.js                           │
+│ M: tests pass, no regressions                           │
+│ B: 100 iterations                                   │
+└──────────────────────────────────────────────────┘

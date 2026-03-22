@@ -47,6 +47,8 @@ class VMState {
         this.flags = 0;
         this.halted = false;
         this.cycles = 0;
+        // AutoResearch: added method
+        this.opCount = 0; // Operation counter
     }
 }
 

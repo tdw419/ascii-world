@@ -1,0 +1,8 @@
+┌──────────────────────────────────────────────────┐
+│ EXPERIMENT - Add logging for debugging           │
+├──────────────────────────────────────────────────┤
+│ H: add logging for better debugging              │
+│ T: sync/synthetic-glyph-vm.js                    │
+│ M: tests pass                                    │
+│ B: 100 iterations                                │
+└──────────────────────────────────────────────────┘

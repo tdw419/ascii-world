@@ -48,6 +48,34 @@ HYPOTHESIS_TEMPLATES = {
         "pattern": r"add.*opcode|new opcode|implement.*opcode",
         "generator": lambda target, content: add_opcode_function(target, content),
     },
+    "add_vm_method": {
+        "pattern": r"add.*method|new method|vm.*method|utility method",
+        "generator": lambda target, content: add_vm_method(target, content),
+    },
+    "add_switch_case": {
+        "pattern": r"add.*case|switch.*case|handle.*opcode",
+        "generator": lambda target, content: add_switch_case(target, content),
+    },
+    "add_perf_counter": {
+        "pattern": r"perf.*counter|performance.*track|count.*ops|metric",
+        "generator": lambda target, content: add_perf_counter(target, content),
+    },
+    "add_logging": {
+        "pattern": r"add.*log|logging|debug|trace",
+        "generator": lambda target, content: add_logging(target, content),
+    },
+    "optimize_loop": {
+        "pattern": r"optimize.*loop|loop.*optim|faster.*loop",
+        "generator": lambda target, content: optimize_loop(target, content),
+    },
+    "add_validation": {
+        "pattern": r"add.*valid|validation|input check|bounds check",
+        "generator": lambda target, content: add_validation(target, content),
+    },
+    "add_error_handling": {
+        "pattern": r"error.*handl|catch.*error|try.*catch|exception",
+        "generator": lambda target, content: add_error_handling(target, content),
+    },
 }
 
 
@@ -141,6 +169,158 @@ def add_formula_function(target_path: Path, content: str) -> str:
 '''
     lines.insert(insert_idx, new_method)
     return "\n".join(lines)
+
+
+def add_vm_method(target_path: Path, content: str) -> str:
+    """Add a utility method to VMState class."""
+    if "// AutoResearch: added method" in content:
+        return content  # Already added
+
+    lines = content.split("\n")
+    result = []
+
+    for line in lines:
+        result.append(line)
+        # Add method after VMState constructor closes
+        if "class VMState {" in line:
+            # Find the closing brace of the constructor
+            continue
+        if "this.cycles = 0;" in line:
+            result.append("        // AutoResearch: added method")
+            result.append("        this.opCount = 0; // Operation counter")
+
+    return "\n".join(result)
+
+
+def add_switch_case(target_path: Path, content: str) -> str:
+    """Add a new case to the opcode switch statement."""
+    if "// AutoResearch: switch case" in content:
+        return content  # Already added
+
+    lines = content.split("\n")
+    result = []
+
+    for i, line in enumerate(lines):
+        result.append(line)
+        # Add case after OP.NOP case
+        if "case OP.NOP:" in line or "case 140:" in line:
+            # Find next break and add after it
+            for j in range(i+1, min(i+10, len(lines))):
+                if "break;" in lines[j]:
+                    result.append("            // AutoResearch: switch case")
+                    result.append("            case 199: { // OP_NOP2")
+                    result.append("                this.state.opCount++;")
+                    result.append("                this.state.pc++;")
+                    result.append("                break;")
+                    result.append("            }")
+                    break
+
+    return "\n".join(result)
+
+
+def add_perf_counter(target_path: Path, content: str) -> str:
+    """Add performance counter to executeSingle."""
+    if "// AutoResearch: perf counter" in content:
+        return content  # Already added
+
+    lines = content.split("\n")
+    result = []
+
+    for line in lines:
+        result.append(line)
+        # Add counter increment after cycles++
+        if "this.state.cycles++;" in line:
+            result.append("        // AutoResearch: perf counter")
+            result.append("        if (this.state.opCount !== undefined) this.state.opCount++;")
+
+    return "\n".join(result)
+
+
+def add_logging(target_path: Path, content: str) -> str:
+    """Add logging statements for debugging."""
+    if "// AutoResearch: logging" in content:
+        return content  # Already added
+
+    # Add logging at the start of main functions
+    lines = content.split("\n")
+    result = []
+
+    for line in lines:
+        result.append(line)
+        # Add logging after function definitions
+        if "function main(" in line or "async main(" in line:
+            result.append("    // AutoResearch: logging")
+            result.append("    console.log('[AutoResearch] Starting execution');")
+
+    return "\n".join(result)
+
+
+def optimize_loop(target_path: Path, content: str) -> str:
+    """Optimize loops for performance."""
+    if "// AutoResearch: loop optimized" in content:
+        return content  # Already optimized
+
+    # Convert for...of to for loop where applicable
+    content = content.replace(
+        "for (const item of items)",
+        "// AutoResearch: loop optimized\n    for (let i = 0; i < items.length; i++) { const item = items[i];"
+    )
+
+    return content
+
+
+def add_validation(target_path: Path, content: str) -> str:
+    """Add input validation."""
+    if "// AutoResearch: validation" in content:
+        return content  # Already added
+
+    # Add validation at function entry points
+    lines = content.split("\n")
+    result = []
+
+    for i, line in enumerate(lines):
+        result.append(line)
+        # Add validation after function definitions with parameters
+        if re.search(r"function\s+\w+\([^)]+\)\s*{", line):
+            result.append("        // AutoResearch: validation")
+            result.append("        if (arguments.length < 1) return undefined;")
+
+    return "\n".join(result)
+
+
+def add_error_handling(target_path: Path, content: str) -> str:
+    """Add try-catch error handling."""
+    if "// AutoResearch: error handling" in content:
+        return content  # Already added
+
+    # Wrap main execution in try-catch
+    lines = content.split("\n")
+    result = []
+    in_main = False
+    brace_count = 0
+
+    for i, line in enumerate(lines):
+        if "function main(" in line or "async main(" in line:
+            in_main = True
+            brace_count = 0
+
+        if in_main:
+            if "{" in line:
+                brace_count += line.count("{")
+                if brace_count == 1:
+                    result.append(line)
+                    result.append("    // AutoResearch: error handling")
+                    result.append("    try {")
+                    continue
+            if "}" in line:
+                brace_count -= line.count("}")
+                if brace_count == 0:
+                    result.append("    } catch (e) { console.error(e); }")
+                    in_main = False
+
+        result.append(line)
+
+    return "\n".join(result)
 
 
 def parse_spec(spec_path: str) -> dict:

@@ -1,0 +1,8 @@
+┌──────────────────────────────────────────────────┐
+│ EXPERIMENT - Add error handling                   │
+├──────────────────────────────────────────────────┤
+│ H: add try-catch error handling                   │
+│ T: sync/synthetic-glyph-vm.js                   │
+│ M: tests pass                                    │
+│ B: 100 iterations                                │
+└──────────────────────────────────────────────────┘

@@ -10,6 +10,9 @@ import { TimeSeriesStore } from './time-series-store.js';
 import { DashboardStore } from './dashboard-store.js';
 import { GpuBridge } from './gpu-bridge.js';
 import { CartridgeStore } from './cartridge-store.js';
+import { ASCIIExperimentSpec } from './ascii-spec-parser.js';
+import { ASCIIExperimentRuntime } from './ascii-experiment-runtime.js';
+import { ASCIIResultsLogger } from './ascii-results-logger.js';
 
 export class PxOSServer {
     constructor(port = 3839) {
@@ -127,7 +130,9 @@ export class PxOSServer {
         }
 
         try {
-            if (pathname === '/health') {
+            if (pathname === '/' || pathname === '/viewer/' || pathname === '/viewer.html') {
+                this.serveViewer(req, res);
+            } else if (pathname === '/health') {
                 this.handleHealth(req, res);
             } else if (pathname === '/status') {
                 await this.handleStatus(req, res);
@@ -179,6 +184,12 @@ export class PxOSServer {
                 this.handleGetCartridgeState(req, res);
             } else if (pathname === '/api/v1/cartridge/execute' && req.method === 'POST') {
                 await this.handleExecuteOpcode(req, res);
+            } else if (pathname === '/api/v1/experiments' && req.method === 'GET') {
+                this.handleGetExperiments(req, res);
+            } else if (pathname === '/api/v1/experiments/run' && req.method === 'POST') {
+                await this.handleRunExperiment(req, res);
+            } else if (pathname === '/api/v1/experiments/specs' && req.method === 'GET') {
+                this.handleGetExperimentSpecs(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -186,6 +197,20 @@ export class PxOSServer {
             console.error('Request error:', err);
             this.sendError(res, 500, 'Internal server error');
         }
+    }
+
+    serveViewer(req, res) {
+        const fs = require('fs');
+        const path = require('path');
+        const viewerPath = path.join(__dirname, '../viewer/viewer.html');
+        fs.readFile(viewerPath, (err, data) => {
+            if (err) {
+                this.sendError(res, 500, 'Viewer not found');
+            } else {
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(data);
+            }
+        });
     }
 
     handleHealth(req, res) {
@@ -449,5 +474,36 @@ export class PxOSServer {
         const { opcode, target, flags } = JSON.parse(body);
         const result = this.cartridgeStore.executeOpcode(opcode, target, flags);
         this.sendJSON(res, 200, result);
+    }
+
+    // ASCII Experiment API
+    handleGetExperiments(req, res) {
+        const logger = new ASCIIResultsLogger();
+        const results = logger.readRecent(50);
+        this.sendJSON(res, 200, results);
+    }
+
+    async handleRunExperiment(req, res) {
+        const body = await this.readBody(req);
+        const { spec } = JSON.parse(body);
+        const runtime = new ASCIIExperimentRuntime({ projectPath: '.' });
+        const result = await runtime.runSpec(spec);
+        this.sendJSON(res, 200, result);
+    }
+
+    handleGetExperimentSpecs(req, res) {
+        const fs = require('fs');
+        const path = require('path');
+        const specsDir = '.autoresearch/specs';
+        if (!fs.existsSync(specsDir)) {
+            this.sendJSON(res, 200, []);
+            return;
+        }
+        const files = fs.readdirSync(specsDir).filter(f => f.endsWith('.ascii'));
+        const specs = files.map(f => ({
+            name: f,
+            content: fs.readFileSync(path.join(specsDir, f), 'utf-8')
+        }));
+        this.sendJSON(res, 200, specs);
     }
 }

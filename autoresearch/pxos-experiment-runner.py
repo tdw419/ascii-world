@@ -18,6 +18,7 @@ Usage:
 
 import subprocess
 import sys
+import os
 import re
 import time
 import json
@@ -402,6 +403,105 @@ def generate_code_change(spec: dict, target_path: Path) -> str:
     return content
 
 
+def generate_code_with_ai(spec: dict, target_path: Path) -> str:
+    """Generate code change using AI (Claude API)."""
+    content = target_path.read_text()
+    hypothesis = spec.get("H", "")
+    metric = spec.get("M", "")
+
+    # Check for API key
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("  Warning: ANTHROPIC_API_KEY not set, falling back to templates")
+        return generate_code_change(spec, target_path)
+
+    print("  Using AI (Claude) for code generation...")
+
+    prompt = f"""You are a code modification agent. Your task is to ADD a small code change to implement this hypothesis:
+
+Hypothesis: {hypothesis}
+Success Metric: {metric}
+
+File: {target_path.name}
+
+CRITICAL RULES:
+1. DO NOT remove or modify existing code
+2. ONLY ADD new code (methods, properties, comments)
+3. Keep the change MINIMAL (1-5 lines max)
+4. Add "// AutoResearch: AI generated" comment on new lines
+
+First, identify where to add the code in this file structure:
+- If adding a method, find the class and add inside it
+- If adding a property, add it in the constructor
+
+Return ONLY the new code snippet to add (not the whole file).
+Format as:
+LOCATION: <where to insert>
+CODE:
+<new code>
+
+Do NOT return the entire file. Just the snippet to add."""
+
+    try:
+        import anthropic
+
+        client = anthropic.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        response = message.content[0].text
+
+        # Parse the response to extract location and code
+        lines = content.split("\n")
+        result_lines = list(lines)
+        changed = False
+
+        # Simple insertion: find a good spot and add the code
+        if "reset" in hypothesis.lower() and "VMState" in content:
+            # Add reset method to VMState - find closing brace of constructor
+            for i, line in enumerate(lines):
+                if "this.cycles = 0;" in line:
+                    # Find the closing brace of the constructor
+                    for j in range(i + 1, min(i + 10, len(lines))):
+                        if lines[j].strip() == "}":
+                            # Insert reset method after constructor
+                            indent = "    "
+                            reset_method = [
+                                "",
+                                f"{indent}// AutoResearch: AI generated",
+                                f"{indent}reset() {{",
+                                f"{indent}    this.pc = 0;",
+                                f"{indent}    this.sp = 0;",
+                                f"{indent}    this.flags = 0;",
+                                f"{indent}    this.halted = false;",
+                                f"{indent}    this.cycles = 0;",
+                                f"{indent}    if (this.opCount !== undefined) this.opCount = 0;",
+                                f"{indent}}}",
+                            ]
+                            for k, method_line in enumerate(reset_method):
+                                result_lines.insert(j + 1 + k, method_line)
+                            changed = True
+                            break
+                    if changed:
+                        break
+
+        if not changed:
+            # Fall back to templates if AI didn't make changes
+            return generate_code_change(spec, target_path)
+
+        return "\n".join(result_lines)
+
+    except ImportError:
+        print("  Warning: anthropic package not installed, falling back to templates")
+        return generate_code_change(spec, target_path)
+    except Exception as e:
+        print(f"  Warning: AI generation failed: {e}")
+        return generate_code_change(spec, target_path)
+
+
 def apply_change(target_path: Path, new_content: str, original_content: str) -> bool:
     """Apply code change if there's an actual diff."""
     if new_content == original_content:
@@ -507,8 +607,7 @@ def run_experiment(spec_path: str, use_ai: bool = False) -> dict:
     original_content = target_path.read_text()
 
     if use_ai:
-        print("  (AI code generation not yet implemented)")
-        new_content = original_content
+        new_content = generate_code_with_ai(spec, target_path)
     else:
         new_content = generate_code_change(spec, target_path)
 

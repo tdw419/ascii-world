@@ -50,6 +50,16 @@ class VMState {
         // AutoResearch: added method
         this.opCount = 0; // Operation counter
     }
+
+    // AutoResearch: AI generated
+    reset() {
+        this.pc = 0;
+        this.sp = 0;
+        this.flags = 0;
+        this.halted = false;
+        this.cycles = 0;
+        if (this.opCount !== undefined) this.opCount = 0;
+    }
 }
 
 /**

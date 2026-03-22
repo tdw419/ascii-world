@@ -3,19 +3,22 @@ import fs from 'fs';
 import path from 'path';
 import { ASCIIExperimentSpec } from './ascii-spec-parser.js';
 import { ASCIIResultsLogger } from './ascii-results-logger.js';
+import { MetricEvaluatorRegistry } from './ascii-metric-evaluators.js';
 
 export class ASCIIExperimentRuntime {
   constructor(options = {}) {
     this.projectPath = options.projectPath || '.';
     this.logger = new ASCIIResultsLogger(options.resultsPath || '.autoresearch/results.tsv');
+    this.evaluatorRegistry = new MetricEvaluatorRegistry(this.projectPath);
   }
 
   async runSpec(asciiText) {
     const spec = ASCIIExperimentSpec.parse(asciiText);
     const startTime = Date.now();
 
-    // Evaluate metric
-    const metricResult = await this.evaluateMetric(spec);
+    // Get appropriate evaluator
+    const evaluator = this.evaluatorRegistry.getEvaluator(spec.m);
+    const metricResult = await evaluator.evaluate(spec);
     const elapsed = Date.now() - startTime;
 
     // Determine status
@@ -36,36 +39,8 @@ export class ASCIIExperimentRuntime {
       baseline: spec.b,
       status,
       elapsed,
-      metricValue: metricResult.value
-    };
-  }
-
-  async evaluateMetric(spec) {
-    const targetPath = path.join(this.projectPath, spec.t);
-
-    // Check if target file exists
-    if (spec.m.includes('exists') || spec.m.includes('file exists')) {
-      return {
-        success: fs.existsSync(targetPath),
-        value: fs.existsSync(targetPath) ? 1 : 0
-      };
-    }
-
-    // Check if tests pass
-    if (spec.m.includes('tests pass')) {
-      try {
-        const { execSync } = await import('child_process');
-        execSync('npm test 2>&1 | grep -q "pass"', { cwd: this.projectPath, stdio: 'pipe' });
-        return { success: true, value: 100 };
-      } catch {
-        return { success: true, value: 90 }; // Assume pass for now
-      }
-    }
-
-    // Default: check target file exists
-    return {
-      success: fs.existsSync(targetPath),
-      value: fs.existsSync(targetPath) ? 100 : 0
+      metricValue: metricResult.value,
+      message: metricResult.message
     };
   }
 }

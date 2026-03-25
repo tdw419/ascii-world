@@ -117,93 +117,66 @@ export class YouTubeScraper {
   }
 
   /**
-   * Parse YouTube homepage HTML and extract video entries
-   * @param {string} html - Raw HTML from YouTube homepage
+   * Deep search for all videoRenderer objects in YouTube data
+   * @param {object} obj - Parsed ytInitialData object
+   * @returns {Array<{id: string, title: string, channel: string}>}
+   */
+  findAllVideos(obj) {
+    const results = [];
+    if (!obj || typeof obj !== 'object') return results;
+
+    // Check if this is a videoRenderer
+    if (obj.videoRenderer && obj.videoRenderer.videoId) {
+      const v = obj.videoRenderer;
+      results.push({
+        id: v.videoId,
+        title: v.title?.runs?.[0]?.text || v.title?.simpleText || 'Untitled',
+        url: `https://youtube.com/watch?v=${v.videoId}`,
+        channel: v.shortBylineText?.runs?.[0]?.text ||
+                 v.longBylineText?.runs?.[0]?.text ||
+                 'Unknown Channel'
+      });
+    }
+
+    // Recursively search all properties
+    for (const key in obj) {
+      results.push(...this.findAllVideos(obj[key]));
+    }
+    return results;
+  }
+
+  /**
+   * Parse YouTube search results HTML and extract video entries
+   * @param {string} html - Raw HTML from YouTube search results
    * @returns {Array<{id: string, title: string, url: string, channel: string}>}
    */
-  parseHomepageHTML(html) {
-    const videos = [];
-
+  parseSearchHTML(html) {
     // Extract ytInitialData JSON blob
     const match = html.match(/var ytInitialData = (\{[\s\S]*?\});\s*<\/script>/);
     if (!match) {
+      console.error('No ytInitialData found in HTML');
       return [];
     }
 
     try {
       const data = JSON.parse(match[1]);
-
-      // Navigate to homepage video items
-      const contents = this.extractHomepageVideoContents(data);
-      if (!contents) {
-        return [];
-      }
-
-      for (const item of contents) {
-        const video = this.extractHomepageVideoFromItem(item);
-        if (video) {
-          videos.push(video);
-        }
-      }
-
-      return videos;
+      return this.findAllVideos(data);
     } catch (err) {
-      console.error('Failed to parse homepage ytInitialData:', err.message);
+      console.error('Failed to parse search ytInitialData:', err.message);
       return [];
     }
   }
 
-  extractHomepageVideoContents(data) {
-    // Homepage uses different structure than channel pages
-    const paths = [
-      // Main homepage rich grid
-      data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.richGridRenderer?.contents,
-      // Alternative homepage structure
-      data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.richGridRenderer?.contents,
-    ];
-
-    for (const path of paths) {
-      if (Array.isArray(path)) {
-        return path;
-      }
-    }
-    return null;
-  }
-
-  extractHomepageVideoFromItem(item) {
-    // Homepage can have different renderer types
-    const renderer = item?.richItemRenderer?.content?.videoRenderer ||
-                     item?.richItemRenderer?.content?.gridVideoRenderer;
-
-    if (!renderer || !renderer.videoId) {
-      return null;
-    }
-
-    // Extract title
-    const title = renderer.title?.runs?.[0]?.text ||
-                  renderer.title?.simpleText ||
-                  'Untitled';
-
-    // Extract channel name
-    const channelName = renderer.shortBylineText?.runs?.[0]?.text ||
-                        renderer.longBylineText?.runs?.[0]?.text ||
-                        'Unknown Channel';
-
-    return {
-      id: renderer.videoId,
-      title,
-      url: `https://youtube.com/watch?v=${renderer.videoId}`,
-      channel: channelName
-    };
-  }
-
   /**
-   * Fetch and scrape YouTube homepage for discover/trending videos
+   * Fetch YouTube search results for discovery
+   * Uses popular search terms to get varied content
+   * @param {string} query - Search query (optional)
    * @returns {Promise<Array<{id: string, title: string, url: string, channel: string}>>}
    */
-  async fetchHomepage() {
+  async fetchHomepage(query = 'music') {
     try {
-      const response = await fetch('https://www.youtube.com/', {
+      const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+      const response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept-Language': 'en-US,en;q=0.9',
@@ -216,9 +189,9 @@ export class YouTubeScraper {
       }
 
       const html = await response.text();
-      return this.parseHomepageHTML(html);
+      return this.parseSearchHTML(html);
     } catch (err) {
-      console.error('Failed to fetch YouTube homepage:', err.message);
+      console.error('Failed to fetch YouTube search:', err.message);
       throw err;
     }
   }

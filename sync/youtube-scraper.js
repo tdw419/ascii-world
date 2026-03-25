@@ -1,4 +1,7 @@
 // sync/youtube-scraper.js
+import { exec } from 'child_process';
+import { existsSync } from 'fs';
+
 export class YouTubeScraper {
   /**
    * Parse YouTube channel HTML and extract video entries
@@ -173,14 +176,21 @@ export class YouTubeScraper {
    */
   async fetchPersonalizedHomepage() {
     return new Promise((resolve, reject) => {
-      // Use yt-dlp to get the homepage videos using chromium cookies
-      const { exec } = require('child_process');
-      const cmd = `yt-dlp --cookies-from-browser chromium --flat-playlist --playlist-end 30 --print "%(id)s|%(title)s|%(uploader)s" "https://www.youtube.com/"`;
+      // Use manually provided cookies if they exist, otherwise try browser cookies
+      const cookieFile = './.youtube-cookies.txt';
+      const cookieFlag = existsSync(cookieFile) 
+        ? `--cookies ${cookieFile}` 
+        : `--cookies-from-browser chromium`;
+        
+      const cmd = `yt-dlp ${cookieFlag} --flat-playlist --playlist-end 30 --print "%(id)s|%(title)s|%(uploader)s" "https://www.youtube.com/"`;
       
       exec(cmd, (error, stdout, stderr) => {
         if (error) {
           console.error('yt-dlp personalized fetch failed:', stderr);
-          return reject(new Error('Failed to fetch personalized homepage. Ensure Chromium is installed and logged into YouTube.'));
+          const msg = existsSync(cookieFile)
+            ? 'Failed to fetch with manual cookies. They may be expired.'
+            : 'Failed to fetch with Chromium. You may need to provide manual cookies.';
+          return reject(new Error(msg));
         }
 
         const lines = stdout.trim().split('\n');

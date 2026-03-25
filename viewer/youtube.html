@@ -170,6 +170,7 @@
     <header>
       <h1>ASCII YouTube</h1>
       <div>
+        <button class="refresh-btn" onclick="setCookies()" title="Paste YouTube cookies for personalized feed">Set Cookies</button>
         <button class="refresh-btn" onclick="refreshCurrentTab()">Refresh</button>
         <button class="add-btn" onclick="addChannel()">+ Add Channel</button>
       </div>
@@ -226,9 +227,31 @@
       }
     }
 
+    async function setCookies() {
+      const cookies = prompt('Paste your YouTube cookies here (Netscape format or raw text from "Get cookies.txt" extension):');
+      if (!cookies) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/youtube/cookies`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cookies })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert('Cookies saved successfully! Now try the "My Home" tab.');
+          if (currentTab === 'personal') loadPersonalized();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (err) {
+        alert('Failed to save cookies: ' + err.message);
+      }
+    }
+
     async function loadPersonalized() {
       const content = document.getElementById('content');
-      content.innerHTML = '<div class="loading">Fetching your personalized YouTube homepage...<br><small>Requires Chromium to be installed and logged in.</small></div>';
+      content.innerHTML = '<div class="loading">Fetching your personalized YouTube homepage...<br><small>If this fails, use "Set Cookies" above with a "Get cookies.txt" extension.</small></div>';
       
       try {
         const res = await fetch(`${API_BASE}/api/youtube/personalized`);
@@ -239,16 +262,16 @@
         const data = await res.json();
         
         if (data.videos.length === 0) {
-          content.innerHTML = '<div class="loading">No videos found. Try logging into YouTube in Chromium first.</div>';
+          content.innerHTML = '<div class="loading">No videos found. Try providing manual cookies with the "Set Cookies" button.</div>';
           return;
         }
 
         renderVideos(data.videos);
         document.getElementById('sources').innerHTML = 
-          `<span class="source-tag">My Home (Chromium)</span> • Fetched: ${new Date(data.fetched).toLocaleTimeString()}`;
+          `<span class="source-tag">My Home (Personalized)</span> • ${data.videos.length} videos`;
       } catch (err) {
         content.innerHTML = `<div class="error">Failed to load personalized feed: ${err.message}<br><br>
-        <small>Make sure you have Chromium installed and are logged into YouTube.</small></div>`;
+        <small>On Linux, Chromium cookie decryption often fails. <br>Please use the <b>"Set Cookies"</b> button with the <b>"Get cookies.txt"</b> browser extension.</small></div>`;
       }
     }
 

@@ -308,6 +308,8 @@ export class PxOSServer {
                 await this.handleAddYouTubeChannel(req, res);
             } else if (pathname.startsWith('/api/youtube/channels/') && req.method === 'DELETE') {
                 this.handleRemoveYouTubeChannel(req, res, url);
+            } else if (pathname === '/api/youtube/cookies' && req.method === 'POST') {
+                await this.handleYouTubeCookies(req, res);
             } else if (pathname === '/api/youtube/personalized') {
                 await this.handleYouTubePersonalized(req, res);
             } else if (pathname === '/api/youtube/discover') {
@@ -787,6 +789,22 @@ export class PxOSServer {
         this.youtubeChannels.channels.splice(index, 1);
         this.saveYouTubeChannels();
         this.sendJSON(res, 200, { ok: true });
+    }
+
+    async handleYouTubeCookies(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { cookies } = JSON.parse(body);
+            if (!cookies) {
+                return this.sendError(res, 400, 'Cookies are required');
+            }
+            // Save cookies to a file
+            writeFileSync('./.youtube-cookies.txt', cookies);
+            console.log('[YOUTUBE] Saved cookies to .youtube-cookies.txt');
+            this.sendJSON(res, 200, { ok: true });
+        } catch (err) {
+            this.sendError(res, 500, `Failed to save cookies: ${err.message}`);
+        }
     }
 
     async handleYouTubePersonalized(req, res) {

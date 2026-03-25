@@ -76,9 +76,10 @@
     }
     .video-actions a:hover { text-decoration: underline; }
     .channel-tag {
-      font-size: 12px;
+      display: block;
+      font-size: 13px;
       color: #8b949e;
-      margin-left: 8px;
+      margin-top: 4px;
     }
     .audio-player {
       position: fixed;
@@ -177,8 +178,8 @@
     </header>
 
     <div class="tabs">
-      <button class="tab active" data-tab="feed" onclick="switchTab('feed')">Feed</button>
-      <button class="tab" data-tab="personal" onclick="switchTab('personal')">My Home</button>
+      <button class="tab" data-tab="feed" onclick="switchTab('feed')">Feed</button>
+      <button class="tab active" data-tab="personal" onclick="switchTab('personal')">My Home</button>
       <button class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</button>
     </div>
 
@@ -199,7 +200,7 @@
 
   <script>
     const API_BASE = window.location.origin;
-    let currentTab = 'feed';
+    let currentTab = 'personal';
 
     function switchTab(tab) {
       currentTab = tab;
@@ -367,10 +368,11 @@
           <li class="video-item">
             <div class="video-title">
               ${escapeHtml(v.title)}
-              <span class="channel-tag">${escapeHtml(v.channel)}</span>
             </div>
+            <div class="channel-tag">${escapeHtml(v.channel)}</div>
             <div class="video-actions">
               <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Audio Only</a>
+              <a href="#" onclick="watchVideo('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Download and Watch Video</a>
               <a href="${v.url}" target="_blank">Watch on YouTube</a>
             </div>
           </li>
@@ -385,23 +387,42 @@
       const audio = document.getElementById('audio');
       const nowPlaying = document.getElementById('nowPlaying');
 
-      nowPlaying.textContent = 'Loading: ' + title;
+      nowPlaying.textContent = 'Loading audio: ' + title;
       player.classList.add('active');
 
       try {
         const res = await fetch(`${API_BASE}/api/youtube/audio?url=${encodeURIComponent(url)}`);
-        if (!res.ok) {
-          throw new Error('Failed to get audio URL');
-        }
+        if (!res.ok) throw new Error('Failed to get audio URL');
         const data = await res.json();
-        audio.src = data.audioUrl;
+
+        audio.src = data.url;
         nowPlaying.textContent = 'Playing: ' + title;
       } catch (err) {
-        nowPlaying.textContent = 'Error: ' + err.message;
+        alert('Error: ' + err.message);
+        player.classList.remove('active');
       }
     }
 
-    function closePlayer() {
+    async function watchVideo(url, title) {
+      event.preventDefault();
+      const status = document.getElementById('sources');
+      const originalStatus = status.innerHTML;
+
+      status.innerHTML = `<span class="loading">Extracting video URL for: ${escapeHtml(title)}...</span>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/youtube/video?url=${encodeURIComponent(url)}`);
+        if (!res.ok) throw new Error('Failed to extract video URL');
+        const data = await res.json();
+
+        // Open the direct stream URL in a new tab
+        window.open(data.url, '_blank');
+        status.innerHTML = originalStatus;
+      } catch (err) {
+        alert('Error: ' + err.message);
+        status.innerHTML = originalStatus;
+      }
+    }
       const player = document.getElementById('audioPlayer');
       const audio = document.getElementById('audio');
       audio.pause();
@@ -439,8 +460,8 @@
       return div.innerHTML;
     }
 
-    // Load feed on page load
-    loadFeed();
+    // Load personalized feed on page load
+    loadPersonalized();
   </script>
 </body>
 </html>

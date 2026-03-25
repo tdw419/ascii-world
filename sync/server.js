@@ -21,7 +21,7 @@ import { renderers, detectFormat } from './renderers/index.js';
 import { runAllVCCTests } from './renderers/vcc-evaluator.js';
 import { GPUAgentBridge, GLYPH_TO_OPCODE, OPCODE_COLORS } from './gpu-agent-bridge.js';
 import { YouTubeScraper } from './youtube-scraper.js';
-import { YouTubeAudio } from './youtube-audio.js';
+import { YouTubeExtractor } from './youtube-extractor.js';
 import { readFileSync, writeFileSync, existsSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -69,7 +69,7 @@ export class PxOSServer {
 
         // YouTube integration
         this.youtubeScraper = new YouTubeScraper();
-        this.youtubeAudio = new YouTubeAudio();
+        this.youtubeExtractor = new YouTubeExtractor();
         this.youtubeChannelsPath = './data/channels.json';
         this.youtubeChannels = this.loadYouTubeChannels();
 
@@ -301,7 +301,9 @@ export class PxOSServer {
             } else if (pathname === '/api/youtube/feed') {
                 await this.handleYouTubeFeed(req, res);
             } else if (pathname === '/api/youtube/audio') {
-                await this.handleYouTubeAudio(req, res, url);
+                await this.handleYouTubeStream(req, res, url, 'audio');
+            } else if (pathname === '/api/youtube/video') {
+                await this.handleYouTubeStream(req, res, url, 'video');
             } else if (pathname === '/api/youtube/channels' && req.method === 'GET') {
                 this.handleYouTubeChannels(req, res);
             } else if (pathname === '/api/youtube/channels' && req.method === 'POST') {
@@ -720,7 +722,7 @@ export class PxOSServer {
         }
     }
 
-    async handleYouTubeAudio(req, res, url) {
+    async handleYouTubeStream(req, res, url, type = 'audio') {
         const videoUrl = url.searchParams.get('url');
 
         if (!videoUrl) {
@@ -728,16 +730,25 @@ export class PxOSServer {
             return;
         }
 
-        if (!this.youtubeAudio.isValidVideoURL(videoUrl)) {
+        if (!this.youtubeExtractor.isValidVideoURL(videoUrl)) {
             this.sendError(res, 400, 'Invalid YouTube URL');
             return;
         }
 
         try {
-            const result = await this.youtubeAudio.getAudioUrl(videoUrl);
-            this.sendJSON(res, 200, result);
+            console.log(`[YOUTUBE] Fetching ${type} URL for: ${videoUrl}`);
+            const result = type === 'video' 
+                ? await this.youtubeExtractor.getVideoUrl(videoUrl)
+                : await this.youtubeExtractor.getAudioUrl(videoUrl);
+            
+            this.sendJSON(res, 200, { 
+                url: result.url,
+                videoId: result.videoId,
+                type 
+            });
         } catch (err) {
-            this.sendError(res, 500, err.message);
+            console.error(`[YOUTUBE] ${type} extraction error:`, err.message);
+            this.sendError(res, 500, `Failed to extract ${type}: ${err.message}`);
         }
     }
 
@@ -1128,12 +1139,18 @@ export class PxOSServer {
 }
 
 // Auto-start if run directly
-const PORT = parseInt(process.env.PORT || process.env.SYNC_PORT || '3840');
-const server = new PxOSServer(PORT);
-server.start().then(() => {
-    console.log(`pxOS Server running on http://localhost:${PORT}`);
-    console.log(`GPU Agent Dashboard: http://localhost:${PORT}/viewer/gpu-agent-dashboard.html`);
-}).catch(err => {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-});
+import { realpathSync } from 'fs';
+const entryPath = realpathSync(process.argv[1]);
+const currentPath = fileURLToPath(import.meta.url);
+
+if (entryPath === currentPath) {
+    const PORT = parseInt(process.env.PORT || process.env.SYNC_PORT || '3840');
+    const server = new PxOSServer(PORT);
+    server.start().then(() => {
+        console.log(`pxOS Server running on http://localhost:${PORT}`);
+        console.log(`GPU Agent Dashboard: http://localhost:${PORT}/viewer/gpu-agent-dashboard.html`);
+    }).catch(err => {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    });
+}

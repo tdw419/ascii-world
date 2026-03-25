@@ -135,6 +135,34 @@
       margin-left: 10px;
     }
     .refresh-btn:hover { background: #30363d; }
+    .discover-search {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .discover-search input {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .discover-search input:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    .discover-search button {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .discover-search button:hover { background: #2ea043; }
   </style>
 </head>
 <body>
@@ -226,27 +254,55 @@
       }
     }
 
-    async function loadDiscover() {
+    let currentQuery = 'music';
+
+    async function loadDiscover(query = null) {
+      if (query) currentQuery = query;
       const content = document.getElementById('content');
-      content.innerHTML = '<div class="loading">Fetching YouTube homepage...</div>';
+
+      // Show search box
+      content.innerHTML = `
+        <div class="discover-search">
+          <input type="text" id="searchQuery" placeholder="Search YouTube..." value="${currentQuery}"
+                 onkeypress="if(event.key==='Enter') loadDiscover(document.getElementById('searchQuery').value)">
+          <button onclick="loadDiscover(document.getElementById('searchQuery').value)">Search</button>
+        </div>
+        <div id="searchResults" class="loading">Searching for "${currentQuery}"...</div>
+      `;
 
       try {
-        const res = await fetch(`${API_BASE}/api/youtube/discover`);
+        const res = await fetch(`${API_BASE}/api/youtube/discover?q=${encodeURIComponent(currentQuery)}`);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
         const data = await res.json();
 
+        const resultsDiv = document.getElementById('searchResults');
         if (data.videos.length === 0) {
-          content.innerHTML = '<div class="loading">No videos found on homepage.</div>';
+          resultsDiv.innerHTML = '<div class="loading">No videos found.</div>';
           return;
         }
 
-        renderVideos(data.videos);
+        resultsDiv.innerHTML = `<ul class="video-list">${
+          data.videos.map(v => `
+            <li class="video-item">
+              <div class="video-title">
+                ${escapeHtml(v.title)}
+                <span class="channel-tag">${escapeHtml(v.channel)}</span>
+              </div>
+              <div class="video-actions">
+                <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Audio Only</a>
+                <a href="${v.url}" target="_blank">Watch on YouTube</a>
+              </div>
+            </li>
+          `).join('')
+        }</ul>`;
+
         document.getElementById('sources').innerHTML =
-          `<span class="source-tag">youtube.com</span> • Fetched: ${new Date(data.fetched).toLocaleTimeString()}`;
+          `<span class="source-tag">search: ${currentQuery}</span> • ${data.videos.length} videos`;
       } catch (err) {
-        content.innerHTML = `<div class="error">Failed to discover: ${err.message}</div>`;
+        document.getElementById('searchResults').innerHTML =
+          `<div class="error">Search failed: ${err.message}</div>`;
       }
     }
 

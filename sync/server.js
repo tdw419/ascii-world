@@ -309,7 +309,7 @@ export class PxOSServer {
             } else if (pathname.startsWith('/api/youtube/channels/') && req.method === 'DELETE') {
                 this.handleRemoveYouTubeChannel(req, res, url);
             } else if (pathname === '/api/youtube/discover') {
-                await this.handleYouTubeDiscover(req, res);
+                await this.handleYouTubeDiscover(req, res, url);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -787,14 +787,16 @@ export class PxOSServer {
         this.sendJSON(res, 200, { ok: true });
     }
 
-    async handleYouTubeDiscover(req, res) {
+    async handleYouTubeDiscover(req, res, url) {
         try {
-            console.log('[DISCOVER] Fetching videos...');
-            const videos = await this.youtubeScraper.fetchHomepage();
+            const query = url.searchParams.get('q') || 'music';
+            console.log('[DISCOVER] Searching for:', query);
+            const videos = await this.youtubeScraper.fetchHomepage(query);
             console.log('[DISCOVER] Found', videos.length, 'videos');
             this.sendJSON(res, 200, {
                 videos,
                 fetched: new Date().toISOString(),
+                query,
                 source: 'youtube.com'
             });
         } catch (err) {

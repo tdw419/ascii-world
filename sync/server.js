@@ -789,13 +789,16 @@ export class PxOSServer {
 
     async handleYouTubeDiscover(req, res) {
         try {
+            console.log('[DISCOVER] Fetching videos...');
             const videos = await this.youtubeScraper.fetchHomepage();
+            console.log('[DISCOVER] Found', videos.length, 'videos');
             this.sendJSON(res, 200, {
                 videos,
                 fetched: new Date().toISOString(),
                 source: 'youtube.com'
             });
         } catch (err) {
+            console.error('[DISCOVER] Error:', err.message);
             this.sendError(res, 500, `Failed to fetch discover feed: ${err.message}`);
         }
     }

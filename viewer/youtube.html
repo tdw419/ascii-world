@@ -12,13 +12,14 @@
       color: #c9d1d9;
       min-height: 100vh;
       padding: 20px;
+      padding-bottom: 100px;
     }
     .container { max-width: 800px; margin: 0 auto; }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       padding-bottom: 10px;
       border-bottom: 1px solid #30363d;
     }
@@ -33,6 +34,27 @@
       font-size: 14px;
     }
     .add-btn:hover { background: #2ea043; }
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #30363d;
+    }
+    .tab {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tab:hover { color: #c9d1d9; }
+    .tab.active {
+      color: #f0f6fc;
+      border-bottom-color: #58a6ff;
+    }
     .loading { text-align: center; padding: 40px; color: #8b949e; }
     .error { background: #f8514920; border: 1px solid #f85149; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
     .video-list { list-style: none; }
@@ -102,14 +124,33 @@
       margin-right: 5px;
       font-size: 12px;
     }
+    .refresh-btn {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-left: 10px;
+    }
+    .refresh-btn:hover { background: #30363d; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>ASCII YouTube</h1>
-      <button class="add-btn" onclick="addChannel()">+ Add Channel</button>
+      <div>
+        <button class="refresh-btn" onclick="refreshCurrentTab()">Refresh</button>
+        <button class="add-btn" onclick="addChannel()">+ Add Channel</button>
+      </div>
     </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="feed" onclick="switchTab('feed')">Feed</button>
+      <button class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</button>
+    </div>
 
     <div id="content">
       <div class="loading">Loading feed...</div>
@@ -128,6 +169,29 @@
 
   <script>
     const API_BASE = window.location.origin;
+    let currentTab = 'feed';
+
+    function switchTab(tab) {
+      currentTab = tab;
+      // Update tab UI
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+      });
+      // Load content
+      if (tab === 'feed') {
+        loadFeed();
+      } else {
+        loadDiscover();
+      }
+    }
+
+    function refreshCurrentTab() {
+      if (currentTab === 'feed') {
+        loadFeed();
+      } else {
+        loadDiscover();
+      }
+    }
 
     async function loadFeed() {
       const content = document.getElementById('content');
@@ -139,6 +203,7 @@
 
         if (data.message) {
           content.innerHTML = `<div class="error">${data.message}</div>`;
+          document.getElementById('sources').innerHTML = '';
           return;
         }
 
@@ -147,22 +212,7 @@
           return;
         }
 
-        const html = `<ul class="video-list">${
-          data.videos.map(v => `
-            <li class="video-item">
-              <div class="video-title">
-                ${escapeHtml(v.title)}
-                <span class="channel-tag">${v.channel}</span>
-              </div>
-              <div class="video-actions">
-                <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Audio Only</a>
-                <a href="${v.url}" target="_blank">Watch on YouTube</a>
-              </div>
-            </li>
-          `).join('')
-        }</ul>`;
-
-        content.innerHTML = html;
+        renderVideos(data.videos);
 
         // Update sources footer
         const sourcesRes = await fetch(`${API_BASE}/api/youtube/channels`);
@@ -174,6 +224,49 @@
       } catch (err) {
         content.innerHTML = `<div class="error">Failed to load feed: ${err.message}</div>`;
       }
+    }
+
+    async function loadDiscover() {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="loading">Fetching YouTube homepage...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/youtube/discover`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+
+        if (data.videos.length === 0) {
+          content.innerHTML = '<div class="loading">No videos found on homepage.</div>';
+          return;
+        }
+
+        renderVideos(data.videos);
+        document.getElementById('sources').innerHTML =
+          `<span class="source-tag">youtube.com</span> • Fetched: ${new Date(data.fetched).toLocaleTimeString()}`;
+      } catch (err) {
+        content.innerHTML = `<div class="error">Failed to discover: ${err.message}</div>`;
+      }
+    }
+
+    function renderVideos(videos) {
+      const content = document.getElementById('content');
+      const html = `<ul class="video-list">${
+        videos.map(v => `
+          <li class="video-item">
+            <div class="video-title">
+              ${escapeHtml(v.title)}
+              <span class="channel-tag">${escapeHtml(v.channel)}</span>
+            </div>
+            <div class="video-actions">
+              <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Audio Only</a>
+              <a href="${v.url}" target="_blank">Watch on YouTube</a>
+            </div>
+          </li>
+        `).join('')
+      }</ul>`;
+      content.innerHTML = html;
     }
 
     async function playAudio(url, title) {
@@ -219,7 +312,9 @@
 
         const data = await res.json();
         if (data.ok) {
-          loadFeed();
+          if (currentTab === 'feed') {
+            loadFeed();
+          }
         } else {
           alert('Error: ' + (data.error || 'Failed to add channel'));
         }

@@ -13,6 +13,20 @@ import { CartridgeStore } from './cartridge-store.js';
 import { ASCIIExperimentSpec } from './ascii-spec-parser.js';
 import { ASCIIExperimentRuntime } from './ascii-experiment-runtime.js';
 import { ASCIIResultsLogger } from './ascii-results-logger.js';
+import { GeometryBridge } from './integrations/openspec/geometry_bridge.js';
+import { EvolutionaryAgent } from './evolutionary-agent.js';
+import { SyntheticGlyphVM, OP, OP_NAMES } from './synthetic-glyph-vm.js';
+import { PixelVMBridge } from './pixelvm-bridge.js';
+import { renderers, detectFormat } from './renderers/index.js';
+import { runAllVCCTests } from './renderers/vcc-evaluator.js';
+import { GPUAgentBridge, GLYPH_TO_OPCODE, OPCODE_COLORS } from './gpu-agent-bridge.js';
+import { YouTubeScraper } from './youtube-scraper.js';
+import { YouTubeAudio } from './youtube-audio.js';
+import { readFileSync, writeFileSync, existsSync, readFile } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class PxOSServer {
     constructor(port = 3839) {
@@ -29,6 +43,19 @@ export class PxOSServer {
         this.cartridgeStore = new CartridgeStore({
             cartridgesDir: '../apps/geos-ascii/examples'
         });
+        this.geometryBridge = new GeometryBridge(this);
+        this.evoAgent = new EvolutionaryAgent(this);
+        this.vm = new SyntheticGlyphVM({ maxCycles: 100000 });
+        this.pixelvm = new PixelVMBridge({ maxCycles: 100000 });
+        this.gpuAgentBridge = new GPUAgentBridge({ 
+            cellStore: this.cellStore,
+            onStats: (stats) => {
+                this.broadcast({ type: 'gpu-stats', stats });
+            },
+            onError: (err) => {
+                console.error('[GPU Agent Bridge]', err);
+            }
+        });
         this.template = [];
         this.httpServer = null;
         this.wss = null;
@@ -39,6 +66,12 @@ export class PxOSServer {
         this.requestCount = 0;
         this.requestCountPerMinute = 0;
         this.lastMinuteReset = Date.now();
+
+        // YouTube integration
+        this.youtubeScraper = new YouTubeScraper();
+        this.youtubeAudio = new YouTubeAudio();
+        this.youtubeChannelsPath = './data/channels.json';
+        this.youtubeChannels = this.loadYouTubeChannels();
 
         // Setup alert notifiers
         this.alertEngine.addNotifier((alert, rule) => {
@@ -60,6 +93,17 @@ export class PxOSServer {
         // Start GPU Bridge
         this.gpuBridge.start(500);
 
+        // Start Evolutionary Agent
+        this.evoAgent.start();
+
+        // Auto-load the 'autoresearch' dashboard if it exists
+        const defaultDashboard = this.dashboardStore.load('autoresearch');
+        if (defaultDashboard) {
+            console.log(`[SERVER] Loading persistent dashboard: autoresearch`);
+            this.template = [...defaultDashboard.template];
+            this.alertEngine.setRules(defaultDashboard.alerts);
+        }
+
         // Load cartridges
         const cartridges = this.cartridgeStore.loadAll();
         console.log(`Loaded ${cartridges.length} cartridges`);
@@ -77,6 +121,11 @@ export class PxOSServer {
             // Check alerts
             const alerts = this.alertEngine.check(cells);
             
+            // Periodically persist the current state (template + rules)
+            if (this.template.length > 0) {
+                this.dashboardStore.save('autoresearch', this.template, this.alertEngine.getRules());
+            }
+            
             // Broadcast cell updates
             this.broadcast({ type: 'cells', changes, cells });
         });
@@ -92,6 +141,9 @@ export class PxOSServer {
     async stop() {
         // Stop GPU Bridge
         this.gpuBridge.stop();
+        
+        // Stop GPU Agent Bridge
+        await this.gpuAgentBridge.stop();
 
         return new Promise((resolve) => {
             if (this.wss) {
@@ -145,7 +197,13 @@ export class PxOSServer {
                     this.sendError(res, 405, 'Method not allowed');
                 }
             } else if (pathname === '/api/v1/render') {
-                await this.handleRender(req, res);
+                if (req.method === 'POST') {
+                    await this.handleMultiRender(req, res, url);
+                } else {
+                    await this.handleRender(req, res);
+                }
+            } else if (pathname.startsWith('/api/v1/render/')) {
+                await this.handleMultiRender(req, res, url);
             } else if (pathname === '/api/v1/template') {
                 if (req.method === 'POST') {
                     await this.handlePostTemplate(req, res);
@@ -184,12 +242,74 @@ export class PxOSServer {
                 this.handleGetCartridgeState(req, res);
             } else if (pathname === '/api/v1/cartridge/execute' && req.method === 'POST') {
                 await this.handleExecuteOpcode(req, res);
+            } else if (pathname === '/api/v1/vm/execute' && req.method === 'POST') {
+                await this.handleVMExecute(req, res);
+            } else if (pathname === '/api/v1/vm/state' && req.method === 'GET') {
+                this.handleVMState(req, res);
+            } else if (pathname === '/api/v1/vm/reset' && req.method === 'POST') {
+                this.handleVMReset(req, res);
+            } else if (pathname === '/api/v1/pixelvm/python' && req.method === 'POST') {
+                await this.handlePixelPython(req, res);
+            } else if (pathname === '/api/v1/pixelvm/pixels' && req.method === 'POST') {
+                await this.handlePixelPixels(req, res);
+            } else if (pathname === '/api/v1/pixelvm/state' && req.method === 'GET') {
+                this.handlePixelState(req, res);
+            } else if (pathname === '/api/v1/pixelvm/map' && req.method === 'GET') {
+                this.handlePixelMap(req, res);
+            } else if (pathname === '/api/v1/pixelvm/reset' && req.method === 'POST') {
+                this.handlePixelReset(req, res);
+            } else if (pathname === '/api/v1/pixelvm/viewport' && req.method === 'GET') {
+                await this.handlePixelViewport(req, res);
             } else if (pathname === '/api/v1/experiments' && req.method === 'GET') {
                 this.handleGetExperiments(req, res);
             } else if (pathname === '/api/v1/experiments/run' && req.method === 'POST') {
                 await this.handleRunExperiment(req, res);
             } else if (pathname === '/api/v1/experiments/specs' && req.method === 'GET') {
                 this.handleGetExperimentSpecs(req, res);
+            } else if (pathname === '/api/v1/vcc/validate' && req.method === 'POST') {
+                await this.handleVCCValidate(req, res);
+            // GPU Agent Bridge API
+            } else if (pathname === '/api/v1/gpu/agent/start' && req.method === 'POST') {
+                await this.handleGPUAgentStart(req, res);
+            } else if (pathname === '/api/v1/gpu/agent/stop' && req.method === 'POST') {
+                await this.handleGPUAgentStop(req, res);
+            } else if (pathname === '/api/v1/gpu/agent/stats' && req.method === 'GET') {
+                this.handleGPUAgentStats(req, res);
+            } else if (pathname === '/api/v1/gpu/inject' && req.method === 'POST') {
+                await this.handleGPUInject(req, res);
+            } else if (pathname === '/api/v1/gpu/wire' && req.method === 'POST') {
+                await this.handleGPUWire(req, res);
+            } else if (pathname === '/api/v1/gpu/gate' && req.method === 'POST') {
+                await this.handleGPUGate(req, res);
+            } else if (pathname === '/api/v1/gpu/circuit/load' && req.method === 'POST') {
+                await this.handleGPUCircuitLoad(req, res);
+            } else if (pathname === '/api/v1/gpu/circuit/scan' && req.method === 'GET') {
+                await this.handleGPUCircuitScan(req, res, url);
+            } else if (pathname === '/api/v1/gpu/circuit/templates' && req.method === 'GET') {
+                this.handleGPUCircuitTemplates(req, res);
+            } else if (pathname === '/api/v1/gpu/heatmap' && req.method === 'POST') {
+                await this.handleGPUHeatmap(req, res);
+            } else if (pathname === '/api/v1/gpu/bridge/start' && req.method === 'POST') {
+                await this.handleGPUBridgeStart(req, res);
+            } else if (pathname === '/api/v1/gpu/bridge/connect' && req.method === 'POST') {
+                await this.handleGPUBridgeConnect(req, res);
+            } else if (pathname === '/api/v1/gpu/glyphs' && req.method === 'GET') {
+                this.handleGPUGlyphs(req, res);
+            // YouTube API
+            } else if (pathname === '/youtube') {
+                this.handleYouTubeViewer(req, res);
+            } else if (pathname === '/api/youtube/feed') {
+                await this.handleYouTubeFeed(req, res);
+            } else if (pathname === '/api/youtube/audio') {
+                await this.handleYouTubeAudio(req, res, url);
+            } else if (pathname === '/api/youtube/channels' && req.method === 'GET') {
+                this.handleYouTubeChannels(req, res);
+            } else if (pathname === '/api/youtube/channels' && req.method === 'POST') {
+                await this.handleAddYouTubeChannel(req, res);
+            } else if (pathname.startsWith('/api/youtube/channels/') && req.method === 'DELETE') {
+                this.handleRemoveYouTubeChannel(req, res, url);
+            } else if (pathname === '/api/youtube/discover') {
+                await this.handleYouTubeDiscover(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -200,10 +320,8 @@ export class PxOSServer {
     }
 
     serveViewer(req, res) {
-        const fs = require('fs');
-        const path = require('path');
         const viewerPath = path.join(__dirname, '../viewer/viewer.html');
-        fs.readFile(viewerPath, (err, data) => {
+        readFile(viewerPath, (err, data) => {
             if (err) {
                 this.sendError(res, 500, 'Viewer not found');
             } else {
@@ -234,6 +352,85 @@ export class PxOSServer {
         const png = await this.engine.toPNG();
         res.writeHead(200, { 'Content-Type': 'image/png' });
         res.end(png);
+    }
+
+    async handleMultiRender(req, res, url) {
+        // Parse format from URL: /api/v1/render/:format
+        let format = url.pathname.replace('/api/v1/render/', '').toLowerCase() || 'html';
+        if (format === '/api/v1/render') format = 'html'; // Default
+
+        const canonicalFormat = detectFormat(format);
+        const renderer = renderers[canonicalFormat];
+
+        if (!renderer) {
+            return this.sendError(res, 400, `Unknown format: ${format}. Available: ${Object.keys(renderers).join(', ')}`);
+        }
+
+        let asciiContent = '';
+        if (req.method === 'POST') {
+            const body = await this.readBody(req);
+            const { content } = JSON.parse(body);
+            asciiContent = content;
+        } else {
+            // Default to rendering current cell state as a formatted table
+            const cells = this.cellStore.getCells();
+            // Simple grid generation (80x24)
+            asciiContent = '╔═══════════════════════════════════════════════════════════════╗\n';
+            asciiContent += '║ pxOS Substrate (Live State)                                   ║\n';
+            asciiContent += '╠═══════════════════════════════════════════════════════════════╣\n';
+            
+            const keys = Object.keys(cells).filter(k => k !== 'title' && k.length < 20);
+            for (let i = 0; i < Math.min(keys.length, 20); i++) {
+                const k = keys[i];
+                const v = String(cells[k]).substring(0, 40);
+                asciiContent += `║ ${k.padEnd(20)} : ${v.padEnd(40)} ║\n`;
+            }
+            asciiContent += '╚═══════════════════════════════════════════════════════════════╝';
+        }
+
+        try {
+            const result = await renderer(asciiContent);
+            
+            // Set correct Content-Type
+            const types = {
+                'html': 'text/html',
+                'python': 'text/x-python',
+                'svg': 'image/svg+xml',
+                'png': 'image/png',
+                'pixels': 'application/octet-stream',
+                'ansi': 'text/plain',
+                'json': 'application/json',
+                'markdown': 'text/markdown'
+            };
+
+            res.writeHead(200, { 'Content-Type': types[canonicalFormat] || 'text/plain' });
+            
+            if (canonicalFormat === 'png' || canonicalFormat === 'pixels') {
+                res.end(result);
+            } else if (canonicalFormat === 'json') {
+                res.end(JSON.stringify(result, null, 2));
+            } else {
+                res.end(String(result));
+            }
+        } catch (err) {
+            this.sendError(res, 500, `Render error: ${err.message}`);
+        }
+    }
+
+    async handleVCCValidate(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { content } = JSON.parse(body);
+            
+            if (!content) {
+                return this.sendError(res, 400, 'Content required for VCC validation');
+            }
+
+            const result = await runAllVCCTests(content);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, `VCC validation error: ${err.message}`);
+        }
     }
 
     async handlePostTemplate(req, res) {
@@ -442,6 +639,168 @@ export class PxOSServer {
     }
 
     // ─────────────────────────────────────────────────────
+    // YouTube Integration
+    // ─────────────────────────────────────────────────────
+
+    loadYouTubeChannels() {
+        try {
+            if (existsSync(this.youtubeChannelsPath)) {
+                const data = readFileSync(this.youtubeChannelsPath, 'utf-8');
+                return JSON.parse(data);
+            }
+        } catch (err) {
+            console.error('Failed to load YouTube channels:', err.message);
+        }
+        return { channels: [] };
+    }
+
+    saveYouTubeChannels() {
+        try {
+            writeFileSync(this.youtubeChannelsPath, JSON.stringify(this.youtubeChannels, null, 2));
+        } catch (err) {
+            console.error('Failed to save YouTube channels:', err.message);
+        }
+    }
+
+    async handleYouTubeViewer(req, res) {
+        const viewerPath = path.join(__dirname, '../viewer/youtube.html');
+        readFile(viewerPath, (err, data) => {
+            if (err) {
+                this.sendError(res, 500, 'YouTube viewer not found');
+            } else {
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(data);
+            }
+        });
+    }
+
+    async handleYouTubeFeed(req, res) {
+        const { channels } = this.youtubeChannels;
+
+        if (channels.length === 0) {
+            this.sendJSON(res, 200, {
+                videos: [],
+                fetched: new Date().toISOString(),
+                channelCount: 0,
+                message: 'No channels configured. Add a channel to get started.'
+            });
+            return;
+        }
+
+        try {
+            const allVideos = [];
+
+            const results = await Promise.allSettled(
+                channels.map(ch =>
+                    this.youtubeScraper.fetchChannel(ch.url, ch.id || ch.name)
+                        .catch(err => {
+                            console.error(`Channel ${ch.id} failed:`, err.message);
+                            return [];
+                        })
+                )
+            );
+
+            for (const result of results) {
+                if (result.status === 'fulfilled') {
+                    allVideos.push(...result.value);
+                }
+            }
+
+            this.sendJSON(res, 200, {
+                videos: allVideos,
+                fetched: new Date().toISOString(),
+                channelCount: channels.length
+            });
+        } catch (err) {
+            this.sendError(res, 500, `Failed to fetch feed: ${err.message}`);
+        }
+    }
+
+    async handleYouTubeAudio(req, res, url) {
+        const videoUrl = url.searchParams.get('url');
+
+        if (!videoUrl) {
+            this.sendError(res, 400, 'Missing url parameter');
+            return;
+        }
+
+        if (!this.youtubeAudio.isValidVideoURL(videoUrl)) {
+            this.sendError(res, 400, 'Invalid YouTube URL');
+            return;
+        }
+
+        try {
+            const result = await this.youtubeAudio.getAudioUrl(videoUrl);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    handleYouTubeChannels(req, res) {
+        this.sendJSON(res, 200, this.youtubeChannels);
+    }
+
+    async handleAddYouTubeChannel(req, res) {
+        const body = await this.readBody(req);
+        const { url, name } = JSON.parse(body);
+
+        if (!url) {
+            this.sendError(res, 400, 'Channel URL required');
+            return;
+        }
+
+        if (!this.youtubeScraper.isValidYouTubeURL(url)) {
+            this.sendError(res, 400, 'Invalid YouTube URL');
+            return;
+        }
+
+        const match = url.match(/youtube\.com\/(@[\w-]+)/);
+        const id = match ? match[1] : `channel_${Date.now()}`;
+
+        if (this.youtubeChannels.channels.some(ch => ch.id === id)) {
+            this.sendError(res, 400, 'Channel already added');
+            return;
+        }
+
+        this.youtubeChannels.channels.push({
+            id,
+            url,
+            name: name || id
+        });
+
+        this.saveYouTubeChannels();
+        this.sendJSON(res, 200, { ok: true, channel: { id, url, name: name || id } });
+    }
+
+    handleRemoveYouTubeChannel(req, res, url) {
+        const id = url.pathname.replace('/api/youtube/channels/', '');
+
+        const index = this.youtubeChannels.channels.findIndex(ch => ch.id === id);
+        if (index === -1) {
+            this.sendError(res, 404, 'Channel not found');
+            return;
+        }
+
+        this.youtubeChannels.channels.splice(index, 1);
+        this.saveYouTubeChannels();
+        this.sendJSON(res, 200, { ok: true });
+    }
+
+    async handleYouTubeDiscover(req, res) {
+        try {
+            const videos = await this.youtubeScraper.fetchHomepage();
+            this.sendJSON(res, 200, {
+                videos,
+                fetched: new Date().toISOString(),
+                source: 'youtube.com'
+            });
+        } catch (err) {
+            this.sendError(res, 500, `Failed to fetch discover feed: ${err.message}`);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────
     // Cartridge Handlers
     // ─────────────────────────────────────────────────────
 
@@ -476,6 +835,84 @@ export class PxOSServer {
         this.sendJSON(res, 200, result);
     }
 
+    // SyntheticGlyphVM API
+    async handleVMExecute(req, res) {
+        const body = await this.readBody(req);
+        const { program, maxCycles = 10000 } = JSON.parse(body);
+
+        if (program && program.length > 0) {
+            this.vm.loadProgram(program);
+        }
+
+        const result = this.vm.executeFrame(maxCycles);
+
+        const pixelBuffer = this.vm.memory.slice(0, 480 * 240 * 4);
+        this.sendJSON(res, 200, {
+            cycles: this.vm.state.cycles,
+            halted: this.vm.state.halted,
+            pc: this.vm.state.pc,
+            opCount: this.vm.state.opCount,
+            pixels: Array.from(pixelBuffer).slice(0, 480 * 240 * 4)
+        });
+    }
+
+    handleVMState(req, res) {
+        this.sendJSON(res, 200, {
+            pc: this.vm.state.pc,
+            sp: this.vm.state.sp,
+            flags: this.vm.state.flags,
+            halted: this.vm.state.halted,
+            cycles: this.vm.state.cycles,
+            opCount: this.vm.state.opCount,
+            memory: Array.from(this.vm.memory.slice(0, 1024))
+        });
+    }
+
+    handleVMReset(req, res) {
+        this.vm.reset();
+        this.sendJSON(res, 200, { reset: true });
+    }
+
+    // PixelVM API (Python → Pixels → Execution)
+    async handlePixelPython(req, res) {
+        const body = await this.readBody(req);
+        const { code, options } = JSON.parse(body);
+        const result = this.pixelvm.executePython(code, options || {});
+        this.sendJSON(res, 200, result);
+    }
+
+    async handlePixelPixels(req, res) {
+        const body = await this.readBody(req);
+        const { pixels, options } = JSON.parse(body);
+        const result = this.pixelvm.executePixels(pixels, options || {});
+        this.sendJSON(res, 200, result);
+    }
+
+    handlePixelState(req, res) {
+        const state = this.pixelvm.getVMState();
+        this.sendJSON(res, 200, state);
+    }
+
+    handlePixelMap(req, res) {
+        const state = this.pixelvm.getMapState();
+        this.sendJSON(res, 200, state);
+    }
+
+    handlePixelReset(req, res) {
+        const result = this.pixelvm.reset(true);
+        this.sendJSON(res, 200, result);
+    }
+
+    async handlePixelViewport(req, res) {
+        try {
+            const png = await this.pixelvm.getViewportPNG();
+            res.writeHead(200, { 'Content-Type': 'image/png' });
+            res.end(png);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
     // ASCII Experiment API
     handleGetExperiments(req, res) {
         const logger = new ASCIIResultsLogger();
@@ -485,9 +922,11 @@ export class PxOSServer {
 
     async handleRunExperiment(req, res) {
         const body = await this.readBody(req);
-        const { spec } = JSON.parse(body);
-        const runtime = new ASCIIExperimentRuntime({ projectPath: '.' });
-        const result = await runtime.runSpec(spec);
+        const { spec, x = 10, y = 15 } = JSON.parse(body);
+        
+        // Execute via bridge (it now handles SIT bonds + template rendering)
+        const { result } = await this.geometryBridge.executeOnCanvas(spec, x, y);
+        
         this.sendJSON(res, 200, result);
     }
 
@@ -506,4 +945,154 @@ export class PxOSServer {
         }));
         this.sendJSON(res, 200, specs);
     }
+
+    // ─────────────────────────────────────────────────────
+    // GPU Agent Bridge API Handlers
+    // ─────────────────────────────────────────────────────
+
+    async handleGPUAgentStart(req, res) {
+        try {
+            const result = await this.gpuAgentBridge.startAgent();
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    async handleGPUAgentStop(req, res) {
+        try {
+            const result = await this.gpuAgentBridge.stopAgent();
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    handleGPUAgentStats(req, res) {
+        const stats = this.gpuAgentBridge.getStats();
+        this.sendJSON(res, 200, stats);
+    }
+
+    async handleGPUInject(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { x, y, opcode, r, g, b } = JSON.parse(body);
+            const result = await this.gpuAgentBridge.injectSignal(x, y, opcode, r, g, b);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    async handleGPUWire(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { x1, y1, x2, y2, color } = JSON.parse(body);
+            const result = await this.gpuAgentBridge.injectWire(x1, y1, x2, y2, color);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    async handleGPUGate(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { type, x, y } = JSON.parse(body);
+            const result = await this.gpuAgentBridge.injectGate(type, x, y);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    async handleGPUCircuitLoad(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { ascii, template, x, y } = JSON.parse(body);
+            
+            let result;
+            if (template) {
+                result = await this.gpuAgentBridge.loadCircuitTemplate(template, x, y);
+            } else if (ascii) {
+                result = await this.gpuAgentBridge.loadCircuit(ascii, x, y);
+            } else {
+                return this.sendError(res, 400, 'Either "ascii" or "template" required');
+            }
+            
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    async handleGPUCircuitScan(req, res, url) {
+        try {
+            const x = parseInt(url.searchParams.get('x')) || 0;
+            const y = parseInt(url.searchParams.get('y')) || 0;
+            const width = parseInt(url.searchParams.get('width')) || 80;
+            const height = parseInt(url.searchParams.get('height')) || 24;
+            
+            const result = await this.gpuAgentBridge.scanRegion(x, y, width, height);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    handleGPUCircuitTemplates(req, res) {
+        const templates = this.gpuAgentBridge.listCircuitTemplates();
+        this.sendJSON(res, 200, { templates });
+    }
+
+    async handleGPUHeatmap(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { ascii, offsetX, offsetY } = JSON.parse(body);
+            const result = await this.gpuAgentBridge.getHeatmap(ascii, offsetX, offsetY);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    async handleGPUBridgeStart(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { port, offsetX, offsetY } = JSON.parse(body);
+            const result = await this.gpuAgentBridge.startNetworkBridge(port, offsetX, offsetY);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    async handleGPUBridgeConnect(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { server, localX, localY, width, height } = JSON.parse(body);
+            const result = await this.gpuAgentBridge.connectToBridge(server, localX, localY, width, height);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, err.message);
+        }
+    }
+
+    handleGPUGlyphs(req, res) {
+        this.sendJSON(res, 200, {
+            glyphToOpcode: GLYPH_TO_OPCODE,
+            opcodeColors: OPCODE_COLORS
+        });
+    }
 }
+
+// Auto-start if run directly
+const PORT = parseInt(process.env.PORT || process.env.SYNC_PORT || '3840');
+const server = new PxOSServer(PORT);
+server.start().then(() => {
+    console.log(`pxOS Server running on http://localhost:${PORT}`);
+    console.log(`GPU Agent Dashboard: http://localhost:${PORT}/viewer/gpu-agent-dashboard.html`);
+}).catch(err => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+});

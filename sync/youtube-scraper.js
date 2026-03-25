@@ -168,6 +168,39 @@ export class YouTubeScraper {
   }
 
   /**
+   * Fetch personalized homepage using yt-dlp and browser cookies
+   * @returns {Promise<Array<{id: string, title: string, url: string, channel: string}>>}
+   */
+  async fetchPersonalizedHomepage() {
+    return new Promise((resolve, reject) => {
+      // Use yt-dlp to get the homepage videos using chromium cookies
+      const { exec } = require('child_process');
+      const cmd = `yt-dlp --cookies-from-browser chromium --flat-playlist --playlist-end 30 --print "%(id)s|%(title)s|%(uploader)s" "https://www.youtube.com/"`;
+      
+      exec(cmd, (error, stdout, stderr) => {
+        if (error) {
+          console.error('yt-dlp personalized fetch failed:', stderr);
+          return reject(new Error('Failed to fetch personalized homepage. Ensure Chromium is installed and logged into YouTube.'));
+        }
+
+        const lines = stdout.trim().split('\n');
+        const videos = lines.map(line => {
+          const [id, title, channel] = line.split('|');
+          if (!id) return null;
+          return {
+            id,
+            title: title || 'Untitled',
+            url: `https://youtube.com/watch?v=${id}`,
+            channel: channel || 'Unknown Channel'
+          };
+        }).filter(v => v !== null);
+
+        resolve(videos);
+      });
+    });
+  }
+
+  /**
    * Fetch YouTube search results for discovery
    * Uses popular search terms to get varied content
    * @param {string} query - Search query (optional)

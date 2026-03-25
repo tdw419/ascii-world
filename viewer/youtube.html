@@ -177,6 +177,7 @@
 
     <div class="tabs">
       <button class="tab active" data-tab="feed" onclick="switchTab('feed')">Feed</button>
+      <button class="tab" data-tab="personal" onclick="switchTab('personal')">My Home</button>
       <button class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</button>
     </div>
 
@@ -208,6 +209,8 @@
       // Load content
       if (tab === 'feed') {
         loadFeed();
+      } else if (tab === 'personal') {
+        loadPersonalized();
       } else {
         loadDiscover();
       }
@@ -216,8 +219,36 @@
     function refreshCurrentTab() {
       if (currentTab === 'feed') {
         loadFeed();
+      } else if (currentTab === 'personal') {
+        loadPersonalized();
       } else {
         loadDiscover();
+      }
+    }
+
+    async function loadPersonalized() {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="loading">Fetching your personalized YouTube homepage...<br><small>Requires Chromium to be installed and logged in.</small></div>';
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/youtube/personalized`);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.message || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        
+        if (data.videos.length === 0) {
+          content.innerHTML = '<div class="loading">No videos found. Try logging into YouTube in Chromium first.</div>';
+          return;
+        }
+
+        renderVideos(data.videos);
+        document.getElementById('sources').innerHTML = 
+          `<span class="source-tag">My Home (Chromium)</span> • Fetched: ${new Date(data.fetched).toLocaleTimeString()}`;
+      } catch (err) {
+        content.innerHTML = `<div class="error">Failed to load personalized feed: ${err.message}<br><br>
+        <small>Make sure you have Chromium installed and are logged into YouTube.</small></div>`;
       }
     }
 

@@ -308,6 +308,8 @@ export class PxOSServer {
                 await this.handleAddYouTubeChannel(req, res);
             } else if (pathname.startsWith('/api/youtube/channels/') && req.method === 'DELETE') {
                 this.handleRemoveYouTubeChannel(req, res, url);
+            } else if (pathname === '/api/youtube/personalized') {
+                await this.handleYouTubePersonalized(req, res);
             } else if (pathname === '/api/youtube/discover') {
                 await this.handleYouTubeDiscover(req, res, url);
             } else {
@@ -785,6 +787,22 @@ export class PxOSServer {
         this.youtubeChannels.channels.splice(index, 1);
         this.saveYouTubeChannels();
         this.sendJSON(res, 200, { ok: true });
+    }
+
+    async handleYouTubePersonalized(req, res) {
+        try {
+            console.log('[PERSONALIZED] Fetching videos with chromium cookies...');
+            const videos = await this.youtubeScraper.fetchPersonalizedHomepage();
+            console.log('[PERSONALIZED] Found', videos.length, 'videos');
+            this.sendJSON(res, 200, {
+                videos,
+                fetched: new Date().toISOString(),
+                source: 'personal'
+            });
+        } catch (err) {
+            console.error('[PERSONALIZED] Error:', err.message);
+            this.sendError(res, 500, `Failed to fetch personalized feed: ${err.message}`);
+        }
     }
 
     async handleYouTubeDiscover(req, res, url) {

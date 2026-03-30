@@ -46,6 +46,17 @@
       "status": "stopped",
       "asciiPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/cyber-ascii/src/ascii/states",
       "bindingsPath": "/home/jericho/zion/projects/ascii_world/ascii_world/apps/cyber-ascii/src/ascii/bindings.json"
+    },
+    {
+      "id": "substack_publish",
+      "name": "substack_publish",
+      "path": "/home/jericho/zion/projects/substack_publish/substack_publish",
+      "port": 3424,
+      "status": "running",
+      "asciiPath": "/home/jericho/zion/projects/substack_publish/substack_publish/src/ascii/states",
+      "bindingsPath": "/home/jericho/zion/projects/substack_publish/substack_publish/src/ascii/bindings.json",
+      "pid": 153443,
+      "lastStarted": 1774289434242
     }
   ]
 }

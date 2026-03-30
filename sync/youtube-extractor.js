@@ -99,7 +99,9 @@ export class YouTubeExtractor {
   }
 
   async getVideoUrl(videoUrl) {
-    // We prefer MP4 for widest browser compatibility without needing specialized players
-    return this.getStreamUrl(videoUrl, 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best');
+    // We strictly prefer mp4 with aac audio (format 18/22 style) 
+    // because browsers handle their audio synchronization much better 
+    // than webm/opus when played directly.
+    return this.getStreamUrl(videoUrl, 'best[ext=mp4][vcodec!=none][acodec!=none]/best[ext=mp4]/best');
   }
 }

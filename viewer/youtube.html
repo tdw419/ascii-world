@@ -67,6 +67,10 @@
       font-size: 15px;
       margin-bottom: 8px;
       color: #f0f6fc;
+      transition: color 0.2s;
+    }
+    .video-title.watched {
+      color: #8b949e;
     }
     .video-actions { font-size: 13px; }
     .video-actions a {
@@ -76,12 +80,38 @@
     }
     .video-actions a:hover { text-decoration: underline; }
     .channel-tag {
-      display: block;
+      display: flex;
+      align-items: center;
       font-size: 13px;
+      color: #8b949e;
+      margin-top: 8px;
+    }
+    .channel-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 10px;
+      background: #30363d;
+    }
+    .video-meta {
+      font-size: 12px;
       color: #8b949e;
       margin-top: 4px;
     }
-    .audio-player {
+    .duration-badge {
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .shorts-tag {
+      color: #ff4b4b !important;
+      font-weight: bold;
+    }
+    .audio-player, .video-player-modal {
       position: fixed;
       bottom: 0;
       left: 0;
@@ -90,7 +120,31 @@
       padding: 15px 20px;
       border-top: 1px solid #30363d;
       display: none;
+      z-index: 1000;
     }
+    .video-player-modal {
+      top: 0;
+      background: rgba(13, 17, 23, 0.98);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-container {
+      width: 90%;
+      max-width: 1000px;
+      position: relative;
+    }
+    .video-player-modal video {
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+    .video-player-modal .close-btn {
+      position: absolute;
+      top: -40px;
+      right: 0;
+    }
+    .video-player-modal.active { display: flex; }
     .audio-player.active { display: block; }
     .audio-player audio { width: 100%; }
     .audio-player .now-playing {
@@ -179,12 +233,18 @@
 
     <div class="tabs">
       <button class="tab" data-tab="feed" onclick="switchTab('feed')">Feed</button>
-      <button class="tab active" data-tab="personal" onclick="switchTab('personal')">My Home</button>
+      <button class="tab" data-tab="personal" onclick="switchTab('personal')">My Home</button>
+      <button class="tab" data-tab="personal_v2" onclick="switchTab('personal_v2')">My Home V2</button>
+      <button class="tab" data-tab="add" onclick="switchTab('add')">Add Video</button>
       <button class="tab" data-tab="discover" onclick="switchTab('discover')">Discover</button>
     </div>
 
     <div id="content">
       <div class="loading">Loading feed...</div>
+    </div>
+
+    <div id="load-more-container" style="display: none; text-align: center; padding: 20px;">
+      <button id="manual-load-more" class="refresh-btn" style="width: 200px; height: 40px;" onclick="loadPersonalized(true)">Load More Videos</button>
     </div>
 
     <footer id="footer">
@@ -198,12 +258,37 @@
     <audio id="audio" controls autoplay></audio>
   </div>
 
+  <div class="video-player-modal" id="videoPlayerModal">
+    <div class="video-container">
+      <button class="close-btn" onclick="closeVideoPlayer()">&times;</button>
+      <video id="videoPlayer" controls autoplay></video>
+    </div>
+  </div>
+
   <script>
     const API_BASE = window.location.origin;
     let currentTab = 'personal';
+    let currentVideos = [];
+    let nextContinuationToken = null;
+    let isLoadingMore = false;
+
+    // Track watched videos
+    const watchedVideos = new Set(JSON.parse(localStorage.getItem('watchedVideos') || '[]'));
+
+    function markAsWatched(vId) {
+      if (!vId) return;
+      watchedVideos.add(vId);
+      localStorage.setItem('watchedVideos', JSON.stringify([...watchedVideos]));
+      // Update UI for all instances of this video
+      document.querySelectorAll(`[data-video-id="${vId}"]`).forEach(el => {
+        el.classList.add('watched');
+      });
+    }
 
     function switchTab(tab) {
       currentTab = tab;
+      nextContinuationToken = null; // Reset pagination
+      currentVideos = [];
       // Update tab UI
       document.querySelectorAll('.tab').forEach(t => {
         t.classList.toggle('active', t.dataset.tab === tab);
@@ -213,23 +298,36 @@
         loadFeed();
       } else if (tab === 'personal') {
         loadPersonalized();
+      } else if (tab === 'personal_v2') {
+        loadPersonalizedV2();
+      } else if (tab === 'subscriptions') {
+        loadSubscriptions();
+      } else if (tab === 'add') {
+        loadAddVideoTab();
       } else {
         loadDiscover();
       }
     }
 
     function refreshCurrentTab() {
+      nextContinuationToken = null; // Reset pagination
       if (currentTab === 'feed') {
         loadFeed();
       } else if (currentTab === 'personal') {
         loadPersonalized();
+      } else if (currentTab === 'personal_v2') {
+        loadPersonalizedV2();
+      } else if (currentTab === 'subscriptions') {
+        loadSubscriptions();
+      } else if (currentTab === 'add') {
+        loadAddVideoTab();
       } else {
         loadDiscover();
       }
     }
 
     async function setCookies() {
-      const cookies = prompt('Paste your YouTube cookies here (Netscape format or raw text from "Get cookies.txt" extension):');
+      const cookies = prompt('PASTE COOKIES HERE:\n\n1. Go to https://youtube.com/feed/subscriptions\n2. Open "Get cookies.txt" extension\n3. Copy the text and paste it here.\n\n(Required for the Subscriptions tab)');
       if (!cookies) return;
       
       try {
@@ -250,12 +348,12 @@
       }
     }
 
-    async function loadPersonalized() {
+    async function loadSubscriptions() {
       const content = document.getElementById('content');
-      content.innerHTML = '<div class="loading">Fetching your personalized YouTube homepage...<br><small>If this fails, use "Set Cookies" above with a "Get cookies.txt" extension.</small></div>';
+      content.innerHTML = '<div class="loading">Fetching your YouTube subscriptions...<br><small>Requires manual cookies to be set.</small></div>';
       
       try {
-        const res = await fetch(`${API_BASE}/api/youtube/personalized`);
+        const res = await fetch(`${API_BASE}/api/youtube/subscriptions`);
         if (!res.ok) {
           const data = await res.json();
           throw new Error(data.message || `HTTP ${res.status}`);
@@ -269,12 +367,123 @@
 
         renderVideos(data.videos);
         document.getElementById('sources').innerHTML = 
-          `<span class="source-tag">My Home (Personalized)</span> • ${data.videos.length} videos`;
+          `<span class="source-tag">Subscriptions (Personalized)</span> • ${data.videos.length} videos`;
       } catch (err) {
-        content.innerHTML = `<div class="error">Failed to load personalized feed: ${err.message}<br><br>
-        <small>On Linux, Chromium cookie decryption often fails. <br>Please use the <b>"Set Cookies"</b> button with the <b>"Get cookies.txt"</b> browser extension.</small></div>`;
+        content.innerHTML = `<div class="error">Failed to load subscriptions: ${err.message}<br><br>
+        <small>Please use the <b>"Set Cookies"</b> button with the <b>"Get cookies.txt"</b> browser extension.</small></div>`;
       }
     }
+
+    async function loadPersonalizedV2() {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="loading">Fetching YouTube homepage using headless Chromium...<br><small>This may take 5-10 seconds to render the DOM.</small></div>';
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/youtube/personalized/v2`);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.message || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        
+        if (data.videos.length === 0) {
+          content.innerHTML = '<div class="loading">No videos found via headless browser.</div>';
+          return;
+        }
+
+        currentVideos = data.videos;
+        renderVideos(currentVideos);
+
+        document.getElementById('sources').innerHTML = 
+          `<span class="source-tag">Headless Chromium</span> • ${data.videos.length} videos`;
+      } catch (err) {
+        content.innerHTML = `<div class="error">Headless fetch failed: ${err.message}</div>`;
+      }
+    }
+
+    async function loadPersonalized(append = false) {
+      if (isLoadingMore) return;
+      if (append) isLoadingMore = true;
+
+      const content = document.getElementById('content');
+      const loadMoreContainer = document.getElementById('load-more-container');
+      
+      if (!append) {
+        content.innerHTML = '<div class="loading">Fetching your personalized YouTube homepage...<br><small>If this fails, use "Set Cookies" above with a "Get cookies.txt" extension.</small></div>';
+        loadMoreContainer.style.display = 'none';
+      } else {
+        const btn = document.getElementById('manual-load-more');
+        btn.textContent = 'Loading...';
+        btn.disabled = true;
+      }
+      
+      try {
+        let url = `${API_BASE}/api/youtube/personalized`;
+        if (nextContinuationToken) {
+          url += `?c=${encodeURIComponent(nextContinuationToken)}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.message || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        
+        if (!append && data.videos.length === 0) {
+          content.innerHTML = '<div class="loading">No videos found. Try providing manual cookies with the "Set Cookies" button.</div>';
+          return;
+        }
+
+        nextContinuationToken = data.continuation;
+        console.log('Next Token received:', nextContinuationToken ? 'YES' : 'NO');
+        
+        if (append) {
+          currentVideos = [...currentVideos, ...data.videos];
+        } else {
+          currentVideos = data.videos;
+        }
+        
+        renderVideos(currentVideos);
+
+        // Show/Hide load more button
+        if (nextContinuationToken) {
+          loadMoreContainer.style.display = 'block';
+          const btn = document.getElementById('manual-load-more');
+          btn.textContent = 'Load More Videos';
+          btn.disabled = false;
+        } else {
+          loadMoreContainer.style.display = 'none';
+        }
+
+        document.getElementById('sources').innerHTML = 
+          `<span class="source-tag">My Home (Personalized)</span> • ${currentVideos.length} videos ${nextContinuationToken ? '(Scroll or click button for more)' : '(End of feed)'}`;
+      } catch (err) {
+        if (!append) {
+          content.innerHTML = `<div class="error">Failed to load personalized feed: ${err.message}<br><br>
+          <small>On Linux, Chromium cookie decryption often fails. <br>Please use the <b>"Set Cookies"</b> button with the <b>"Get cookies.txt"</b> browser extension.</small></div>`;
+        } else {
+          alert('Failed to load more videos: ' + err.message);
+          const btn = document.getElementById('manual-load-more');
+          btn.textContent = 'Load More Videos';
+          btn.disabled = false;
+        }
+      } finally {
+        isLoadingMore = false;
+      }
+    }
+
+    // Scroll Listener for Infinite Scroll
+    window.addEventListener('scroll', () => {
+      // Only enable for personalized tab for now
+      if (currentTab !== 'personal') return;
+      if (!nextContinuationToken || isLoadingMore) return;
+
+      // Trigger load more when 200px from bottom
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+        loadPersonalized(true);
+      }
+    });
 
     async function loadFeed() {
       const content = document.getElementById('content');
@@ -341,12 +550,12 @@
         resultsDiv.innerHTML = `<ul class="video-list">${
           data.videos.map(v => `
             <li class="video-item">
-              <div class="video-title">
+              <div class="video-title ${watchedVideos.has(v.id) ? 'watched' : ''}" data-video-id="${v.id}">
                 ${escapeHtml(v.title)}
                 <span class="channel-tag">${escapeHtml(v.channel)}</span>
               </div>
               <div class="video-actions">
-                <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Audio Only</a>
+                <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}', '${v.id}')">Audio Only</a>
                 <a href="${v.url}" target="_blank">Watch on YouTube</a>
               </div>
             </li>
@@ -361,19 +570,73 @@
       }
     }
 
+    async function loadAddVideoTab() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="discover-search">
+          <input type="text" id="videoUrl" placeholder="Enter YouTube URL (e.g., https://www.youtube.com/watch?v=...)">
+          <button onclick="submitAddVideo()">Get Video</button>
+        </div>
+        <div id="addVideoResults"></div>
+      `;
+    }
+
+    async function submitAddVideo() {
+      const url = document.getElementById('videoUrl').value.trim();
+      if (!url) return;
+
+      const resultsDiv = document.getElementById('addVideoResults');
+      resultsDiv.innerHTML = '<div class="loading">Fetching video info...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/youtube/video-info?url=${encodeURIComponent(url)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (data.videos.length === 0) {
+          resultsDiv.innerHTML = '<div class="loading">Video not found or info hidden.</div>';
+          return;
+        }
+
+        const v = data.videos[0];
+        resultsDiv.innerHTML = `
+          <ul class="video-list">
+            <li class="video-item">
+              <div class="video-title ${watchedVideos.has(v.id) ? 'watched' : ''}" data-video-id="${v.id}">${escapeHtml(v.title)}</div>
+              <div class="channel-tag">${escapeHtml(v.channel)}</div>
+              <div class="video-actions">
+                <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}', '${v.id}')">Audio</a>
+                <a href="#" onclick="watchVideo('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}', '${v.id}')">Video</a>
+                <a href="${v.url}" target="_blank">Watch on YouTube</a>
+              </div>
+            </li>
+          </ul>
+        `;
+      } catch (err) {
+        resultsDiv.innerHTML = `<div class="error">Failed to get video: ${err.message}</div>`;
+      }
+    }
+
     function renderVideos(videos) {
       const content = document.getElementById('content');
       const html = `<ul class="video-list">${
         videos.map(v => `
           <li class="video-item">
-            <div class="video-title">
+            <div class="video-title ${watchedVideos.has(v.id) ? 'watched' : ''}" data-video-id="${v.id}">
               ${escapeHtml(v.title)}
+              ${v.duration ? `<span class="duration-badge">${v.duration}</span>` : ''}
             </div>
-            <div class="channel-tag">${escapeHtml(v.channel)}</div>
+            <div class="channel-tag ${v.channel === 'YouTube Shorts' ? 'shorts-tag' : ''}">
+              <!-- ${v.channelLogo ? `<img src="${v.channelLogo}" class="channel-logo" loading="lazy">` : ''} -->
+              ${v.channel === 'YouTube Shorts' ? '⚡ ' : ''}${escapeHtml(v.channel)}
+            </div>
+            <div class="video-meta">
+              ${v.views ? `<span>${v.views}</span>` : ''}
+              ${v.published ? ` • <span>${v.published}</span>` : ''}
+            </div>
             <div class="video-actions">
-              <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Audio Only</a>
-              <a href="#" onclick="watchVideo('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}')">Download and Watch Video</a>
-              <a href="${v.url}" target="_blank">Watch on YouTube</a>
+              <a href="#" onclick="playAudio('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}', '${v.id}')">Audio</a>
+              <a href="#" onclick="watchVideo('${escapeHtml(v.url)}', '${escapeHtml(v.title).replace(/'/g, "\\'")}', '${v.id}')">Video</a>
             </div>
           </li>
         `).join('')
@@ -381,8 +644,9 @@
       content.innerHTML = html;
     }
 
-    async function playAudio(url, title) {
+    async function playAudio(url, title, vId) {
       event.preventDefault();
+      markAsWatched(vId);
       const player = document.getElementById('audioPlayer');
       const audio = document.getElementById('audio');
       const nowPlaying = document.getElementById('nowPlaying');
@@ -396,33 +660,49 @@
         const data = await res.json();
 
         audio.src = data.url;
-        nowPlaying.textContent = 'Playing: ' + title;
+        audio.playbackRate = 1.5; // Default to 1.5x speed
+        nowPlaying.textContent = 'Playing (1.5x): ' + title;
       } catch (err) {
         alert('Error: ' + err.message);
         player.classList.remove('active');
       }
     }
 
-    async function watchVideo(url, title) {
+    async function watchVideo(url, title, vId) {
       event.preventDefault();
+      markAsWatched(vId);
       const status = document.getElementById('sources');
       const originalStatus = status.innerHTML;
-
-      status.innerHTML = `<span class="loading">Extracting video URL for: ${escapeHtml(title)}...</span>`;
+      const modal = document.getElementById('videoPlayerModal');
+      const video = document.getElementById('videoPlayer');
+      
+      status.innerHTML = `<span class="loading">Preparing internal player for: ${escapeHtml(title)}...</span>`;
 
       try {
         const res = await fetch(`${API_BASE}/api/youtube/video?url=${encodeURIComponent(url)}`);
         if (!res.ok) throw new Error('Failed to extract video URL');
         const data = await res.json();
-
-        // Open the direct stream URL in a new tab
-        window.open(data.url, '_blank');
+        
+        // Load into internal player instead of new tab
+        video.src = data.url;
+        video.playbackRate = 1.5; // Default to 1.5x speed
+        modal.classList.add('active');
         status.innerHTML = originalStatus;
       } catch (err) {
         alert('Error: ' + err.message);
         status.innerHTML = originalStatus;
       }
     }
+
+    function closeVideoPlayer() {
+      const modal = document.getElementById('videoPlayerModal');
+      const video = document.getElementById('videoPlayer');
+      video.pause();
+      video.src = '';
+      modal.classList.remove('active');
+    }
+
+    function closePlayer() {
       const player = document.getElementById('audioPlayer');
       const audio = document.getElementById('audio');
       audio.pause();
@@ -462,6 +742,25 @@
 
     // Load personalized feed on page load
     loadPersonalized();
+
+    // Keyboard Shortcuts for Audio Player
+    window.addEventListener('keydown', (e) => {
+      const audio = document.getElementById('audio');
+      const activeElement = document.activeElement;
+      
+      // Don't trigger if user is typing in an input or textarea
+      if (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        audio.currentTime = Math.max(0, audio.currentTime - 10);
+      }
+    });
   </script>
 </body>
 </html>

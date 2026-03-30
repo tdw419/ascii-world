@@ -1,3 +1,9 @@
 {
-  "channels": []
+  "channels": [
+    {
+      "id": "@NateBJones",
+      "url": "https://www.youtube.com/@NateBJones",
+      "name": "@NateBJones"
+    }
+  ]
 }

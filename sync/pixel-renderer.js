@@ -31,29 +31,38 @@ const COLORS = {
 };
 
 // Character → color mapping based on semantic meaning
-function charColor(ch, prevCh, nextCh) {
+function charColor(ch, prevCh, nextCh, pulse = 1.0) {
+    let color;
+
     // Status indicators
-    if (ch === '●') return COLORS.green;
-    if (ch === '○') return COLORS.dim;
-    if (ch === '◉') return COLORS.red;
-    if (ch === '◐' || ch === '◑') return COLORS.yellow;
-    if (ch === '✗') return COLORS.red;
+    if (ch === '●') color = COLORS.green;
+    else if (ch === '○') color = COLORS.dim;
+    else if (ch === '◉') color = COLORS.red;
+    else if (ch === '◐' || ch === '◑') color = COLORS.yellow;
+    else if (ch === '✗') color = COLORS.red;
 
     // Box drawing characters
-    const code = ch.charCodeAt(0);
-    if (code >= 0x2500 && code <= 0x257F) return COLORS.border;  // Box Drawing
-    if (code >= 0x2550 && code <= 0x256C) return COLORS.cyan;    // Double borders
-    if (code >= 0x2580 && code <= 0x259F) {                      // Block elements
-        if (ch === '█' || ch === '▓') return COLORS.bar_fill;
-        if (ch === '░') return COLORS.bar_empty;
-        // Sparkline blocks
-        return COLORS.cyan;
+    else {
+        const code = ch.charCodeAt(0);
+        if (code >= 0x2500 && code <= 0x257F) color = COLORS.border;  // Box Drawing
+        else if (code >= 0x2550 && code <= 0x256C) color = COLORS.cyan;    // Double borders
+        else if (code >= 0x2580 && code <= 0x259F) {                      // Block elements
+            if (ch === '█' || ch === '▓') color = COLORS.bar_fill;
+            else if (ch === '░') color = COLORS.bar_empty;
+            else color = COLORS.cyan; // Sparkline blocks
+        }
+        // Bracket keys [A]
+        else if (ch === '[' || ch === ']') color = COLORS.cyan;
+        else color = COLORS.fg;
     }
 
-    // Bracket keys [A]
-    if (ch === '[' || ch === ']') return COLORS.cyan;
+    // Apply Signature Pulse (Phase 1: Molecular Foundation)
+    // Only apply pulse to active status symbols and agent markers
+    if (ch === '●' || ch === '◉' || ch === '◐' || ch === '◑' || (ch >= 'A' && ch <= 'Z')) {
+        return [color[0], color[1], color[2], Math.floor(color[3] * pulse)];
+    }
 
-    return COLORS.fg;
+    return color;
 }
 
 // ── Bitmap Font (6x10, embedded) ───────────────────────────────────────
@@ -230,6 +239,10 @@ function generateGlyphBitmap(charCode) {
 export function renderToPixels(asciiContent) {
     if (FONT_DATA.size === 0) initFont();
 
+    // Calculate Entropic Heartbeat (Signature Pulse)
+    const t = Date.now() / 1000;
+    const pulse = 0.7 + 0.3 * Math.sin(t * 2 * Math.PI); // 2Hz pulse between 0.7 and 1.0
+
     const data = new Uint8Array(PIXEL_W * PIXEL_H * 4);
 
     // Fill background
@@ -249,7 +262,7 @@ export function renderToPixels(asciiContent) {
             const ch = chars[col];
             const codePoint = ch.codePointAt(0);
             const bitmap = FONT_DATA.get(codePoint) || FONT_DATA.get(0);
-            const color = charColor(ch, chars[col - 1], chars[col + 1]);
+            const color = charColor(ch, chars[col - 1], chars[col + 1], pulse);
 
             if (!bitmap) continue;
 

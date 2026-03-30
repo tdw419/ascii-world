@@ -630,7 +630,7 @@ export class ManagerServer {
 
         // Fetch view from managed project
         try {
-            const response = await fetch(`http://localhost:${project.port}/view`);
+            const response = await fetch(`http://localhost:${project.port}/view`, { headers: { "Accept": "application/json" } });
 
             if (!response.ok) {
                 const templateData = {
@@ -1113,7 +1113,7 @@ export class ManagerServer {
         }
 
         try {
-            const response = await fetch(`http://localhost:${project.port}/view`);
+            const response = await fetch(`http://localhost:${project.port}/view`, { headers: { "Accept": "application/json" } });
 
             if (!response.ok) {
                 return this.jsonResponse({

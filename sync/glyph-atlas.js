@@ -184,4 +184,36 @@ export class GlyphAtlas {
     drawTextCell(buf, col, row, text, color) {
         this.drawText(buf, col * this.glyphW, row * this.glyphH, text, color);
     }
+
+    /**
+     * High-performance 32-bit text drawing.
+     * Uses setPixel32 and skips empty rows.
+     */
+    drawText32(buf, px, py, text, rgba32) {
+        let cx = px;
+        const width = buf.width;
+        const data32 = buf.data32;
+
+        for (const ch of text) {
+            const bitmap = this.getGlyph(ch);
+            for (let gy = 0; gy < this.glyphH; gy++) {
+                const row = bitmap[gy] || 0;
+                if (row === 0) continue; // Skip empty rows
+                
+                const screenY = py + gy;
+                if (screenY < 0 || screenY >= buf.height) continue;
+                const rowOff = screenY * width;
+
+                for (let gx = 0; gx < this.glyphW; gx++) {
+                    if (row & (1 << (this.glyphW - 1 - gx))) {
+                        const screenX = cx + gx;
+                        if (screenX >= 0 && screenX < width) {
+                            data32[rowOff + screenX] = rgba32;
+                        }
+                    }
+                }
+            }
+            cx += this.glyphW;
+        }
+    }
 }

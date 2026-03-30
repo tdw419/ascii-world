@@ -103,4 +103,48 @@ describe('PxOSServer', () => {
         const res = await fetch('http://localhost:3840/unknown');
         assert.strictEqual(res.status, 404);
     });
+
+    describe('Multi-Renderer API', () => {
+        const sampleASCII = '╔════════╗\n║ TEST   ║\n╚════════╝';
+
+        it('GET /api/v1/render/html returns default state as HTML', async () => {
+            const res = await fetch('http://localhost:3840/api/v1/render/html');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.headers.get('content-type'), 'text/html');
+            const html = await res.text();
+            assert.ok(html.includes('<pre class="ascii-world'));
+        });
+
+        it('POST /api/v1/render/python renders provided ASCII', async () => {
+            const res = await fetch('http://localhost:3840/api/v1/render/python', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: sampleASCII })
+            });
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.headers.get('content-type'), 'text/x-python');
+            const code = await res.text();
+            assert.ok(code.includes('class ASCIIWorld:'));
+            assert.ok(code.includes('TEST'));
+        });
+
+        it('POST /api/v1/render/svg renders provided ASCII', async () => {
+            const res = await fetch('http://localhost:3840/api/v1/render/svg', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: sampleASCII })
+            });
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.headers.get('content-type'), 'image/svg+xml');
+            const svg = await res.text();
+            assert.ok(svg.includes('<svg'));
+        });
+
+        it('returns 400 for unknown format', async () => {
+            const res = await fetch('http://localhost:3840/api/v1/render/unknown');
+            assert.strictEqual(res.status, 400);
+            const data = await res.json();
+            assert.ok(data.error.includes('Unknown format'));
+        });
+    });
 });

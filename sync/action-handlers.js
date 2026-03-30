@@ -1,5 +1,10 @@
 // action-handlers.js - Process GUI actions and update ASCII
 import { updateHash, extractHash } from './hash-utils.js';
+import fs from 'fs/promises';
+import path from 'path';
+
+const DATA_DIR = process.env.DATA_DIR || path.join(import.meta.dirname, '../data');
+const AIPM_CMD_FILE = process.env.AIPM_CMD_FILE || '/home/jericho/zion/projects/aipm/data/aipm-web-cmd.json';
 
 /**
  * Process a button click action
@@ -35,11 +40,53 @@ export function handleButtonClick(content, action) {
         changes.push(`Exit requested - no state change`);
     }
 
+    // AIPM-specific actions
+    const key = action.key.toUpperCase();
+    if (['P', 'R', 'I', 'S'].includes(key)) {
+        handleAipmAction(key, changes);
+    }
+
     // Update hash
     newContent = updateHash(newContent);
     const newHash = extractHash(newContent);
 
     return { content: newContent, changes, newHash };
+}
+
+/**
+ * Handle AIPM-specific button actions
+ */
+async function handleAipmAction(key, changes) {
+    try {
+        const timestamp = Date.now();
+        let cmd = null;
+
+        switch (key) {
+            case 'P':
+                cmd = { action: 'pause', reason: 'via web UI', timestamp };
+                changes.push('AIPM: Pausing autonomous processing');
+                break;
+            case 'R':
+                cmd = { action: 'resume', reason: 'via web UI', timestamp };
+                changes.push('AIPM: Resuming autonomous processing');
+                break;
+            case 'I':
+                cmd = { action: 'inject', title: 'Injected from web UI', timestamp };
+                changes.push('AIPM: Inject command triggered');
+                break;
+            case 'S':
+                changes.push('AIPM: Status refresh - no action needed');
+                return;
+        }
+
+        if (cmd) {
+            await fs.writeFile(AIPM_CMD_FILE, JSON.stringify(cmd, null, 2));
+            console.log(`AIPM command written: ${cmd.action}`);
+        }
+    } catch (err) {
+        console.error('Failed to write AIPM command:', err);
+        changes.push(`AIPM command failed: ${err.message}`);
+    }
 }
 
 /**

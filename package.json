@@ -13,6 +13,7 @@
     "test:watch": "node --test --watch tests/*.test.js"
   },
   "dependencies": {
+    "blessed": "^0.1.81",
     "sharp": "^0.33.0",
     "ws": "^8.18.0"
   },

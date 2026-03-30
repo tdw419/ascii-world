@@ -78,4 +78,52 @@ export class GpuBridge {
 
         this.cellStore.setCells(changes);
     }
+
+    /**
+     * Push pixels (SIT bonds) directly to the hardware VRAM via Hilbert Clock poke.
+     * @param {Array<{x: number, y: number, r: number, g: number, b: number}>} pixels 
+     */
+    async pushPixels(pixels) {
+        console.log(`[GPU-BRIDGE] Pushing ${pixels.length} pixels to hardware...`);
+        
+        for (const px of pixels) {
+            // Calculate 1D address (simple linear mapping for now, or Hilbert if required)
+            // Infinite Map uses linear addresses for pokes
+            const addr = px.y * 2560 + px.x; 
+            
+            // Pack RGBA (8-bit each) into 32-bit uint
+            // Format: 0xRRGGBBAA
+            const val = (px.r << 24) | (px.g << 16) | (px.b << 8) | 0xFF;
+            
+            try {
+                await this.poke(addr, val);
+            } catch (err) {
+                console.error(`[GPU-BRIDGE] Poke failed at ${px.x},${px.y}:`, err.message);
+            }
+        }
+    }
+
+    /**
+     * Call the /poke endpoint on the Rust daemon.
+     */
+    poke(addr, val) {
+        return new Promise((resolve, reject) => {
+            const url = new URL(`${this.daemonUrl}poke`);
+            url.searchParams.set('addr', `0x${addr.toString(16)}`);
+            
+            const req = http.request(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                }
+            }, (res) => {
+                res.on('data', () => {});
+                res.on('end', () => resolve());
+            });
+
+            req.on('error', reject);
+            req.write(`0x${val.toString(16).padStart(8, '0')}`);
+            req.end();
+        });
+    }
 }

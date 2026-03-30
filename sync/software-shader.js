@@ -214,4 +214,324 @@ export class SoftwareShader {
     }
 }
 
+/**
+ * Easing functions for animation interpolation
+ */
+export const Easing = {
+    linear: (t) => t,
+    easeInQuad: (t) => t * t,
+    easeOutQuad: (t) => t * (2 - t),
+    easeInOutQuad: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+    easeInCubic: (t) => t * t * t,
+    easeOutCubic: (t) => (--t) * t * t + 1,
+    easeInOutCubic: (t) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+    easeInOutSine: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
+};
+
+/**
+ * RgbAnimation — Time-based animation controller for software shaders.
+ *
+ * Provides:
+ * - Managed animation loop with configurable FPS
+ * - Easing functions for smooth transitions
+ * - Shader layering (background + foreground)
+ * - Per-frame time delta and elapsed time tracking
+ * - Start/stop/pause/resume lifecycle
+ */
+export class RgbAnimation {
+    /**
+     * @param {Object} options
+     * @param {PixelBuffer} options.buffer - Target pixel buffer
+     * @param {Function} options.shader - Shader function (x, y, t, elapsed, dt) => color
+     * @param {number} [options.fps=30] - Target frames per second
+     * @param {Object} [options.region] - Render region { x, y, w, h }
+     * @param {boolean} [options.useFastPath=false] - Use renderFast (shader must return packed Uint32)
+     * @param {Function} [options.onFrame] - Callback after each frame render(context)
+     * @param {Function} [options.easing] - Easing function for time interpolation
+     * @param {number} [options.duration] - Duration in seconds (0 = infinite)
+     * @param {boolean} [options.loop=true] - Loop animation when duration is set
+     */
+    constructor(options = {}) {
+        this.buffer = options.buffer || null;
+        this.shader = options.shader || null;
+        this.fps = options.fps || 30;
+        this.region = options.region || null;
+        this.useFastPath = options.useFastPath || false;
+        this.onFrame = options.onFrame || null;
+        this.easing = options.easing || Easing.linear;
+        this.duration = options.duration || 0;
+        this.loop = options.loop !== false;
+
+        // State
+        this._running = false;
+        this._paused = false;
+        this._startTime = 0;
+        this._pausedAt = 0;
+        this._pauseAccum = 0;
+        this._frameCount = 0;
+        this._lastFrameTime = 0;
+        this._timer = null;
+        this._lastDt = 0;
+
+        // Layer support
+        this._layers = [];
+
+        // Mouse state (updated by user code or attached MouseInput)
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.mouseDown = false;
+    }
+
+    /**
+     * Add an additional shader layer.
+     * Layers are rendered in order; later layers draw on top.
+     * Each layer: { shader, region?, blend?, opacity? }
+     */
+    addLayer(layer) {
+        this._layers.push({
+            shader: layer.shader,
+            region: layer.region || null,
+            blend: layer.blend || 'overwrite',
+            opacity: layer.opacity !== undefined ? layer.opacity : 1.0,
+        });
+        return this;
+    }
+
+    /**
+     * Remove all layers
+     */
+    clearLayers() {
+        this._layers = [];
+        return this;
+    }
+
+    /**
+     * Start the animation loop
+     */
+    start() {
+        if (this._running) return this;
+        this._running = true;
+        this._paused = false;
+        this._startTime = performance.now();
+        this._pauseAccum = 0;
+        this._frameCount = 0;
+        this._lastFrameTime = this._startTime;
+
+        const interval = Math.max(1, Math.floor(1000 / this.fps));
+        this._timer = setInterval(() => this._tick(), interval);
+        return this;
+    }
+
+    /**
+     * Stop the animation loop
+     */
+    stop() {
+        this._running = false;
+        this._paused = false;
+        if (this._timer) {
+            clearInterval(this._timer);
+            this._timer = null;
+        }
+        return this;
+    }
+
+    /**
+     * Pause the animation
+     */
+    pause() {
+        if (!this._running || this._paused) return this;
+        this._paused = true;
+        this._pausedAt = performance.now();
+        return this;
+    }
+
+    /**
+     * Resume from pause
+     */
+    resume() {
+        if (!this._paused) return this;
+        this._paused = false;
+        this._pauseAccum += performance.now() - this._pausedAt;
+        return this;
+    }
+
+    /**
+     * Check if animation is running
+     */
+    get isRunning() { return this._running && !this._paused; }
+
+    /**
+     * Check if animation is paused
+     */
+    get isPaused() { return this._paused; }
+
+    /**
+     * Get total elapsed seconds (excluding paused time)
+     */
+    get elapsed() {
+        if (!this._running) return 0;
+        const now = this._paused ? this._pausedAt : performance.now();
+        return (now - this._startTime - this._pauseAccum) / 1000;
+    }
+
+    /**
+     * Get total frame count
+     */
+    get frameCount() { return this._frameCount; }
+
+    /**
+     * Get last frame delta time in seconds
+     */
+    get lastDt() { return this._lastDt; }
+
+    /**
+     * Internal tick: render one frame
+     */
+    _tick() {
+        if (!this._running || this._paused || !this.buffer || !this.shader) return;
+
+        const now = performance.now();
+        const elapsed = this.elapsed;
+        this._lastDt = (now - this._lastFrameTime) / 1000;
+        this._lastFrameTime = now;
+
+        // Check duration
+        if (this.duration > 0 && elapsed >= this.duration) {
+            if (this.loop) {
+                // Reset timing for loop
+                this._startTime = now;
+                this._pauseAccum = 0;
+            } else {
+                this.stop();
+                return;
+            }
+        }
+
+        // Compute eased time
+        let t = elapsed;
+        if (this.duration > 0) {
+            const rawProgress = (elapsed % this.duration) / this.duration;
+            t = this.easing(rawProgress);
+        }
+
+        // Render base shader
+        this._renderShader(this.shader, this.region, t, elapsed);
+
+        // Render layers
+        for (const layer of this._layers) {
+            this._renderLayer(layer, t, elapsed);
+        }
+
+        this._frameCount++;
+
+        // Callback
+        if (this.onFrame) {
+            this.onFrame({
+                elapsed,
+                t,
+                dt: this._lastDt,
+                frameCount: this._frameCount,
+                mouseX: this.mouseX,
+                mouseY: this.mouseY,
+                mouseDown: this.mouseDown,
+                buffer: this.buffer,
+            });
+        }
+    }
+
+    /**
+     * Render a single shader
+     */
+    _renderShader(shader, region, t, elapsed) {
+        // Wrap shader to pass additional animation context
+        const wrappedShader = (x, y, time) => {
+            return shader(x, y, time, elapsed, this._lastDt);
+        };
+
+        if (this.useFastPath) {
+            SoftwareShader.renderFast(this.buffer, wrappedShader, region, t);
+        } else {
+            SoftwareShader.render(this.buffer, wrappedShader, region, t);
+        }
+    }
+
+    /**
+     * Render a layer with optional alpha blending
+     */
+    _renderLayer(layer, t, elapsed) {
+        if (layer.opacity >= 1.0 && layer.blend === 'overwrite') {
+            this._renderShader(layer.shader, layer.region, t, elapsed);
+            return;
+        }
+
+        // Alpha blend: render to temp, composite
+        if (layer.opacity < 1.0 && this.buffer) {
+            const region = layer.region;
+            const x0 = region?.x || 0;
+            const y0 = region?.y || 0;
+            const w = region?.w || this.buffer.width;
+            const h = region?.h || this.buffer.height;
+
+            for (let y = Math.max(0, y0); y < Math.min(this.buffer.height, y0 + h); y++) {
+                for (let x = Math.max(0, x0); x < Math.min(this.buffer.width, x0 + w); x++) {
+                    const result = layer.shader(x, y, t, elapsed, this._lastDt);
+                    const c = normalizeColor(result);
+                    const alpha = layer.opacity;
+                    const [or, og, ob] = this.buffer.getPixel(x, y);
+                    this.buffer.setPixel(x, y,
+                        (or * (1 - alpha) + c.r * alpha) | 0,
+                        (og * (1 - alpha) + c.g * alpha) | 0,
+                        (ob * (1 - alpha) + c.b * alpha) | 0,
+                        255
+                    );
+                }
+            }
+        } else {
+            this._renderShader(layer.shader, layer.region, t, elapsed);
+        }
+    }
+
+    /**
+     * Render a single frame manually (no timer). Useful for testing.
+     * @param {number} t - Time parameter
+     * @param {number} elapsed - Elapsed seconds
+     * @param {number} dt - Delta time
+     */
+    renderFrame(t = 0, elapsed = 0, dt = 0) {
+        if (!this.buffer || !this.shader) return;
+
+        this._lastDt = dt;
+        const wrappedShader = (x, y, time) => {
+            return this.shader(x, y, time, elapsed, dt);
+        };
+
+        if (this.useFastPath) {
+            SoftwareShader.renderFast(this.buffer, wrappedShader, this.region, t);
+        } else {
+            SoftwareShader.render(this.buffer, wrappedShader, this.region, t);
+        }
+
+        for (const layer of this._layers) {
+            if (layer.opacity >= 1.0 && layer.blend === 'overwrite') {
+                this._renderShader(layer.shader, layer.region, t, elapsed);
+            } else if (layer.opacity < 1.0) {
+                this._renderLayer(layer, t, elapsed);
+            } else {
+                this._renderShader(layer.shader, layer.region, t, elapsed);
+            }
+        }
+
+        this._frameCount++;
+    }
+
+    /**
+     * Update mouse state (called by user code or MouseInput integration)
+     */
+    setMouseState(x, y, down) {
+        this.mouseX = x;
+        this.mouseY = y;
+        if (down !== undefined) this.mouseDown = down;
+    }
+}
+
 export { compileFormula, normalizeColor };

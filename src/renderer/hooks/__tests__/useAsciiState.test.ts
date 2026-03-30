@@ -1,7 +1,6 @@
 // src/renderer/hooks/__tests__/useAsciiState.test.ts
 
-import '../../test-setup';
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useAsciiState } from '../useAsciiState';
 

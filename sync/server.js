@@ -141,6 +141,11 @@ export class PxOSServer {
     async stop() {
         // Stop GPU Bridge
         this.gpuBridge.stop();
+
+        // Stop Evolutionary Agent
+        if (this.evoAgent && this.evoAgent.stop) {
+            this.evoAgent.stop();
+        }
         
         // Stop GPU Agent Bridge
         await this.gpuAgentBridge.stop();
@@ -153,6 +158,7 @@ export class PxOSServer {
                 this.wss.close();
             }
             if (this.httpServer) {
+                this.httpServer.closeAllConnections();
                 this.httpServer.close(() => {
                     console.log('pxOS server stopped');
                     resolve();

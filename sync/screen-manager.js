@@ -41,8 +41,8 @@ export class Window {
         this.id = options.id || `win_${Window._nextId++}`;
         this.col = options.col || 0;
         this.row = options.row || 0;
-        this.width = Math.max(1, options.width || 10);
-        this.height = Math.max(1, options.height || 5);
+        this.width = Math.max(1, options.width ?? 10);
+        this.height = Math.max(1, options.height ?? 5);
         this.title = options.title || null;
         this.border = options.border !== false;
         this.fg = options.fg || [255, 255, 255, 255];

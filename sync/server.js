@@ -25,7 +25,8 @@ import { YouTubeExtractor } from './youtube-extractor.js';
 import { ContentStore } from './content-store.js';
 import { Router } from './router.js';
 import { NavigationRenderer } from './navigation-renderer.js';
-import { readFileSync, writeFileSync, existsSync, readFile } from 'fs';
+import { ThemeEditor, DEFAULT_THEME, THEME_PRESETS } from './theme-editor.js';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -84,6 +85,11 @@ export class PxOSServer {
         this.cmsRouter = new Router(this.cmsContentStore);
         this.cmsNavRenderer = new NavigationRenderer(this.cmsRouter, {
             style: 'horizontal',
+        });
+
+        // CMS: Theme Editor
+        this.themeEditor = new ThemeEditor({
+            themesDir: './themes',
         });
 
         // Setup alert notifiers
@@ -340,6 +346,17 @@ export class PxOSServer {
                 this.handleCMSNav(req, res);
             } else if (pathname === '/api/cms/page' && req.method === 'GET') {
                 this.handleCMSPage(req, res, url);
+            // CMS Theme Editor API
+            } else if (pathname === '/api/cms/theme' && req.method === 'GET') {
+                this.handleCMSThemeGet(req, res);
+            } else if (pathname === '/api/cms/theme/save' && req.method === 'POST') {
+                await this.handleCMSThemeSave(req, res);
+            } else if (pathname === '/api/cms/theme/reset' && req.method === 'POST') {
+                this.handleCMSThemeReset(req, res);
+            } else if (pathname === '/api/cms/theme/preset' && req.method === 'GET') {
+                this.handleCMSThemePreset(req, res, url);
+            } else if (pathname === '/api/cms/theme/preview' && req.method === 'GET') {
+                this.handleCMSThemePreview(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -642,6 +659,21 @@ export class PxOSServer {
                 } else if (msg.type === 'cms:forward') {
                     const result = this.cmsRouter.forward();
                     ws.send(JSON.stringify({ type: 'cms:navigation', action: 'forward', result }));
+                } else if (msg.type === 'cms:theme:edit') {
+                    // Live theme editing via WebSocket
+                    const action = this.themeEditor.handleKey(msg.key);
+                    const theme = this.themeEditor.getTheme();
+                    ws.send(JSON.stringify({ type: 'cms:theme:updated', action, theme }));
+                } else if (msg.type === 'cms:theme:set') {
+                    // Set a specific theme property
+                    const { prop, value } = msg;
+                    try {
+                        this.themeEditor.setProperty(prop, value);
+                        const theme = this.themeEditor.getTheme();
+                        ws.send(JSON.stringify({ type: 'cms:theme:updated', action: 'set', theme }));
+                    } catch (err) {
+                        ws.send(JSON.stringify({ type: 'cms:theme:error', error: err.message }));
+                    }
                 }
             } catch {}
         });
@@ -680,6 +712,68 @@ export class PxOSServer {
         const slug = url.searchParams.get('slug') || '';
         const result = this.cmsRouter.resolve(slug);
         this.sendJSON(res, 200, result);
+    }
+
+    // ─────────────────────────────────────────────────────
+    // CMS Theme Editor Handlers
+    // ─────────────────────────────────────────────────────
+
+    handleCMSThemeGet(req, res) {
+        const theme = this.themeEditor.getTheme();
+        this.sendJSON(res, 200, { theme });
+    }
+
+    async handleCMSThemeSave(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const overrides = body ? JSON.parse(body) : {};
+            if (overrides.name || overrides.theme) {
+                const themeData = overrides.theme || overrides;
+                this.themeEditor.setTheme(themeData);
+            }
+            const saved = this.themeEditor.save();
+
+            // Persist to themes/custom.json
+            const themesDir = this.themeEditor.themesDir;
+            if (themesDir) {
+                const filePath = path.join(themesDir, 'custom.json');
+                const dir = path.dirname(filePath);
+                if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+                writeFileSync(filePath, JSON.stringify(saved, null, 2));
+            }
+
+            this.sendJSON(res, 200, { ok: true, theme: saved });
+        } catch (err) {
+            this.sendError(res, 500, `Theme save error: ${err.message}`);
+        }
+    }
+
+    handleCMSThemeReset(req, res) {
+        const theme = this.themeEditor.reset();
+        this.sendJSON(res, 200, { ok: true, theme });
+    }
+
+    handleCMSThemePreset(req, res, url) {
+        const name = url.searchParams.get('name') || '';
+        if (name) {
+            const applied = this.themeEditor.applyPreset(name);
+            if (!applied) {
+                return this.sendError(res, 404, `Unknown preset: ${name}`);
+            }
+            return this.sendJSON(res, 200, { ok: true, theme: this.themeEditor.getTheme() });
+        }
+        // List available presets
+        const presets = {};
+        for (const [key, val] of Object.entries(THEME_PRESETS)) {
+            presets[key] = val.name || key;
+        }
+        this.sendJSON(res, 200, { presets });
+    }
+
+    handleCMSThemePreview(req, res) {
+        const ascii = this.themeEditor.renderPreview();
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(ascii);
     }
 
     readBody(req) {

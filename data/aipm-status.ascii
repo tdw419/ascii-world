@@ -17,7 +17,7 @@
 │ ◉ glyphlang        │ red     │ 55/55    │ 0p 1a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
 │ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
-│ ◉ openmind         │ red     │ n/a      │ 2p 0a                       │
+│ ◉ openmind         │ red     │ n/a      │ 1p 1a                       │
 │ ● pixel-linux      │ green   │ n/a      │ 0p 0a                       │
 │ ● pixel-poc        │ green   │ n/a      │ 0p 0a                       │
 │ ● rhythmbox-tools  │ green   │ n/a      │ 0p 0a                       │
@@ -26,7 +26,7 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: 620c432cd81d
+│ Commit: 4ebab35499ec
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘

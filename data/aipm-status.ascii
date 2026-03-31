@@ -26,7 +26,7 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: a6f3afe72ac0
+│ Commit: 605c715904b9
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘

@@ -354,7 +354,11 @@ export class PxOSServer {
             } else if (pathname === '/api/youtube/cookies' && req.method === 'POST') {
                 await this.handleYouTubeCookies(req, res);
             } else if (pathname === '/api/youtube/personalized') {
-                await this.handleYouTubePersonalized(req, res);
+                await this.handleYouTubePersonalized(req, res, url);
+            } else if (pathname === '/api/youtube/personalized/v2') {
+                await this.handleYouTubePersonalizedV2(req, res, url);
+            } else if (pathname === '/api/youtube/subscriptions') {
+                await this.handleYouTubeSubscriptions(req, res);
             } else if (pathname === '/api/youtube/discover') {
                 await this.handleYouTubeDiscover(req, res, url);
             // CMS Navigation & Routing

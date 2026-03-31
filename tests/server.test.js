@@ -1,5 +1,5 @@
 // tests/server.test.js
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { PxOSServer } from '../sync/server.js';
 
@@ -8,6 +8,9 @@ describe('PxOSServer', () => {
 
     beforeEach(async () => {
         server = new PxOSServer(3840); // Use different port for tests
+        // Clear CMS content store so tests don't leak across runs
+        server.cmsContentStore.items.clear();
+        server.cmsContentStore.manifests.clear();
         await server.start();
         // Small delay to ensure server is fully ready
         await new Promise(r => setTimeout(r, 100));
@@ -145,6 +148,184 @@ describe('PxOSServer', () => {
             assert.strictEqual(res.status, 400);
             const data = await res.json();
             assert.ok(data.error.includes('Unknown format'));
+        });
+    });
+
+    // ── CMS Navigation & Routing API ────────────────────────────
+
+    describe('CMS Navigation API', () => {
+        it('GET /api/cms/nav returns navigation tree and history', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/nav');
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.ok(Array.isArray(data.tree));
+            assert.ok(data.history);
+            assert.ok('history' in data.history);
+            assert.ok('index' in data.history);
+        });
+
+        it('GET /api/cms/nav reflects manifests added to content store', async () => {
+            server.cmsContentStore.createManifest({ title: 'Test Page', slug: 'test-page' });
+            const res = await fetch('http://localhost:3840/api/cms/nav');
+            const data = await res.json();
+            assert.strictEqual(data.tree.length, 1);
+            assert.strictEqual(data.tree[0].title, 'Test Page');
+            assert.strictEqual(data.tree[0].path, '/test-page');
+        });
+
+        it('GET /api/cms/nav reflects nested page hierarchy', async () => {
+            server.cmsContentStore.createManifest({ title: 'Blog', slug: 'blog' });
+            server.cmsContentStore.createManifest({ title: 'Blog Post', slug: 'blog/post-1' });
+            const res = await fetch('http://localhost:3840/api/cms/nav');
+            const data = await res.json();
+            assert.strictEqual(data.tree.length, 1);
+            assert.strictEqual(data.tree[0].title, 'Blog');
+            assert.strictEqual(data.tree[0].children.length, 1);
+            assert.strictEqual(data.tree[0].children[0].title, 'Blog Post');
+        });
+
+        it('GET /api/cms/page resolves an existing slug', async () => {
+            const m = server.cmsContentStore.createManifest({ title: 'About', slug: 'about' });
+            const res = await fetch('http://localhost:3840/api/cms/page?slug=about');
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.slug, 'about');
+            assert.strictEqual(data.is404, false);
+            assert.ok(data.manifest);
+            assert.strictEqual(data.manifest.id, m.id);
+        });
+
+        it('GET /api/cms/page returns 404 for unknown slug', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/page?slug=no-such-page');
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.is404, true);
+            assert.strictEqual(data.manifest, null);
+        });
+
+        it('GET /api/cms/page resolves with leading slash normalization', async () => {
+            server.cmsContentStore.createManifest({ title: 'Home', slug: 'home' });
+            const res = await fetch('http://localhost:3840/api/cms/page?slug=/home');
+            const data = await res.json();
+            assert.strictEqual(data.slug, 'home');
+            assert.strictEqual(data.is404, false);
+        });
+
+        it('GET /api/cms/page with empty slug returns 404', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/page?slug=');
+            const data = await res.json();
+            assert.strictEqual(data.is404, true);
+        });
+
+        it('CMS router navigate updates history reflected in /api/cms/nav', async () => {
+            server.cmsContentStore.createManifest({ title: 'Page A', slug: 'page-a' });
+            server.cmsContentStore.createManifest({ title: 'Page B', slug: 'page-b' });
+            server.cmsRouter.navigate('page-a');
+            server.cmsRouter.navigate('page-b');
+
+            const res = await fetch('http://localhost:3840/api/cms/nav');
+            const data = await res.json();
+            assert.deepStrictEqual(data.history.history, ['page-a', 'page-b']);
+            assert.strictEqual(data.history.index, 1);
+            assert.strictEqual(data.history.current, 'page-b');
+        });
+    });
+
+    // ── CMS WebSocket Navigation ────────────────────────────────
+
+    describe('CMS WebSocket Navigation', () => {
+        let WebSocket;
+        before(async () => {
+            const mod = await import('ws');
+            WebSocket = mod.default;
+        });
+
+        function connectWS() {
+            return new Promise((resolve, reject) => {
+                const ws = new WebSocket(`ws://localhost:3840`);
+                ws.on('open', () => resolve(ws));
+                ws.on('error', reject);
+            });
+        }
+
+        function waitForMessage(ws, type, timeout = 2000) {
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error(`Timeout waiting for ${type}`)), timeout);
+                ws.on('message', (raw) => {
+                    const msg = JSON.parse(raw.toString());
+                    if (msg.type === type) {
+                        clearTimeout(timer);
+                        resolve(msg);
+                    }
+                });
+            });
+        }
+
+        it('cms:navigate sends cms:page-change response', async () => {
+            server.cmsContentStore.createManifest({ title: 'WS Page', slug: 'ws-page' });
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:page-change');
+                ws.send(JSON.stringify({ type: 'cms:navigate', slug: 'ws-page' }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.slug, 'ws-page');
+                assert.strictEqual(msg.is404, false);
+                assert.ok(msg.manifest);
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:navigate to 404 returns is404 true', async () => {
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:page-change');
+                ws.send(JSON.stringify({ type: 'cms:navigate', slug: 'nonexistent' }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.is404, true);
+                assert.strictEqual(msg.manifest, null);
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:back sends navigation response', async () => {
+            server.cmsContentStore.createManifest({ title: 'Back A', slug: 'back-a' });
+            server.cmsContentStore.createManifest({ title: 'Back B', slug: 'back-b' });
+            server.cmsRouter.navigate('back-a');
+            server.cmsRouter.navigate('back-b');
+
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:navigation');
+                ws.send(JSON.stringify({ type: 'cms:back' }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.action, 'back');
+                assert.ok(msg.result);
+                assert.strictEqual(msg.result.slug, 'back-a');
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:forward sends navigation response', async () => {
+            server.cmsContentStore.createManifest({ title: 'Fwd A', slug: 'fwd-a' });
+            server.cmsContentStore.createManifest({ title: 'Fwd B', slug: 'fwd-b' });
+            server.cmsRouter.navigate('fwd-a');
+            server.cmsRouter.navigate('fwd-b');
+            server.cmsRouter.back();
+
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:navigation');
+                ws.send(JSON.stringify({ type: 'cms:forward' }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.action, 'forward');
+                assert.ok(msg.result);
+                assert.strictEqual(msg.result.slug, 'fwd-b');
+            } finally {
+                ws.close();
+            }
         });
     });
 });

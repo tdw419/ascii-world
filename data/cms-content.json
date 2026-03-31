@@ -2,25 +2,25 @@
   "version": 1,
   "items": {},
   "manifests": {
-    "pm_mnes3pc1_b": {
-      "id": "pm_mnes3pc1_b",
+    "pm_mnes7gad_b": {
+      "id": "pm_mnes7gad_b",
       "title": "Fwd A",
       "slug": "fwd-a",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774971332353,
-      "updated_at": 1774971332353
+      "created_at": 1774971507253,
+      "updated_at": 1774971507253
     },
-    "pm_mnes3pc1_c": {
-      "id": "pm_mnes3pc1_c",
+    "pm_mnes7gad_c": {
+      "id": "pm_mnes7gad_c",
       "title": "Fwd B",
       "slug": "fwd-b",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774971332353,
-      "updated_at": 1774971332353
+      "created_at": 1774971507253,
+      "updated_at": 1774971507253
     }
   }
 }

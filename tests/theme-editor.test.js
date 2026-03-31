@@ -1,6 +1,9 @@
 // tests/theme-editor.test.js
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import {
     ANSI_16, colorCube, greyRamp, PALETTE_256, PRESET_COLORS,
     isValidRGB, parseHex, toHex, nearestColorIndex,
@@ -727,5 +730,586 @@ describe('ThemeEditor — Deep Clone Safety', () => {
         theme1.fg[0] = 0;
         const theme2 = editor.getTheme();
         assert.strictEqual(theme2.fg[0], 200); // Original unchanged
+    });
+});
+
+// ─── File I/O Tests ────────────────────────────────────────
+
+describe('ThemeEditor — File I/O', () => {
+    let editor;
+    let tmpDir;
+
+    beforeEach(() => {
+        tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theme-test-'));
+        editor = new ThemeEditor({ themesDir: tmpDir });
+    });
+
+    it('saveToFile creates a JSON file', () => {
+        editor.setProperty('name', 'test-save');
+        const saved = editor.saveToFile();
+        assert.strictEqual(saved.name, 'test-save');
+        const filePath = path.join(tmpDir, 'custom.json');
+        assert.ok(fs.existsSync(filePath));
+        const loaded = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        assert.strictEqual(loaded.name, 'test-save');
+    });
+
+    it('saveToFile creates directory if missing', () => {
+        const deepDir = path.join(tmpDir, 'nested', 'themes');
+        const ed = new ThemeEditor({ themesDir: deepDir });
+        ed.saveToFile();
+        assert.ok(fs.existsSync(path.join(deepDir, 'custom.json')));
+    });
+
+    it('saveToFile uses custom filename', () => {
+        editor.saveToFile('my-theme.json');
+        assert.ok(fs.existsSync(path.join(tmpDir, 'my-theme.json')));
+    });
+
+    it('loadFromFile loads a theme from file', () => {
+        const themeData = { ...DEFAULT_THEME, name: 'loaded', fg: [100, 100, 100, 255] };
+        fs.writeFileSync(path.join(tmpDir, 'custom.json'), JSON.stringify(themeData));
+        const loaded = editor.loadFromFile();
+        assert.strictEqual(loaded.name, 'loaded');
+        assert.deepStrictEqual(loaded.fg, [100, 100, 100, 255]);
+    });
+
+    it('loadFromFile fills missing properties from DEFAULT_THEME', () => {
+        fs.writeFileSync(path.join(tmpDir, 'custom.json'), JSON.stringify({ name: 'minimal' }));
+        const loaded = editor.loadFromFile();
+        assert.deepStrictEqual(loaded.border, DEFAULT_THEME.border);
+    });
+
+    it('loadFromFile throws for missing file', () => {
+        assert.throws(() => editor.loadFromFile('nonexistent.json'), /Theme file not found/);
+    });
+
+    it('loadFromFile throws for invalid JSON', () => {
+        fs.writeFileSync(path.join(tmpDir, 'bad.json'), 'not json');
+        assert.throws(() => editor.loadFromFile('bad.json'));
+    });
+
+    it('loadFromFile updates border style index', () => {
+        const themeData = { ...DEFAULT_THEME, borderStyle: 'double' };
+        fs.writeFileSync(path.join(tmpDir, 'custom.json'), JSON.stringify(themeData));
+        editor.loadFromFile();
+        // Verify via handleKey that border section starts at double
+        editor.section = 'border';
+        editor.handleKey({ name: 'right' });
+        assert.strictEqual(editor.getTheme().borderStyle, 'rounded');
+    });
+
+    it('listThemeFiles returns sorted JSON files', () => {
+        fs.writeFileSync(path.join(tmpDir, 'beta.json'), '{}');
+        fs.writeFileSync(path.join(tmpDir, 'alpha.json'), '{}');
+        fs.writeFileSync(path.join(tmpDir, 'gamma.json'), '{}');
+        fs.writeFileSync(path.join(tmpDir, 'readme.txt'), 'hello');
+        const files = editor.listThemeFiles();
+        assert.deepStrictEqual(files, ['alpha.json', 'beta.json', 'gamma.json']);
+    });
+
+    it('listThemeFiles returns empty array for missing directory', () => {
+        const ed = new ThemeEditor({ themesDir: '/nonexistent/path' });
+        assert.deepStrictEqual(ed.listThemeFiles(), []);
+    });
+
+    it('loadNamedTheme loads by name without .json', () => {
+        const themeData = { ...DEFAULT_THEME, name: 'named' };
+        fs.writeFileSync(path.join(tmpDir, 'named.json'), JSON.stringify(themeData));
+        const loaded = editor.loadNamedTheme('named');
+        assert.strictEqual(loaded.name, 'named');
+    });
+
+    it('loadNamedTheme returns null for missing theme', () => {
+        const result = editor.loadNamedTheme('missing');
+        assert.strictEqual(result, null);
+    });
+
+    it('round-trip save/load preserves theme', () => {
+        editor.setProperty('name', 'roundtrip');
+        editor.setProperty('fg', [42, 42, 42]);
+        editor.setProperty('borderStyle', 'rounded');
+        editor.setProperty('effects.scanlines', true);
+        editor.saveToFile();
+
+        const ed2 = new ThemeEditor({ themesDir: tmpDir });
+        const loaded = ed2.loadFromFile();
+        assert.strictEqual(loaded.name, 'roundtrip');
+        assert.deepStrictEqual(loaded.fg, [42, 42, 42]);
+        assert.strictEqual(loaded.borderStyle, 'rounded');
+        assert.strictEqual(loaded.effects.scanlines, true);
+    });
+
+    it('emits save-to-file event', () => {
+        let event = null;
+        editor.on('change', (e) => { event = e; });
+        editor.saveToFile();
+        assert.ok(event);
+        assert.strictEqual(event.type, 'save-to-file');
+        assert.ok(event.path);
+    });
+
+    it('emits load-from-file event', () => {
+        fs.writeFileSync(path.join(tmpDir, 'custom.json'), JSON.stringify(DEFAULT_THEME));
+        let event = null;
+        editor.on('change', (e) => { event = e; });
+        editor.loadFromFile();
+        assert.ok(event);
+        assert.strictEqual(event.type, 'load-from-file');
+    });
+});
+
+// ─── Color Picker Integration Tests ────────────────────────
+
+describe('ThemeEditor — Color Picker Integration', () => {
+    let editor;
+
+    beforeEach(() => {
+        editor = new ThemeEditor();
+    });
+
+    it('getPickerForCurrentProperty returns ColorPicker', () => {
+        const picker = editor.getPickerForCurrentProperty();
+        assert.ok(picker instanceof ColorPicker);
+    });
+
+    it('picker is initialized with current property color', () => {
+        const picker = editor.getPickerForCurrentProperty();
+        const color = picker.getColor();
+        assert.strictEqual(color[0], DEFAULT_THEME.fg[0]);
+        assert.strictEqual(color[1], DEFAULT_THEME.fg[1]);
+        assert.strictEqual(color[2], DEFAULT_THEME.fg[2]);
+    });
+
+    it('picker updates for different properties', () => {
+        editor.handleKey({ name: 'down' }); // move to bg
+        const picker = editor.getPickerForCurrentProperty();
+        const color = picker.getColor();
+        assert.strictEqual(color[0], DEFAULT_THEME.bg[0]);
+    });
+
+    it('applyPickerColor changes theme property', () => {
+        editor.applyPickerColor([128, 64, 32]);
+        assert.deepStrictEqual(editor.getTheme().fg.slice(0, 3), [128, 64, 32]);
+    });
+
+    it('applyPickerColor can target specific property', () => {
+        editor.applyPickerColor([10, 20, 30], 'bg');
+        assert.deepStrictEqual(editor.getTheme().bg.slice(0, 3), [10, 20, 30]);
+    });
+
+    it('applyPickerColor ignores invalid RGB', () => {
+        const origFg = [...editor.getTheme().fg];
+        editor.applyPickerColor([999, 0, 0]);
+        assert.deepStrictEqual(editor.getTheme().fg, origFg);
+    });
+
+    it('applyPickerColor emits event', () => {
+        let event = null;
+        editor.on('change', (e) => { event = e; });
+        editor.applyPickerColor([50, 50, 50]);
+        assert.ok(event);
+        assert.strictEqual(event.type, 'picker-color-applied');
+    });
+});
+
+// ─── Effect Rendering Tests ────────────────────────────────
+
+describe('ThemeEditor — Effect Rendering', () => {
+    let editor;
+
+    beforeEach(() => {
+        editor = new ThemeEditor();
+    });
+
+    it('applyEffects returns string with no effects', () => {
+        const result = editor.applyEffects('hello\nworld');
+        assert.strictEqual(result, 'hello\nworld');
+    });
+
+    it('applyEffects adds scanline dimming on odd lines', () => {
+        editor.setProperty('effects.scanlines', true);
+        const result = editor.applyEffects('line1\nline2\nline3');
+        const lines = result.split('\n');
+        assert.ok(!lines[0].includes('\x1b[2m'));
+        assert.ok(lines[1].includes('\x1b[2m'));
+        assert.ok(!lines[2].includes('\x1b[2m'));
+    });
+
+    it('applyEffects adds glow effect', () => {
+        editor.setProperty('effects.glow', true);
+        const result = editor.applyEffects('hello');
+        assert.ok(result.includes('\x1b[1m'));
+    });
+
+    it('applyEffects adds shadow effect', () => {
+        editor.setProperty('effects.shadow', true);
+        const result = editor.applyEffects('hello');
+        assert.ok(result.includes('\x1b[38;2;0;0;0m'));
+    });
+
+    it('applyEffects combines multiple effects', () => {
+        editor.setProperty('effects.scanlines', true);
+        editor.setProperty('effects.glow', true);
+        const result = editor.applyEffects('a\nb');
+        // Line 2 (index 1) should have both scanline dim and glow
+        assert.ok(result.includes('\x1b[2m'));
+        assert.ok(result.includes('\x1b[1m'));
+    });
+
+    it('renderEffectsPreview returns string', () => {
+        const preview = editor.renderEffectsPreview();
+        assert.ok(typeof preview === 'string');
+        assert.ok(preview.includes('Sample Effects Box'));
+    });
+
+    it('renderEffectsPreview with effects modifies output', () => {
+        editor.setProperty('effects.scanlines', true);
+        const preview = editor.renderEffectsPreview();
+        assert.ok(preview.includes('\x1b[2m'));
+    });
+});
+
+// ─── Theme Diff Tests ──────────────────────────────────────
+
+describe('ThemeEditor — Diff & Dirty', () => {
+    let editor;
+
+    beforeEach(() => {
+        editor = new ThemeEditor();
+    });
+
+    it('diff returns empty array when no changes', () => {
+        const diffs = editor.diff();
+        assert.strictEqual(diffs.length, 0);
+    });
+
+    it('diff detects color change', () => {
+        editor.setProperty('fg', [100, 100, 100]);
+        const diffs = editor.diff();
+        assert.ok(diffs.length >= 1);
+        const fgDiff = diffs.find(d => d.prop === 'fg');
+        assert.ok(fgDiff);
+        assert.deepStrictEqual(fgDiff.current, [100, 100, 100]);
+    });
+
+    it('diff detects borderStyle change', () => {
+        editor.setProperty('borderStyle', 'double');
+        const diffs = editor.diff();
+        const bsDiff = diffs.find(d => d.prop === 'borderStyle');
+        assert.ok(bsDiff);
+        assert.strictEqual(bsDiff.current, 'double');
+    });
+
+    it('diff detects effect change', () => {
+        editor.setProperty('effects.scanlines', true);
+        const diffs = editor.diff();
+        const fxDiff = diffs.find(d => d.prop === 'effects.scanlines');
+        assert.ok(fxDiff);
+        assert.strictEqual(fxDiff.current, true);
+        assert.strictEqual(fxDiff.saved, false);
+    });
+
+    it('diff returns empty after save', () => {
+        editor.setProperty('fg', [100, 100, 100]);
+        editor.save();
+        assert.strictEqual(editor.diff().length, 0);
+    });
+
+    it('isDirty returns false when no changes', () => {
+        assert.strictEqual(editor.isDirty(), false);
+    });
+
+    it('isDirty returns true after unsaved change', () => {
+        editor.setProperty('fg', [100, 100, 100]);
+        assert.strictEqual(editor.isDirty(), true);
+    });
+
+    it('isDirty returns false after save', () => {
+        editor.setProperty('fg', [100, 100, 100]);
+        editor.save();
+        assert.strictEqual(editor.isDirty(), false);
+    });
+
+    it('isDirty returns false after reset', () => {
+        editor.setProperty('fg', [100, 100, 100]);
+        editor.reset();
+        assert.strictEqual(editor.isDirty(), false);
+    });
+});
+
+// ─── Export / Import Tests ─────────────────────────────────
+
+describe('ThemeEditor — Export/Import', () => {
+    let editor;
+
+    beforeEach(() => {
+        editor = new ThemeEditor();
+    });
+
+    it('exportJSON returns valid JSON string', () => {
+        const json = editor.exportJSON();
+        const parsed = JSON.parse(json);
+        assert.strictEqual(parsed.name, 'default');
+        assert.ok(parsed.fg);
+    });
+
+    it('exportJSON includes all properties', () => {
+        const json = editor.exportJSON();
+        const parsed = JSON.parse(json);
+        assert.ok(parsed.effects);
+        assert.ok(parsed.borderStyle);
+        assert.ok(parsed.fg);
+        assert.ok(parsed.bg);
+    });
+
+    it('importJSON loads theme from JSON string', () => {
+        const json = JSON.stringify({ ...DEFAULT_THEME, name: 'imported', fg: [1, 2, 3, 255] });
+        const result = editor.importJSON(json);
+        assert.strictEqual(result.name, 'imported');
+        assert.deepStrictEqual(result.fg, [1, 2, 3, 255]);
+    });
+
+    it('importJSON fills missing properties from DEFAULT_THEME', () => {
+        const json = JSON.stringify({ name: 'partial' });
+        const result = editor.importJSON(json);
+        assert.deepStrictEqual(result.border, DEFAULT_THEME.border);
+    });
+
+    it('importJSON throws for invalid JSON', () => {
+        assert.throws(() => editor.importJSON('not json'));
+    });
+
+    it('round-trip export/import preserves theme', () => {
+        editor.setProperty('name', 'roundtrip');
+        editor.setProperty('fg', [42, 42, 42]);
+        editor.setProperty('borderStyle', 'rounded');
+        const json = editor.exportJSON();
+
+        const ed2 = new ThemeEditor();
+        ed2.importJSON(json);
+        assert.strictEqual(ed2.getTheme().name, 'roundtrip');
+        assert.deepStrictEqual(ed2.getTheme().fg, [42, 42, 42]);
+        assert.strictEqual(ed2.getTheme().borderStyle, 'rounded');
+    });
+});
+
+// ─── Theme Merge Tests ─────────────────────────────────────
+
+describe('ThemeEditor — Merge', () => {
+    let editor;
+
+    beforeEach(() => {
+        editor = new ThemeEditor();
+    });
+
+    it('merge applies partial color properties', () => {
+        editor.merge({ fg: [100, 100, 100], bg: [0, 0, 0, 255] });
+        assert.deepStrictEqual(editor.getTheme().fg, [100, 100, 100]);
+        assert.deepStrictEqual(editor.getTheme().bg, [0, 0, 0, 255]);
+    });
+
+    it('merge applies borderStyle', () => {
+        editor.merge({ borderStyle: 'double' });
+        assert.strictEqual(editor.getTheme().borderStyle, 'double');
+    });
+
+    it('merge applies effects', () => {
+        editor.merge({ effects: { scanlines: true, glow: true } });
+        assert.strictEqual(editor.getTheme().effects.scanlines, true);
+        assert.strictEqual(editor.getTheme().effects.glow, true);
+        // shadow should remain unchanged
+        assert.strictEqual(editor.getTheme().effects.shadow, false);
+    });
+
+    it('merge applies name', () => {
+        editor.merge({ name: 'merged' });
+        assert.strictEqual(editor.getTheme().name, 'merged');
+    });
+
+    it('merge ignores invalid color values', () => {
+        const origFg = [...editor.getTheme().fg];
+        editor.merge({ fg: [999, 0, 0] });
+        assert.deepStrictEqual(editor.getTheme().fg, origFg);
+    });
+
+    it('merge ignores invalid borderStyle', () => {
+        editor.merge({ borderStyle: 'fancy' });
+        assert.strictEqual(editor.getTheme().borderStyle, 'single');
+    });
+
+    it('merge emits change event', () => {
+        let event = null;
+        editor.on('change', (e) => { event = e; });
+        editor.merge({ fg: [50, 50, 50] });
+        assert.ok(event);
+        assert.strictEqual(event.type, 'merge');
+    });
+
+    it('merge preserves unmerged properties', () => {
+        const origBg = [...editor.getTheme().bg];
+        editor.merge({ fg: [50, 50, 50] });
+        assert.deepStrictEqual(editor.getTheme().bg, origBg);
+    });
+});
+
+// ─── Keyboard Advanced Tests ───────────────────────────────
+
+describe('ThemeEditor — Keyboard Advanced', () => {
+    let editor;
+
+    beforeEach(() => {
+        editor = new ThemeEditor();
+    });
+
+    it('shift+right doubles color step', () => {
+        const origFg = [...editor.getTheme().fg];
+        editor.handleKey({ name: 'right', shift: true });
+        const newFg = editor.getTheme().fg;
+        assert.strictEqual(newFg[0] - origFg[0], 16); // 2x step of 8
+    });
+
+    it('ctrl+right adjusts blue channel', () => {
+        const origFg = [...editor.getTheme().fg];
+        editor.handleKey({ name: 'right', ctrl: true });
+        const newFg = editor.getTheme().fg;
+        assert.strictEqual(newFg[2], origFg[2] + 8);
+    });
+
+    it('alt+right adjusts green channel', () => {
+        const origFg = [...editor.getTheme().fg];
+        editor.handleKey({ name: 'right', alt: true });
+        const newFg = editor.getTheme().fg;
+        assert.strictEqual(newFg[1], origFg[1] + 8);
+    });
+
+    it('left decreases red channel', () => {
+        editor.setProperty('fg', [200, 200, 200, 255]);
+        const origFg = [...editor.getTheme().fg];
+        editor.handleKey({ name: 'left' });
+        const newFg = editor.getTheme().fg;
+        assert.strictEqual(newFg[0], origFg[0] - 8);
+    });
+
+    it('color adjustment clamps at 0', () => {
+        editor.setProperty('fg', [0, 0, 0, 255]);
+        editor.handleKey({ name: 'left' });
+        assert.strictEqual(editor.getTheme().fg[0], 0);
+    });
+
+    it('color adjustment clamps at 255', () => {
+        editor.setProperty('fg', [255, 0, 0, 255]);
+        editor.handleKey({ name: 'right' });
+        assert.strictEqual(editor.getTheme().fg[0], 255);
+    });
+
+    it('border left wraps to last style', () => {
+        editor.section = 'border';
+        editor.handleKey({ name: 'left' });
+        assert.strictEqual(editor.getTheme().borderStyle, 'none');
+    });
+
+    it('effects up wraps around', () => {
+        editor.section = 'effects';
+        editor.handleKey({ name: 'up' });
+        const prop = editor.getCurrentProperty();
+        assert.strictEqual(prop, 'effects.shadow');
+    });
+
+    it('presets left does nothing', () => {
+        editor.section = 'presets';
+        const result = editor.handleKey({ name: 'left' });
+        assert.strictEqual(result.action, 'none');
+    });
+
+    it('unknown key returns none', () => {
+        const result = editor.handleKey({ name: 'z' });
+        assert.strictEqual(result.action, 'none');
+    });
+});
+
+// ─── Overlay Rendering Advanced Tests ──────────────────────
+
+describe('ThemeEditor — Overlay Rendering Advanced', () => {
+    let editor;
+
+    beforeEach(() => {
+        editor = new ThemeEditor();
+    });
+
+    it('overlay with double border shows double chars', () => {
+        editor.setProperty('borderStyle', 'double');
+        const overlay = editor.renderOverlay();
+        assert.ok(overlay.includes('╔'));
+        assert.ok(overlay.includes('╗'));
+    });
+
+    it('overlay with rounded border shows rounded chars', () => {
+        editor.setProperty('borderStyle', 'rounded');
+        const overlay = editor.renderOverlay();
+        assert.ok(overlay.includes('╭'));
+    });
+
+    it('overlay shows border section content', () => {
+        editor.section = 'border';
+        const overlay = editor.renderOverlay();
+        assert.ok(overlay.includes('Border Style'));
+    });
+
+    it('overlay shows effects section content', () => {
+        editor.section = 'effects';
+        const overlay = editor.renderOverlay();
+        assert.ok(overlay.includes('scanlines'));
+    });
+
+    it('overlay shows presets section content', () => {
+        editor.section = 'presets';
+        const overlay = editor.renderOverlay();
+        assert.ok(overlay.includes('default'));
+    });
+
+    it('overlay shows active section in tabs', () => {
+        editor.section = 'border';
+        const overlay = editor.renderOverlay();
+        assert.ok(overlay.includes('[border]'));
+    });
+
+    it('overlay footer has key hints', () => {
+        const overlay = editor.renderOverlay();
+        assert.ok(overlay.includes('Tab:next'));
+        assert.ok(overlay.includes('Ctrl+S:save'));
+    });
+});
+
+// ─── Theme Validation Tests ────────────────────────────────
+
+describe('ThemeEditor — Theme Validation', () => {
+    it('all presets have valid RGB colors', () => {
+        const colorProps = ['fg', 'bg', 'border', 'borderHighlight', 'activeFg', 'activeBg',
+            'focusFg', 'focusBg', 'titleFg', 'titleBg', 'linkFg', 'headingFg'];
+        for (const [name, preset] of Object.entries(THEME_PRESETS)) {
+            for (const prop of colorProps) {
+                assert.ok(preset[prop], `Preset "${name}" missing ${prop}`);
+                assert.ok(isValidRGB(preset[prop]), `Preset "${name}" ${prop} invalid RGB`);
+            }
+        }
+    });
+
+    it('all presets have effects object', () => {
+        for (const [name, preset] of Object.entries(THEME_PRESETS)) {
+            assert.ok(preset.effects, `Preset "${name}" missing effects`);
+            assert.ok(typeof preset.effects.scanlines === 'boolean');
+            assert.ok(typeof preset.effects.glow === 'boolean');
+            assert.ok(typeof preset.effects.shadow === 'boolean');
+        }
+    });
+
+    it('all border chars are single characters', () => {
+        for (const [style, chars] of Object.entries(BORDER_CHARS)) {
+            for (const [key, char] of Object.entries(chars)) {
+                assert.ok(typeof char === 'string', `BORDER_CHARS.${style}.${key} not string`);
+                assert.ok(char.length >= 1, `BORDER_CHARS.${style}.${key} too short`);
+            }
+        }
     });
 });

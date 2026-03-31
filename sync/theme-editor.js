@@ -4,9 +4,12 @@
 // Supports save/load/reset of custom themes, and live preview rendering.
 
 import { EventEmitter } from 'events';
+import fs from 'fs';
+import path from 'path';
 import {
     isValidRGB, parseHex, toHex, nearestColorIndex,
-    PRESET_COLORS, PALETTE_256, ansi256Fg, ansi256Bg, ANSI_RESET,
+    PRESET_COLORS, PALETTE_256, ansi256Fg, ansi256Bg, ansiTrueFg, ANSI_RESET,
+    ColorPicker,
 } from './color-picker.js';
 
 /**
@@ -439,6 +442,234 @@ export class ThemeEditor extends EventEmitter {
         lines.push(fxLine);
 
         return lines.join('\n');
+    }
+
+    // ── File I/O ───────────────────────────────────────────────
+
+    /**
+     * Save current theme to a JSON file.
+     * @param {string} [filename] - File name (default: 'custom.json')
+     * @returns {Object} The saved theme
+     */
+    saveToFile(filename = 'custom.json') {
+        const filePath = path.join(this.themesDir, filename);
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        const data = this._deepClone(this.theme);
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        this._savedTheme = this._deepClone(this.theme);
+        this._emitChange('save-to-file', { path: filePath });
+        return data;
+    }
+
+    /**
+     * Load a theme from a JSON file.
+     * @param {string} [filename] - File name (default: 'custom.json')
+     * @returns {Object} The loaded theme
+     * @throws {Error} If file not found or invalid JSON
+     */
+    loadFromFile(filename = 'custom.json') {
+        const filePath = path.join(this.themesDir, filename);
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`Theme file not found: ${filePath}`);
+        }
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        const data = JSON.parse(raw);
+        this.theme = this._deepClone({ ...DEFAULT_THEME, ...data });
+        this._savedTheme = this._deepClone(this.theme);
+        this._borderStyleIndex = this._borderStyles.indexOf(this.theme.borderStyle || 'single');
+        this._emitChange('load-from-file', { path: filePath });
+        return this._deepClone(this.theme);
+    }
+
+    /**
+     * List available theme files in the themes directory.
+     * @returns {string[]} Array of theme file names
+     */
+    listThemeFiles() {
+        if (!fs.existsSync(this.themesDir)) return [];
+        return fs.readdirSync(this.themesDir)
+            .filter(f => f.endsWith('.json'))
+            .sort();
+    }
+
+    /**
+     * Load a theme from file by name (without .json extension).
+     * @param {string} name - Theme name
+     * @returns {Object|null} The loaded theme, or null if not found
+     */
+    loadNamedTheme(name) {
+        const filename = `${name}.json`;
+        try {
+            return this.loadFromFile(filename);
+        } catch {
+            return null;
+        }
+    }
+
+    // ── Color Picker Integration ───────────────────────────────
+
+    /**
+     * Get a ColorPicker initialized for the current property.
+     * @returns {ColorPicker}
+     */
+    getPickerForCurrentProperty() {
+        const prop = this.getCurrentProperty();
+        const currentColor = this._colorProps.includes(prop)
+            ? this.theme[prop]
+            : [200, 200, 200, 255];
+        return new ColorPicker({ initial: currentColor.slice(0, 3) });
+    }
+
+    /**
+     * Apply a color from the picker to the current property.
+     * @param {number[]} rgb - RGB color from picker
+     * @param {string} [prop] - Property name (defaults to current)
+     */
+    applyPickerColor(rgb, prop) {
+        const target = prop || this.getCurrentProperty();
+        if (this._colorProps.includes(target) && isValidRGB(rgb)) {
+            this.theme[target] = [...rgb];
+            this._emitChange('picker-color-applied', { prop: target, value: rgb });
+        }
+    }
+
+    // ── Effect Rendering ───────────────────────────────────────
+
+    /**
+     * Apply visual effects to a text string.
+     * @param {string} text - Input text
+     * @returns {string} Text with effects applied
+     */
+    applyEffects(text) {
+        const fx = this.theme.effects;
+        const lines = text.split('\n');
+        const result = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+
+            if (fx.scanlines && i % 2 === 1) {
+                // Dim every other line for scanline effect
+                line = '\x1b[2m' + line + ANSI_RESET;
+            }
+
+            if (fx.glow) {
+                // Add subtle highlight to simulate glow
+                line = ansiTrueFg(this.theme.borderHighlight.slice(0, 3)) + '\x1b[1m' + line + ANSI_RESET;
+            }
+
+            if (fx.shadow) {
+                // Prepend shadow offset
+                line = '\x1b[38;2;0;0;0m' + line + ANSI_RESET;
+            }
+
+            result.push(line);
+        }
+
+        return result.join('\n');
+    }
+
+    /**
+     * Render a preview showing the effects applied.
+     * @returns {string}
+     */
+    renderEffectsPreview() {
+        const sample = [
+            '┌──────────────────────┐',
+            '│  Sample Effects Box  │',
+            '├──────────────────────┤',
+            '│  Line 1              │',
+            '│  Line 2              │',
+            '│  Line 3              │',
+            '│  Line 4              │',
+            '└──────────────────────┘',
+        ].join('\n');
+
+        return this.applyEffects(sample);
+    }
+
+    // ── Theme Diff ─────────────────────────────────────────────
+
+    /**
+     * Compute differences between current and saved theme.
+     * @returns {Object[]} Array of {prop, current, saved} diffs
+     */
+    diff() {
+        const diffs = [];
+        const allProps = [
+            ...this._colorProps, 'borderStyle', 'name',
+            'effects.scanlines', 'effects.glow', 'effects.shadow',
+        ];
+
+        for (const prop of allProps) {
+            let current, saved;
+            if (prop.startsWith('effects.')) {
+                const key = prop.replace('effects.', '');
+                current = this.theme.effects[key];
+                saved = this._savedTheme.effects[key];
+            } else {
+                current = this.theme[prop];
+                saved = this._savedTheme[prop];
+            }
+
+            if (JSON.stringify(current) !== JSON.stringify(saved)) {
+                diffs.push({ prop, current, saved });
+            }
+        }
+
+        return diffs;
+    }
+
+    /**
+     * Check if the current theme has unsaved changes.
+     * @returns {boolean}
+     */
+    isDirty() {
+        return this.diff().length > 0;
+    }
+
+    /**
+     * Export the current theme as a JSON string.
+     * @returns {string}
+     */
+    exportJSON() {
+        return JSON.stringify(this.theme, null, 2);
+    }
+
+    /**
+     * Import a theme from a JSON string.
+     * @param {string} json - JSON string
+     * @returns {Object} The imported theme
+     * @throws {Error} If invalid JSON
+     */
+    importJSON(json) {
+        const data = JSON.parse(json);
+        this.setTheme(data);
+        return this.getTheme();
+    }
+
+    // ── Theme Merge ────────────────────────────────────────────
+
+    /**
+     * Merge partial theme properties into the current theme.
+     * @param {Object} partial - Partial theme properties
+     */
+    merge(partial) {
+        for (const [key, value] of Object.entries(partial)) {
+            if (key === 'effects' && typeof value === 'object') {
+                Object.assign(this.theme.effects, value);
+            } else if (this._colorProps.includes(key) && isValidRGB(value)) {
+                this.theme[key] = [...value];
+            } else if (key === 'borderStyle' && BORDER_CHARS[value]) {
+                this.theme.borderStyle = value;
+            } else if (key === 'name') {
+                this.theme.name = value;
+            }
+        }
+        this._emitChange('merge', { partial });
     }
 
     // ── Private Helpers ────────────────────────────────────────

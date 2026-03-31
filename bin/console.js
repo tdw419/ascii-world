@@ -4,6 +4,7 @@
 
 import { TextWriter } from './text-to-fb.js';
 import { KeyboardInput, InputLine } from './keyboard.js';
+import { RgbAnimation, SoftwareShader } from '../sync/software-shader.js';
 import * as readline from 'node:readline';
 
 const COLS = 320;  // 1920 / 6
@@ -58,6 +59,7 @@ export class ScreenConsole {
         this.dirty = true;
         this.renderInterval = null;
         this.pixelFormula = null; // Active pixel formula for re-rendering
+        this.rgbAnimation = null; // Active RgbAnimation instance
     }
     
     /**
@@ -80,7 +82,10 @@ export class ScreenConsole {
             this.print('  calc <expr>       - Same as eval', 0xAAAAAA);
             this.print('  formula <fn>      - Render grayscale formula (x,y)=>v', 0xAAAAAA);
             this.print('  rgb <fn>          - Render RGB formula (x,y)=>[r,g,b]', 0xAAAAAA);
-            this.print('  animate <fn>      - Animate formula (x,y,t)=>v', 0xFFFF00);
+            this.print('  animate <fn>      - Animate formula (x,y,t)=>v (grayscale)', 0xFFFF00);
+            this.print('  rgb-animate <fn>  - Animate RGB formula (x,y,t)=>[r,g,b]', 0xFF88FF);
+            this.print('  rgb-animate pause - Pause RGB animation', 0xFF88FF);
+            this.print('  rgb-animate resume- Resume RGB animation', 0xFF88FF);
             this.print('  stop              - Stop animation', 0xFFFF00);
             this.print('  fps               - Show animation FPS', 0xAAAAAA);
             this.print('  test              - Run test', 0xAAAAAA);
@@ -317,9 +322,18 @@ export class ScreenConsole {
         });
         
         this.commands.set('stop', () => {
+            let stopped = false;
             if (this.animationInterval) {
                 clearInterval(this.animationInterval);
                 this.animationInterval = null;
+                stopped = true;
+            }
+            if (this.rgbAnimation && this.rgbAnimation.isRunning) {
+                this.rgbAnimation.stop();
+                this.rgbAnimation = null;
+                stopped = true;
+            }
+            if (stopped) {
                 this.print('Animation stopped', 0xFFFF00);
             } else {
                 this.print('No animation running', 0x888888);
@@ -327,13 +341,108 @@ export class ScreenConsole {
         });
         
         this.commands.set('fps', () => {
-            // Show FPS counter during animation
-            if (this.animationInterval && this.frameCount) {
-                const elapsed = (Date.now() - this.animationStart) / 1000;
-                const fps = this.frameCount / elapsed;
+            if (this.rgbAnimation && this.rgbAnimation.isRunning) {
+                const elapsed = this.rgbAnimation.elapsed;
+                const fps = elapsed > 0 ? this.rgbAnimation.frameCount / elapsed : 0;
+                this.print(`FPS: ${fps.toFixed(1)} (RGB, frame ${this.rgbAnimation.frameCount})`, 0x00FF00);
+            } else if (this.animationInterval) {
+                // Legacy grayscale animation
+                const elapsed = this.animationStart ? (Date.now() - this.animationStart) / 1000 : 0;
+                const fps = elapsed > 0 ? (this.frameCount || 0) / elapsed : 0;
                 this.print(`FPS: ${fps.toFixed(1)}`, 0x00FF00);
             } else {
                 this.print('No animation running', 0x888888);
+            }
+        });
+        
+        this.commands.set('rgb-animate', (args) => {
+            // Subcommands for pause/resume
+            const subCmd = args[0];
+            if (subCmd === 'pause') {
+                if (this.rgbAnimation && this.rgbAnimation.isRunning) {
+                    this.rgbAnimation.pause();
+                    this.print('RGB animation paused', 0xFF88FF);
+                } else {
+                    this.print('No RGB animation running', 0x888888);
+                }
+                return;
+            }
+            if (subCmd === 'resume') {
+                if (this.rgbAnimation && this.rgbAnimation.isPaused) {
+                    this.rgbAnimation.resume();
+                    this.print('RGB animation resumed', 0xFF88FF);
+                } else {
+                    this.print('No paused RGB animation to resume', 0x888888);
+                }
+                return;
+            }
+            
+            const expr = args.join(' ');
+            if (!expr) {
+                this.print('Usage: rgb-animate (x,y,t) => [r, g, b]', 0x888888);
+                this.print('  rgb-animate (x,y,t) => [Math.sin(x/20+t)*127+128, Math.sin(y/20+t*1.2)*127+128, 128]', 0x666666);
+                this.print('  rgb-animate (x,y,t) => [x & 0xFF, y & 0xFF, ((x+t) ^ y) & 0xFF]', 0x666666);
+                this.print('  rgb-animate plasma   - Use built-in plasma shader', 0x666666);
+                this.print('  rgb-animate pause    - Pause animation', 0x666666);
+                this.print('  rgb-animate resume   - Resume animation', 0x666666);
+                this.print('  stop                 - Stop animation', 0x666666);
+                return;
+            }
+            
+            // Stop any existing animations
+            if (this.animationInterval) {
+                clearInterval(this.animationInterval);
+                this.animationInterval = null;
+            }
+            if (this.rgbAnimation) {
+                this.rgbAnimation.stop();
+                this.rgbAnimation = null;
+            }
+            
+            try {
+                let fn;
+                // Built-in shader names
+                const builtins = { plasma: true, xor: true, gradient: true, checkerboard: true, mandelbrot: true };
+                if (builtins[expr]) {
+                    fn = SoftwareShader.getBuiltin(expr);
+                    if (!fn) {
+                        this.print(`Unknown built-in: ${expr}`, 0xFF4444);
+                        return;
+                    }
+                } else {
+                    fn = eval(expr);
+                }
+                
+                if (typeof fn !== 'function') {
+                    this.print('Error: formula must be a function (x,y,t) => [r,g,b]', 0xFF4444);
+                    return;
+                }
+                
+                this.print(`RGB Animating: ${expr}`, 0xFF88FF);
+                this.print('Type "stop" to halt, "rgb-animate pause" to pause', 0x888888);
+                
+                const buffer = this.writer.buffer;
+                const regionSize = 256;
+                const startX = 10;
+                const startY = 30;
+                
+                this.rgbAnimation = new RgbAnimation({
+                    buffer,
+                    shader: fn,
+                    region: { x: startX, y: startY, w: regionSize, h: regionSize },
+                    fps: 30,
+                    onFrame: () => {
+                        // Re-render text overlay on top of animation pixels
+                        this.dirty = true;
+                        this.renderTextOverlay();
+                        this.flush();
+                    }
+                });
+                
+                this.rgbAnimation.start();
+                
+            } catch (e) {
+                this.print(`Error: ${e.message}`, 0xFF4444);
             }
         });
     }
@@ -381,6 +490,45 @@ export class ScreenConsole {
     command(name, handler) {
         this.commands.set(name, handler);
         return this;
+    }
+    
+    /**
+     * Render only the text overlay (header, lines, input) without clearing.
+     * Used during RGB animation to preserve animated pixel content.
+     */
+    renderTextOverlay() {
+        const atlas = this.writer.atlas;
+        const glyphW = atlas.glyphW;
+        const glyphH = atlas.glyphH;
+        
+        // Header background + text
+        this.writer.fillRect(0, 0, this.width, glyphH + 4, 0x0a0a12);
+        this.writer.print(this.header, 0, 0, 0x00FFFF);
+        this.writer.fillRect(0, glyphH + 2, this.width, 2, 0x00FFFF);
+        
+        // Output lines (only visible area, skip animation region rows where possible)
+        const startRow = 2;
+        const visibleLines = this.lines.slice(-this.maxLines);
+        
+        for (let i = 0; i < visibleLines.length; i++) {
+            const { text, color } = visibleLines[i];
+            const y = (startRow + i) * glyphH;
+            // Clear just the text row area
+            this.writer.fillRect(0, y, this.width, glyphH, 0x0a0a12);
+            this.writer.print(text.slice(0, COLS), 0, y, color);
+        }
+        
+        // Input line area
+        const inputY = (ROWS - 1) * glyphH;
+        this.writer.fillRect(0, inputY - 2 - glyphH, this.width, glyphH + 4, 0x0a0a12);
+        this.writer.fillRect(0, inputY - 2, this.width, 2, 0x444444);
+        this.writer.print(this.input.getDisplayText(), 0, inputY, 0xFFFFFF);
+        
+        const cursorX = this.input.getCursorPos() * glyphW;
+        this.writer.fillRect(cursorX, inputY, glyphW, glyphH, 0x444444);
+        this.writer.print(this.input.buffer[this.input.cursor] || ' ', cursorX, inputY, 0xFFFFFF);
+        
+        this.dirty = false;
     }
     
     /**
@@ -537,6 +685,10 @@ export class ScreenConsole {
      * Stop console
      */
     stop() {
+        if (this.rgbAnimation) {
+            this.rgbAnimation.stop();
+            this.rgbAnimation = null;
+        }
         this.kb.stop();
     }
 }

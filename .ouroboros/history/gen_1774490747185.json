@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const PI = 3.14159265, TAU = 6.2831853;\n  let u = x * 0.0125, v = y * 0.0125;\n  let a = 0, b = 0, c = 0, d = 0;\n  for (let i = 0; i < 6; i++) {\n    let ang = i * 1.047 + t * 0.045 * (i & 1 ? 1 : -1);\n    let f = 2.2 + i * 0.9, ph = t * 0.11 + i * 1.8;\n    let cx = Math.cos(ang), sy = Math.sin(ang);\n    a += Math.sin((cx * f * u + sy * f * v) + ph);\n    b += Math.cos((cx * f * u - sy * f * v) - ph * 0.6);\n    let ang2 = ang + 0.785, f2 = 4.5 + i * 1.2;\n    c += Math.sin((Math.cos(ang2) * f2 * u + Math.sin(ang2) * f2 * v) + ph * 1.4);\n    d += Math.cos((Math.cos(ang2) * f2 * u - Math.sin(ang2) * f2 * v) - ph);\n  }\n  a /= 6; b /= 6; c /= 6; d /= 6;\n  let ru = a - b * b + 0.08 * c + 0.04 * Math.sin(t * 0.15);\n  let rv = b - a * a + 0.08 * d + 0.04 * Math.cos(t * 0.12);\n  let w1 = Math.sin(ru * TAU * 1.2), w2 = Math.sin(rv * TAU * 1.2);\n  let spot = 1 - Math.pow(Math.abs(w1) * Math.abs(w2), 0.35);\n  let ridge = Math.pow(Math.max(0, 1 - Math.abs(w1) * 3), 2) + Math.pow(Math.max(0, 1 - Math.abs(w2) * 3), 2);\n  let tex = (c * 0.5 + d * 0.5 + 1) * 0.5;\n  let field = (ru + rv + 2) * 0.25;\n  let hue = field * 0.4 + tex * 0.15 + 0.55;\n  let sat = 0.7 + spot * 0.3;\n  let val = 0.25 + spot * 0.55 + ridge * 0.2;\n  let h6 = hue * 6, hi = h6 % 6, f = hi - Math.floor(hi), p = val * (1 - sat), q = val * (1 - sat * f), z = val * (1 - sat * (1 - f));\n  let r, g, bl;\n  switch (Math.floor(hi) % 6) {\n    case 0: r = val; g = z; bl = p; break;\n    case 1: r = q; g = val; bl = p; break;\n    case 2: r = p; g = val; bl = z; break;\n    case 3: r = p; g = q; bl = val; break;\n    case 4: r = z; g = p; bl = val; break;\n    default: r = val; g = p; bl = q;\n  }\n  r += ridge * 0.15; g += ridge * 0.08; bl += ridge * 0.12;\n  return [Math.min(255, r * 290), Math.min(255, g * 290), Math.min(255, bl * 290)];\n}",
+  "score": {
+    "coherence": 9,
+    "harmony": 8,
+    "complexity": 9,
+    "density": 5,
+    "total": 31,
+    "reason": "The image has high coherence with smooth, flowing organic shapes and no visual artifacts. Harmony is strong with vibrant neon colors (pink, blue, purple) that create an appealing, futuristic aesthetic. Complexity is high due to the intricate, non-repeating patterns. However, density is low — it's purely decorative with no functional UI elements, making it unsuitable for conveying information in a minimal OS context."
+  },
+  "timestamp": 1774490747185,
+  "filename": "gen11_1774490747185"
+}

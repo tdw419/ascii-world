@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no mathematical patterns or useful UI information, making its complexity and density extremely low."
+  },
+  "timestamp": 1774643100336,
+  "filename": "gen2224_1774643100336"
+}

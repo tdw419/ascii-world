@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const s = [\n    [160+Math.sin(t*.6)*100, 80+Math.cos(t*.4)*50],\n    [320+Math.cos(t*.5)*100, 160+Math.sin(t*.7)*50],\n    [240+Math.sin(t*.3+2)*140, 120+Math.cos(t*.5+1)*90],\n    [100+Math.cos(t*.45+1)*80, 180+Math.sin(t*.55+3)*60],\n    [380+Math.sin(t*.35+4)*70, 60+Math.cos(t*.65+2)*40]\n  ];\n  const fq=[.08,.1,.06,.09,.07], sp=[2,1.7,2.3,1.9,2.1];\n  let act=0;\n  for(let i=0;i<5;i++){const d=Math.sqrt((x-s[i][0])**2+(y-s[i][1])**2);act+=Math.sin(d*fq[i]-t*sp[i]);}\n  act/=5;\n  const inh=(Math.sin(x*.05+y*.03+t*.8)+Math.sin(x*.03-y*.05+t*1.1)+Math.sin(x*.08-y*.02+t*1.3)*.4+Math.sin(x*.02+y*.09-t*.9)*.4)/3.2;\n  const det=Math.sin((x+y)*.15+t*3)*.15+Math.sin((x-y)*.12-t*2.5)*.15+Math.sin((x*1.5+y*.7)*.1+t*1.6)*.08;\n  const wx=Math.sin(act*2+t*.3)*15, wy=Math.cos(inh*2-t*.4)*15;\n  const cx=240+wx, cy=120+wy;\n  const dist=Math.sqrt((x-cx)**2+(y-cy)**2), ang=Math.atan2(y-cy,x-cx);\n  const rad=Math.sin(dist*.04-t*1.5), angu=Math.sin(ang*6+t*.4), rad2=Math.sin(dist*.02+t*.7)*.3;\n  const r1=act-inh*.8+det, sp1=Math.tanh(r1*2.5);\n  const p2=Math.tanh((rad+angu*.5+rad2)*2);\n  const r2=Math.tanh((sp1*1.5+p2*1.2)*1.8);\n  const r3=Math.tanh((r2+Math.sin(dist*.03+ang*3-t)*.5)*2);\n  const bl=sp1*.3+p2*.25+r2*.25+r3*.2;\n  const v=bl*.5+.5;\n  const pal=[[8,12,52],[12,58,95],[18,120,128],[45,170,130],[215,185,50],[215,120,60],[160,50,80],[90,25,100],[8,12,52]];\n  const idx=v*(pal.length-1), i=Math.min(idx|0,pal.length-2), f=idx-i;\n  const lm=.8+Math.sin(r1*Math.PI)*.1+r2*.08+Math.sin(ang*3+dist*.02+t)*.02;\n  return [Math.min(255,(pal[i][0]+(pal[i+1][0]-pal[i][0])*f)*lm)|0,Math.min(255,(pal[i][1]+(pal[i+1][1]-pal[i][1])*f)*lm)|0,Math.min(255,(pal[i][2]+(pal[i+1][2]-pal[i][2])*f)*lm)|0];\n}",
+  "score": {
+    "coherence": 8,
+    "harmony": 7,
+    "complexity": 9,
+    "density": 4,
+    "total": 28,
+    "reason": "The image has high coherence with smooth, flowing patterns and no visual artifacts. Its color harmony is strong with a vibrant, gradient-like palette, though the intensity may reduce readability. Complexity is high due to the intricate, swirling mathematical patterns. However, density is low — it's purely decorative with no functional UI elements, making it unsuitable for a practical OS interface."
+  },
+  "timestamp": 1774491653135,
+  "filename": "gen28_1774491653135"
+}

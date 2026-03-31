@@ -28,6 +28,8 @@ import { ContentStore } from './content-store.js';
 import { Router } from './router.js';
 import { NavigationRenderer } from './navigation-renderer.js';
 import { ThemeEditor, DEFAULT_THEME, THEME_PRESETS } from './theme-editor.js';
+import { AiArchitect } from './ai-architect.js';
+import { AiRefiner } from './ai-refiner.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -92,6 +94,18 @@ export class PxOSServer {
         // CMS: Theme Editor
         this.themeEditor = new ThemeEditor({
             themesDir: './themes',
+        });
+
+        // CMS: AI Architect & Refiner
+        this.aiArchitect = new AiArchitect({
+            contentStore: this.cmsContentStore,
+            router: this.cmsRouter,
+            themeEditor: this.themeEditor,
+        });
+        this.aiRefiner = new AiRefiner({
+            contentStore: this.cmsContentStore,
+            router: this.cmsRouter,
+            themeEditor: this.themeEditor,
         });
 
         // Setup alert notifiers
@@ -366,6 +380,11 @@ export class PxOSServer {
                 await this.handleCMSExportPNG(req, res);
             } else if (pathname === '/api/cms/export/html' && req.method === 'POST') {
                 await this.handleCMSExportHTML(req, res);
+            // CMS AI Architect API
+            } else if (pathname === '/api/cms/architect' && req.method === 'POST') {
+                await this.handleCMSArchitect(req, res);
+            } else if (pathname === '/api/cms/refine' && req.method === 'POST') {
+                await this.handleCMSRefine(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -936,6 +955,38 @@ export class PxOSServer {
             res.end(html);
         } catch (err) {
             this.sendError(res, 500, `HTML export error: ${err.message}`);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────
+    // CMS AI Architect & Refiner Handlers
+    // ─────────────────────────────────────────────────────
+
+    async handleCMSArchitect(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { description } = body ? JSON.parse(body) : {};
+            if (!description || typeof description !== 'string') {
+                return this.sendError(res, 400, 'description is required');
+            }
+            const siteManifest = this.aiArchitect.generate(description);
+            this.sendJSON(res, 200, { ok: true, site: siteManifest });
+        } catch (err) {
+            this.sendError(res, 500, `Architect error: ${err.message}`);
+        }
+    }
+
+    async handleCMSRefine(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { instruction } = body ? JSON.parse(body) : {};
+            if (!instruction || typeof instruction !== 'string') {
+                return this.sendError(res, 400, 'instruction is required');
+            }
+            const result = this.aiRefiner.refine(instruction);
+            this.sendJSON(res, 200, result);
+        } catch (err) {
+            this.sendError(res, 500, `Refine error: ${err.message}`);
         }
     }
 

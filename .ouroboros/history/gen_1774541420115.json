@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const wx = Math.sin(x*0.02+t*0.3)*15 + Math.cos(y*0.015-t*0.2)*10 + Math.sin(y*0.03+t*0.5)*5;\n  const wy = Math.cos(y*0.02-t*0.25)*15 + Math.sin(x*0.018+t*0.35)*10 + Math.cos(x*0.025-t*0.4)*5;\n  const sx = x + wx, sy = y + wy;\n  const wells = [\n    [160+Math.sin(t*0.6)*100, 80+Math.cos(t*0.4)*50, 0.08, 2.0, 1.2],\n    [320+Math.cos(t*0.5)*100, 160+Math.sin(t*0.7)*50, 0.1, 1.7, 0.8],\n    [240+Math.sin(t*0.3+2)*140, 120+Math.cos(t*0.5+1)*90, 0.06, 2.3, 1.5],\n    [120+Math.cos(t*0.8+1)*80, 180+Math.sin(t*0.6+3)*60, 0.12, 1.5, 0.6],\n    [360+Math.sin(t*0.4+4)*90, 60+Math.cos(t*0.9+2)*70, 0.07, 2.6, 1.0],\n    [240+Math.cos(t*0.35+5)*120, 200+Math.sin(t*0.55)*80, 0.09, 1.9, 0.9]\n  ];\n  let aS=0, iS=0, grav=0, potential=0;\n  for (const [sX,sY,f,sp,mass] of wells) {\n    const d = Math.sqrt((sx-sX)**2+(sy-sY)**2)+1;\n    aS += Math.sin(d*f-t*sp);\n    iS += Math.sin(d*f*0.7+t*sp*0.6+1.5);\n    grav += mass/d;\n    potential += mass*50/d;\n  }\n  const act=aS/6, inh=iS/6;\n  const bg = (Math.sin(sx*0.04+sy*0.025+t*0.8)+Math.sin(sx*0.03-sy*0.04+t*1.1))/2+Math.sin((sx+sy)*0.12+t*2.5)*0.2+Math.sin((sx-sy)*0.1-t*2)*0.2;\n  const dist=Math.sqrt((sx-cx)**2+(sy-cy)**2), ang=Math.atan2(sy-cy,sx-cx);\n  const spiral = (Math.sin(dist*0.05-ang*3-t*1.5)+Math.sin(dist*0.04+ang*4-t*1.2))*0.4;\n  const kinetic = grav*Math.sin(t*2+dist*0.05);\n  const reaction = Math.tanh((act-inh*0.7+bg*0.3+spiral+kinetic*0.3)*2.2);\n  const cell = Math.tanh((Math.sin(sx*0.15)*Math.sin(sy*0.15)+Math.sin((sx+sy)*0.1+t)*0.5)*1.5)*0.3;\n  const blend = reaction*0.75+cell*0.25;\n  const photoBand = Math.sin(y*0.05+t*0.3)*Math.sin(x*0.02-t*0.2)*0.12;\n  const v = blend*0.5+0.5+photoBand;\n  const pal = [[5,8,45],[10,40,130],[0,190,210],[25,230,110],[245,225,40],[255,135,35],[255,55,85],[185,25,125],[5,8,45]];\n  const idx = Math.max(0,Math.min(v*(pal.length-1),pal.length-1.001));\n  const pi = Math.min(idx|0,pal.length-2), f = idx-pi;\n  let r = pal[pi][0]+(pal[pi+1][0]-pal[pi][0])*f;\n  let g = pal[pi][1]+(pal[pi+1][1]-pal[pi][1])*f;\n  let b = pal[pi][2]+(pal[pi+1][2]-pal[pi][2])*f;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS framebuffer (e.g., boot screen or uninitialized state), but aesthetically and informationally barren."
+  },
+  "timestamp": 1774541420115,
+  "filename": "gen106_1774541420115"
+}

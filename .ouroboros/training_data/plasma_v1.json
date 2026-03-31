@@ -1,0 +1,12 @@
+{
+  "name": "plasma",
+  "timestamp": "2026-03-26T01:18:18.868Z",
+  "scores": {
+    "coherence": 7,
+    "harmony": 5,
+    "complexity": 9,
+    "density": 3,
+    "total": 24,
+    "reason": "The image has high complexity with intricate, wave-like patterns but lacks coherence due to chaotic color transitions. Harmony is low because the vibrant, clashing colors (red, blue, green) are visually jarring. Density is very low — it's purely decorative with no functional UI elements — making it unsuitable for a minimal OS interface."
+  }
+}

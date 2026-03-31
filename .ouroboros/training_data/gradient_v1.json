@@ -1,0 +1,12 @@
+{
+  "name": "gradient",
+  "timestamp": "2026-03-26T01:18:20.401Z",
+  "scores": {
+    "coherence": 10,
+    "harmony": 9,
+    "complexity": 8,
+    "density": 3,
+    "total": 30,
+    "reason": "The image is visually coherent with a smooth gradient and no artifacts. The color harmony is excellent, transitioning through a pleasing spectrum. The complexity is moderate with a simple gradient pattern. However, the density is very low as it contains no functional UI elements or information, making it purely decorative."
+  }
+}

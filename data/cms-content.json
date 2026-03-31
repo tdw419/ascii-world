@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "items": {},
+  "manifests": {
+    "pm_mnekvo5l_b": {
+      "id": "pm_mnekvo5l_b",
+      "title": "Fwd A",
+      "slug": "fwd-a",
+      "layout": [],
+      "theme": null,
+      "metadata": {},
+      "created_at": 1774959200265,
+      "updated_at": 1774959200265
+    },
+    "pm_mnekvo5l_c": {
+      "id": "pm_mnekvo5l_c",
+      "title": "Fwd B",
+      "slug": "fwd-b",
+      "layout": [],
+      "theme": null,
+      "metadata": {},
+      "created_at": 1774959200265,
+      "updated_at": 1774959200265
+    }
+  }
+}

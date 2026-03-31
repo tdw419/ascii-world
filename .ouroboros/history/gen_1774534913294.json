@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const wx = Math.sin(y*0.012+t*0.25)*25 + Math.cos((x+y)*0.008+t*0.3)*15 + Math.sin(x*0.018-t*0.15)*10;\n  const wy = Math.cos(x*0.012-t*0.2)*25 + Math.sin((x-y)*0.008-t*0.25)*15 + Math.cos(y*0.018+t*0.2)*10;\n  const sx = x + wx, sy = y + wy;\n  const wells = [\n    [160+Math.sin(t*0.45)*130, 90+Math.cos(t*0.3)*65, 9000, 0.08, 2.2],\n    [320+Math.cos(t*0.38)*110, 165+Math.sin(t*0.5)*75, 11000, 0.065, 1.8],\n    [240+Math.sin(t*0.28+2)*155, 115+Math.cos(t*0.42+1)*105, 7000, 0.09, 2.5],\n    [75+Math.cos(t*0.65+1)*75, 195+Math.sin(t*0.45+3)*55, 8000, 0.075, 2.0],\n    [405+Math.sin(t*0.32+4)*65, 55+Math.cos(t*0.75+2)*45, 10000, 0.055, 2.8],\n    [240+Math.cos(t*0.28+5)*135, 225+Math.sin(t*0.48)*65, 6000, 0.085, 1.6]\n  ];\n  let potential = 0, actSum = 0, inhSum = 0;\n  for (const [wX, wY, mass, freq, speed] of wells) {\n    const dx = sx - wX, dy = sy - wY;\n    const d = Math.sqrt(dx*dx + dy*dy) + 0.1;\n    potential += mass / d;\n    actSum += Math.sin(d * freq - t * speed);\n    inhSum += Math.sin(d * freq * 0.65 + t * speed * 0.55 + 2.0);\n  }\n  const n = wells.length, act = actSum/n, inh = inhSum/n;\n  const energyWave = Math.sin(potential*0.002-t*2.5) + Math.sin(potential*0.0015+t*1.8)*0.6;\n  const macro = Math.tanh((act - inh*0.65 + energyWave*0.2)*3.2);\n  const micro1 = Math.sin(sx*0.1+sy*0.08+t*2.2)*Math.sin(sx*0.07-sy*0.11-t*1.7);\n  const micro2 = Math.sin((sx+sy)*0.09-t*2.8)*Math.cos((sx-sy)*0.07+t*2.1);\n  const micro = Math.tanh((micro1+micro2*0.7)*1.8)*0.2;\n  const cx = 240, cy = 120;\n  const dist = Math.sqrt((sx-cx)**2+(sy-cy)**2), ang = Math.atan2(sy-cy, sx-cx);\n  const spiral = Math.sin(dist*0.055-ang*5+t*2.0)*Math.cos(dist*0.04+ang*3-t*1.5)*0.25;\n  const field = macro + micro + spiral;\n  const v = Math.tanh(field*2.2)*0.5+0.5;\n  const edgeSharp = Math.abs(macro) > 0.7 ? 1.0 : Math.pow(Math.abs(macro)/0.7, 4);\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns, mathematical depth, or useful UI information, making it extremely low in complexity and density."
+  },
+  "timestamp": 1774534913294,
+  "filename": "gen13_1774534913294"
+}

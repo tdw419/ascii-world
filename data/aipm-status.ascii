@@ -1,0 +1,94 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║  AIPM v2 Dashboard                                     [Neural-Reality]║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+  ▶  RUNNING normally
+
+[P] Pause  [R] Resume  [I] Inject  [S] Status
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Project Health                                                        │
+├───────────────────┬────────┬──────────┬──────────────────────────────┤
+│ Project           │ Health │ Tests    │ Queue                       │
+├───────────────────┼────────┼──────────┼──────────────────────────────┤
+│ ◉ ascii-world-core │ red     │ 1067/1065 │ 0p 11a                      │
+│ ◉ geometry-os-gpu  │ red     │ n/a      │ 0p 5a                       │
+│ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
+│ ◉ glyphlang        │ red     │ 55/55    │ 5p 0a                       │
+│ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
+│ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
+│ ● openmind         │ green   │ n/a      │ 0p 0a                       │
+│ ● pixel-linux      │ green   │ n/a      │ 0p 0a                       │
+│ ● pixel-poc        │ green   │ n/a      │ 0p 0a                       │
+│ ● rhythmbox-tools  │ green   │ n/a      │ 0p 0a                       │
+└───────────────────┴────────┴──────────┴──────────────────────────────┘
+
+┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
+│ Status: RED | Consecutive failures: 6
+│ Commit: e9ee3f3f7b51
+│ Tests:  1067/1065 passing
+│ GitHub: tdw419/ascii-world
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── geometry-os-gpu (rust) ─────────────────────────────────────────────┐
+│ Status: RED | Consecutive failures: 3
+│ Commit: 78cf8f26af24
+│ Tests:  0/0 passing
+│ GitHub: tdw419/geometry-os
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── glass-box-monitor (javascript) ─────────────────────────────────────────────┐
+│ Status: GREEN | Consecutive failures: 0
+│ Commit: 1eb3f4260a13
+│ Tests:  0/0 passing
+│ GitHub: tdw419/glass-box-monitor
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── glyphlang (go) ─────────────────────────────────────────────┐
+│ Status: RED | Consecutive failures: 3
+│ Commit: 23b146994f5e
+│ Tests:  55/55 passing
+│ GitHub: tdw419/glyphlang
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── glyphlang-source (go) ─────────────────────────────────────────────┐
+│ Status: GREEN | Consecutive failures: 0
+│ Commit: c2a5cb006fbe
+│ Tests:  48/49 passing
+│ GitHub: GlyphLang/GlyphLang
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── openclaw-glass (python) ─────────────────────────────────────────────┐
+│ Status: GREEN | Consecutive failures: 0
+│ Commit: 2274bec841cb
+│ Tests:  0/0 passing
+│ GitHub: openclaw/openclaw
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── openmind (javascript) ─────────────────────────────────────────────┐
+│ Status: GREEN | Consecutive failures: 0
+│ Commit: b5663f692607
+│ Tests:  0/0 passing
+│ GitHub: tdw419/openmind
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── pixel-linux (rust) ─────────────────────────────────────────────┐
+│ Status: GREEN | Consecutive failures: 0
+│ Commit: 8606a413c842
+│ Tests:  0/0 passing
+│ GitHub: None
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── pixel-poc (rust) ─────────────────────────────────────────────┐
+│ Status: GREEN | Consecutive failures: 0
+│ Commit: 4f05be61397a
+│ Tests:  0/0 passing
+│ GitHub: None
+└────────────────────────────────────────────────────────────────────┘
+
+┌─── rhythmbox-tools (python) ─────────────────────────────────────────────┐
+│ Status: GREEN | Consecutive failures: 0
+│ Commit: db9a40a8e58f
+│ Tests:  0/0 passing
+│ GitHub: tdw419/rhythmbox-tools
+└────────────────────────────────────────────────────────────────────┘

@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  let nx = x / 480, ny = y / 240;\n  let a = 0, b = 0;\n  for (let i = 0; i < 8; i++) {\n    let p = t * 0.18 + i * 0.785;\n    let sx = 0.5 + 0.4 * Math.sin(p + i * 0.3);\n    let sy = 0.5 + 0.3 * Math.cos(p * 0.7 + i * 1.1);\n    let dx = nx - sx, dy = ny - sy;\n    let d = Math.sqrt(dx * dx + dy * dy);\n    let w = Math.exp(-d * 2.2);\n    a += Math.sin(d * (20 + i * 3) - t * (0.6 + i * 0.1)) * w;\n    b += Math.cos(d * (15 + i * 2.5) + t * (0.4 + i * 0.08)) * w;\n  }\n  let a2 = a * a, b2 = b * b, ab = a * b;\n  let react = a2 - b2 * 0.6 + ab * 0.4 - 0.08;\n  let spots = Math.tanh(react * 10);\n  let stripes = Math.sin(react * 28) * 0.2;\n  let micro = Math.sin(a * 40 + b * 35 + t * 2) * 0.08;\n  let p = Math.max(0, Math.min(1, spots * 0.65 + stripes + micro + 0.52));\n  p = p * p * (3 - 2 * p);\n  let h = t * 0.02 + p * 0.18 + Math.sin(nx * 2 + ny * 2 + t * 0.1) * 0.05;\n  let r = 0.5 + 0.48 * Math.cos(6.2832 * (h + 0.0) + 0.4);\n  let g = 0.5 + 0.48 * Math.cos(6.2832 * (h + 0.32) + 0.2);\n  let bl = 0.5 + 0.48 * Math.cos(6.2832 * (h + 0.64) + 0.6);\n  let shadow = Math.max(0, Math.min(1, react * 5 + 0.5));\n  let lum = 0.18 + 0.82 * p - shadow * 0.1;\n  let glow = Math.exp(-Math.abs(react) * 6) * 0.15;\n  return [\n    Math.min(1, r * lum + glow * 0.8),\n    Math.min(1, g * lum + glow * 0.5),\n    Math.min(1, bl * lum + glow * 0.9)\n  ];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS framebuffer (e.g., boot screen), but visually uninteresting."
+  },
+  "timestamp": 1774490108388,
+  "filename": "gen1_1774490108388"
+}

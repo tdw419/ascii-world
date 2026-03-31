@@ -1,0 +1,8 @@
+╔═══════════════════════════════════════════════════════════════╗
+║ EXPERIMENT: ouroboros-vcc-check                               ║
+╠═══════════════════════════════════════════════════════════════╣
+║ H: All renderers (HTML, SVG, ANSI) preserve Ouroboros status  ║
+║ T: sync/renderers/vcc-evaluator.js                            ║
+║ M: vcc_validate_all == 1.0                                    ║
+║ B: 1 iteration                                                ║
+╚═══════════════════════════════════════════════════════════════╝

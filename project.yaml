@@ -1,0 +1,11 @@
+name: ascii-world-core
+language: javascript
+test_command: "cd /home/jericho/zion/projects/aipm/repos/ascii-world-core && node --test tests/*.test.js 2>&1 | grep -oP '(?<=pass )\\d+|(?<=tests )\\d+' | paste -sd'/' -"
+test_parser: regex
+test_parser_config:
+  regex: "(\\d+)/(\\d+)"
+health_threshold: 3
+protected_files:
+  - README.md
+  - ROADMAP.md
+  - project.yaml

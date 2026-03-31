@@ -1,0 +1,14 @@
+protected_files:
+  - sync/server.js
+  - sync/cell-store.js
+  - sync/pixel-formula-engine.js
+allowed_targets:
+  - sync/pixel-buffer.js
+  - sync/screen-manager.js
+  - sync/glyph-atlas.js
+  - sync/keyboard-input.js
+  - sync/ansi-parser.js
+  - sync/framebuffer-writer.js
+  - sync/software-shader.js
+  - tests/
+create_backup: true

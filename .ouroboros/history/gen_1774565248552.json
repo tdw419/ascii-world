@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const P = [2,3,5,7,11,13,17,19,23,29];\n  const wx = Math.sin(x*0.018+t*0.3)* 0;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 1,
+    "harmony": 1,
+    "complexity": 1,
+    "density": 1,
+    "total": 4,
+    "reason": "Error: Vision API error: 400 Bad Request"
+  },
+  "timestamp": 1774565248549,
+  "filename": "gen722_1774565248549"
+}

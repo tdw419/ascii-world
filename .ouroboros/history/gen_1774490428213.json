@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const s = 0.013, px = x * s, py = y * s;\n  let a = Math.sin(px*3.2+t*0.18)*Math.cos(py*3.8-t*0.12) + Math.sin((px-py)*2.5+t*0.1)*0.7 + Math.cos(px*1.8+py*2.2-t*0.08)*0.6;\n  let b = Math.sin(px*6.4+py*5.2+t*0.22)*0.4 + Math.cos(px*7.1-py*6.8-t*0.18)*0.35 + Math.sin(px*8.5+py*7.9+t*0.15)*0.25;\n  let c = Math.sin(px*12.1-py*11.3+t*0.3)*0.15 + Math.cos(px*13.7+py*12.9-t*0.28)*0.12;\n  let rd = (a*0.55 - b*0.4 + c*0.15) + (a*a*0.25 - b*0.12);\n  rd = Math.sin(rd*2.8 + Math.sin(rd*1.4)*0.5);\n  rd = Math.sin(rd*3.14 + a*0.4);\n  let fine = Math.sin(px*20+py*18+t*0.35)*Math.cos(px*16-py*22-t*0.3)*0.06;\n  rd = Math.tanh((rd+fine)*1.9);\n  let spot = Math.sin(px*4.7+t*0.13)*Math.sin(py*5.1-t*0.11)*Math.cos((px+py)*2.3+t*0.07);\n  spot = Math.pow(Math.max(0, Math.sin(spot*2.2)), 2.5)*0.3;\n  let p = rd + spot;\n  let ph = p + t*0.015;\n  let cr = 0.06 + 0.48*(0.5+0.5*Math.sin(ph*2.6+0.0)) + 0.18*Math.pow(Math.max(0,p),4);\n  let cg = 0.12 + 0.42*(0.5+0.5*Math.sin(ph*2.6+1.9)) + 0.12*Math.pow(Math.max(0,p),4);\n  let cb = 0.22 + 0.52*(0.5+0.5*Math.sin(ph*2.6+3.8)) + 0.08*Math.pow(Math.max(0,p),4);\n  let edge = Math.abs(Math.sin(rd*5.0))*0.15;\n  cr += edge*0.3; cg += edge*0.5; cb += edge*0.7;\n  return [Math.min(1,cr), Math.min(1,cg), Math.min(1,cb)];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no visual complexity or useful information density for a UI, making it functionally minimal but aesthetically neutral."
+  },
+  "timestamp": 1774490428213,
+  "filename": "gen4_1774490428213"
+}

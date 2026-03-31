@@ -1,0 +1,161 @@
+#!/usr/bin/env node
+/**
+ * Ouroboros Continuous Loop V2 - Strategic Roadmap-Driven
+ * 
+ * Now uses ROADMAP.md for strategic direction instead of
+ * just reactive hill-climbing.
+ * 
+ * Features:
+ * - Reads roadmap phases and milestones
+ * - Determines next action based on current phase
+ * - Updates roadmap progress as milestones complete
+ * - Tracks metrics over time
+ */
+
+import { execSync } from 'child_process';
+import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
+import { join, basename } from 'path';
+
+const PROJECT_ROOT = '/home/jericho/zion/projects/ascii_world/ascii_world';
+const STATE_DIR = join(PROJECT_ROOT, '.ouroboros');
+const STATE_FILE = join(STATE_DIR, 'loop_state.json');
+const LOG_FILE = join(STATE_DIR, 'loop.log');
+const ROADMAP_FILE = join(PROJECT_ROOT, 'ROADMAP.md');
+
+mkdirSync(STATE_DIR, { recursive: true });
+
+// State
+let state = {
+    active: true,
+    iterations: 0,
+    maxIterations: 100,
+    startTime: new Date().toISOString(),
+    currentPhase: 'Phase 2',
+    insights: [],
+    metrics: { testsPassing: 0, coverage: 0 }
+};
+
+if (existsSync(STATE_FILE)) {
+    try {
+        state = { ...state, ...JSON.parse(readFileSync(STATE_FILE, 'utf-8')) };
+    } catch (e) {}
+}
+
+function log(msg) {
+    const line = `[${new Date().toISOString()}] ${msg}`;
+    console.log(line);
+    const existing = existsSync(LOG_FILE) ? readFileSync(LOG_FILE, 'utf-8') : '';
+    writeFileSync(LOG_FILE, existing + line + '\n');
+}
+
+function saveState() {
+    writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
+
+function run(cmd, timeout = 30000) {
+    try {
+        return execSync(cmd, { cwd: PROJECT_ROOT, timeout, encoding: 'utf-8' });
+    } catch (e) {
+        return (e.stdout || '') + (e.stderr || '');
+    }
+}
+
+function getTestStats() {
+    const result = run('timeout 25 node --test tests/*.test.js 2>&1');
+    const tests = result.match(/ℹ tests (\d+)/)?.[1] || '0';
+    const pass = result.match(/ℹ pass (\d+)/)?.[1] || '0';
+    return { tests: parseInt(tests), pass: parseInt(pass) };
+}
+
+function getUntestedModules() {
+    const syncDir = join(PROJECT_ROOT, 'sync');
+    const testsDir = join(PROJECT_ROOT, 'tests');
+    
+    const modules = [];
+    const files = readdirSync(syncDir).filter(f => f.endsWith('.js'));
+    
+    for (const f of files) {
+        const base = basename(f, '.js');
+        const testFile = join(testsDir, `${base}.test.js`);
+        if (!existsSync(testFile)) {
+            const lines = execSync(`wc -l < "${join(syncDir, f)}"`, { encoding: 'utf-8' }).trim();
+            modules.push({ name: base, lines: parseInt(lines) });
+        }
+    }
+    
+    return modules.sort((a, b) => b.lines - a.lines);
+}
+
+function parseRoadmap() {
+    if (!existsSync(ROADMAP_FILE)) {
+        return { phases: [], currentPhase: null };
+    }
+    
+    const content = readFileSync(ROADMAP_FILE, 'utf-8');
+    const phases = [];
+    
+    // Parse phases
+    const phaseRegex = /### (Phase \d+): (.+?) ([✅🔄⏸️❌])/g;
+    let match;
+    
+    while ((match = phaseRegex.exec(content)) !== null) {
+        const [, id, name, emoji] = match;
+        const status = {
+            '✅': 'complete',
+            '🔄': 'in_progress',
+            '⏸️': 'paused',
+            '❌': 'blocked'
+        }[emoji] || 'pending';
+        
+        // Extract milestones
+        const phaseStart = content.indexOf(match[0]);
+        const nextPhase = content.indexOf('### Phase', phaseStart + 1);
+        const phaseContent = content.slice(phaseStart, nextPhase === -1 ? undefined : nextPhase);
+        
+        const milestones = [];
+        const milestoneRegex = /- \[([ x])\] (.+)/g;
+        let mMatch;
+        while ((mMatch = milestoneRegex.exec(phaseContent)) !== null) {
+            milestones.push({
+                text: mMatch[2],
+                complete: mMatch[1] === 'x'
+            });
+        }
+        
+        phases.push({ id, name, status, milestones });
+    }
+    
+    // Find current phase
+    const current = phases.find(p => p.status === 'in_progress') || 
+                    phases.find(p => p.status !== 'complete');
+    
+    return { phases, currentPhase: current };
+}
+
+function updateRoadmap(stats) {
+    if (!existsSync(ROADMAP_FILE)) return;
+    
+    let content = readFileSync(ROADMAP_FILE, 'utf-8');
+    
+    // Update metrics table
+    content = content.replace(
+        /\| Tests \| [\d.~%]+ \| [\d.~%]+ \| ([\d.+%]+) \|/,
+        `| Tests | 212 | ${stats.pass} | 400+ |`
+    );
+    
+    // Check if Phase 2 should complete
+    if (stats.pass >= 500) {
+        content = content.replace(
+            /### Phase 2: (.+?) 🔄/,
+            '### Phase 2: $1 ✅'
+        );
+        content = content.replace(
+            /\*\*Status:\*\* IN_PROGRESS/,
+            '**Status:** COMPLETE'
+        );
+        log('📊 Phase 2 marked complete - 400+ tests reached!');
+    }
+    
+    writeFileSync(ROADMAP_FILE, content);
+}
+

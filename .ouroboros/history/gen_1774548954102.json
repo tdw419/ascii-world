@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const P = [2,3,5,7,11,13,17,19,23,29];\n  const cx = 240;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS boot screen but visually empty."
+  },
+  "timestamp": 1774548954102,
+  "filename": "gen288_1774548954102"
+}

@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  let u = 0, v = 0, w = 0;\n  for (let i = 0; i < 9; i++) {\n    let ph = i * 0.6981;\n    let cx = 240 + 190 * Math.sin(t * 0.11 + ph);\n    let cy = 120 + 85 * Math.cos(t * 0.08 + ph * 1.4);\n    let dx = x - cx, dy = y - cy;\n    let d = Math.sqrt(dx * dx + dy * dy);\n    u += Math.exp(-d * 0.0025) * Math.sin(d * 0.11 - t * 1.1 + ph);\n    v += Math.exp(-d * 0.002) * Math.sin(d * 0.075 + t * 0.6 + ph * 0.6);\n    w += Math.exp(-d * 0.003) * Math.cos(d * 0.09 - t * 0.4 + ph * 1.2);\n  }\n  let ru = Math.tanh(u * 1.8);\n  let rv = Math.tanh(v * 1.8);\n  let rw = Math.tanh(w * 1.5);\n  let p1 = Math.tanh((ru * ru - rv * rv + 0.25 * rw) * 2.2);\n  let p2 = Math.tanh((ru * rv + 0.4 * rw - 0.15 * Math.sin(t * 0.3)) * 2.0);\n  let p3 = Math.tanh((rw - ru * rv * 0.5) * 1.8);\n  let h = (p1 * 0.15 + p2 * 0.1 + 0.52 + 0.03 * Math.sin(p3 * 4.0)) % 1;\n  let s = 0.55 + 0.4 * Math.abs(p1);\n  let l = 0.18 + 0.32 * (0.5 + 0.5 * p1) + 0.12 * Math.abs(p2) + 0.08 * (0.5 + 0.5 * p3);\n  let c = (1 - Math.abs(2 * l - 1)) * s;\n  let hh = h * 6, xx = c * (1 - Math.abs(hh % 2 - 1)), m = l - c * 0.5;\n  let r, g, b;\n  if (hh < 1) { r = c; g = xx; b = 0; }\n  else if (hh < 2) { r = xx; g = c; b = 0; }\n  else if (hh < 3) { r = 0; g = c; b = xx; }\n  else if (hh < 4) { r = 0; g = xx; b = c; }\n  else if (hh < 5) { r = xx; g = 0; b = c; }\n  else { r = c; g = 0; b = xx; }\n  return [Math.min(1, r + m + 0.02 * p3), Math.min(1, g + m + 0.01 * p2), Math.min(1, b + m + 0.03 * p1)];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is ideal for a minimal OS boot screen but lacks visual interest."
+  },
+  "timestamp": 1774490495297,
+  "filename": "gen6_1774490495297"
+}

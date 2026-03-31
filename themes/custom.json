@@ -1,0 +1,81 @@
+{
+  "name": "modified",
+  "fg": [
+    50,
+    50,
+    50,
+    255
+  ],
+  "bg": [
+    10,
+    10,
+    18,
+    255
+  ],
+  "border": [
+    60,
+    60,
+    80,
+    255
+  ],
+  "borderHighlight": [
+    0,
+    200,
+    255,
+    255
+  ],
+  "activeFg": [
+    0,
+    255,
+    255,
+    255
+  ],
+  "activeBg": [
+    20,
+    20,
+    35,
+    255
+  ],
+  "focusFg": [
+    0,
+    0,
+    0,
+    255
+  ],
+  "focusBg": [
+    0,
+    200,
+    255,
+    255
+  ],
+  "titleFg": [
+    0,
+    255,
+    255,
+    255
+  ],
+  "titleBg": [
+    10,
+    10,
+    18,
+    255
+  ],
+  "linkFg": [
+    100,
+    200,
+    255,
+    255
+  ],
+  "headingFg": [
+    255,
+    200,
+    100,
+    255
+  ],
+  "borderStyle": "single",
+  "effects": {
+    "scanlines": false,
+    "glow": false,
+    "shadow": false
+  }
+}

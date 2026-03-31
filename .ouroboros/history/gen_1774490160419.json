@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  let nx = x / 480, ny = y / 240;\n  let u = 0, v = 0, w = 0;\n  for (let i = 0; i < 9; i++) {\n    let a = i * 0.698 + t * 0.12 * ((i % 3) - 1);\n    let f = 18 + 4 * Math.sin(t * 0.25 + i * 0.7);\n    let wave = Math.sin(nx * f * Math.cos(a) + ny * f * Math.sin(a) + t * 0.5 + i * 1.8);\n    let ph = i * 2.094;\n    u += wave * Math.cos(ph);\n    v += wave * Math.cos(ph + 2.094);\n    w += wave * Math.cos(ph + 4.189);\n  }\n  let mag = Math.sqrt(u * u + v * v + w * w) / 9;\n  let r1 = u * (1 - mag) - v * 0.7;\n  let r2 = v * (1 - mag) - w * 0.6;\n  let r3 = w * (1 - mag) - u * 0.5;\n  let coarse = Math.sin(r1 * 3 + r2 * 1.5);\n  let fine = Math.sin(r2 * 5 - r3 * 2.5);\n  let detail = Math.sin((r1 + r3) * 8);\n  let p = coarse * 0.5 + fine * 0.3 + detail * 0.2;\n  let s1 = 1 / (1 + Math.exp(-p * 6));\n  let s2 = 1 / (1 + Math.exp(-fine * 4));\n  let hue = t * 0.05 + p * 0.5;\n  let cr = 0.5 + 0.45 * Math.sin(hue * 6.28);\n  let cg = 0.5 + 0.45 * Math.sin(hue * 6.28 + 2.094);\n  let cb = 0.5 + 0.45 * Math.sin(hue * 6.28 + 4.189);\n  cr = s1 * cr + (1 - s1) * (0.04 + 0.08 * s2);\n  cg = s1 * cg + (1 - s1) * (0.06 + 0.12 * s2);\n  cb = s1 * cb + (1 - s1) * (0.12 + 0.18 * s2);\n  let lum = (cr + cg + cb) / 3;\n  cr = lum + (cr - lum) * 1.5;\n  cg = lum + (cg - lum) * 1.5;\n  cb = lum + (cb - lum) * 1.5;\n  cr = Math.pow(Math.max(0, Math.min(1, cr)), 0.85);\n  cg = Math.pow(Math.max(0, Math.min(1, cg)), 0.85);\n  cb = Math.pow(Math.max(0, Math.min(1, cb)), 0.85);\n  return [cr * 255, cg * 255, cb * 255];\n}",
+  "score": {
+    "coherence": 7,
+    "harmony": 4,
+    "complexity": 9,
+    "density": 3,
+    "total": 23,
+    "reason": "The image has high visual complexity with intricate, swirling patterns but suffers from poor color harmony (overly saturated pink and green) and low density (no functional UI elements). Coherence is decent with clear patterns, but the aesthetic is jarring, making it unsuitable for a minimal OS interface."
+  },
+  "timestamp": 1774490160419,
+  "filename": "gen2_1774490160419"
+}

@@ -1,0 +1,412 @@
+{
+  "active": false,
+  "iterations": 148,
+  "maxIterations": 200,
+  "startTime": "2026-03-23T16:34:07.620Z",
+  "currentPhase": "Phase 2",
+  "insights": [
+    {
+      "iteration": 98,
+      "action": "improve_coverage",
+      "testsBefore": 450,
+      "testsAfter": 451,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T18:56:06.087Z"
+    },
+    {
+      "iteration": 99,
+      "action": "improve_coverage",
+      "testsBefore": 451,
+      "testsAfter": 452,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T18:56:59.136Z"
+    },
+    {
+      "iteration": 100,
+      "action": "improve_coverage",
+      "testsBefore": 452,
+      "testsAfter": 453,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T18:57:52.193Z"
+    },
+    {
+      "iteration": 101,
+      "action": "improve_coverage",
+      "testsBefore": 453,
+      "testsAfter": 454,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T18:58:45.244Z"
+    },
+    {
+      "iteration": 102,
+      "action": "improve_coverage",
+      "testsBefore": 454,
+      "testsAfter": 455,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T18:59:38.300Z"
+    },
+    {
+      "iteration": 103,
+      "action": "improve_coverage",
+      "testsBefore": 455,
+      "testsAfter": 456,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:00:31.362Z"
+    },
+    {
+      "iteration": 104,
+      "action": "improve_coverage",
+      "testsBefore": 456,
+      "testsAfter": 457,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:01:24.413Z"
+    },
+    {
+      "iteration": 105,
+      "action": "improve_coverage",
+      "testsBefore": 457,
+      "testsAfter": 458,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:02:17.455Z"
+    },
+    {
+      "iteration": 106,
+      "action": "improve_coverage",
+      "testsBefore": 458,
+      "testsAfter": 459,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:03:10.517Z"
+    },
+    {
+      "iteration": 107,
+      "action": "improve_coverage",
+      "testsBefore": 459,
+      "testsAfter": 460,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:04:03.565Z"
+    },
+    {
+      "iteration": 108,
+      "action": "improve_coverage",
+      "testsBefore": 460,
+      "testsAfter": 461,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:04:56.615Z"
+    },
+    {
+      "iteration": 109,
+      "action": "improve_coverage",
+      "testsBefore": 461,
+      "testsAfter": 462,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:05:49.664Z"
+    },
+    {
+      "iteration": 110,
+      "action": "improve_coverage",
+      "testsBefore": 462,
+      "testsAfter": 463,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:06:42.700Z"
+    },
+    {
+      "iteration": 111,
+      "action": "improve_coverage",
+      "testsBefore": 463,
+      "testsAfter": 464,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:07:35.742Z"
+    },
+    {
+      "iteration": 112,
+      "action": "improve_coverage",
+      "testsBefore": 464,
+      "testsAfter": 465,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:08:28.793Z"
+    },
+    {
+      "iteration": 113,
+      "action": "improve_coverage",
+      "testsBefore": 465,
+      "testsAfter": 466,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:09:21.842Z"
+    },
+    {
+      "iteration": 114,
+      "action": "improve_coverage",
+      "testsBefore": 466,
+      "testsAfter": 467,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:10:14.910Z"
+    },
+    {
+      "iteration": 115,
+      "action": "improve_coverage",
+      "testsBefore": 467,
+      "testsAfter": 468,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:11:07.968Z"
+    },
+    {
+      "iteration": 116,
+      "action": "improve_coverage",
+      "testsBefore": 468,
+      "testsAfter": 469,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:12:01.010Z"
+    },
+    {
+      "iteration": 117,
+      "action": "improve_coverage",
+      "testsBefore": 469,
+      "testsAfter": 470,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:12:54.067Z"
+    },
+    {
+      "iteration": 118,
+      "action": "improve_coverage",
+      "testsBefore": 470,
+      "testsAfter": 471,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:13:47.116Z"
+    },
+    {
+      "iteration": 119,
+      "action": "improve_coverage",
+      "testsBefore": 471,
+      "testsAfter": 472,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:14:40.183Z"
+    },
+    {
+      "iteration": 120,
+      "action": "improve_coverage",
+      "testsBefore": 472,
+      "testsAfter": 473,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:15:33.233Z"
+    },
+    {
+      "iteration": 121,
+      "action": "improve_coverage",
+      "testsBefore": 473,
+      "testsAfter": 474,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:16:26.292Z"
+    },
+    {
+      "iteration": 122,
+      "action": "improve_coverage",
+      "testsBefore": 474,
+      "testsAfter": 475,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:17:19.343Z"
+    },
+    {
+      "iteration": 123,
+      "action": "improve_coverage",
+      "testsBefore": 475,
+      "testsAfter": 476,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:18:12.400Z"
+    },
+    {
+      "iteration": 124,
+      "action": "improve_coverage",
+      "testsBefore": 476,
+      "testsAfter": 477,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:19:05.449Z"
+    },
+    {
+      "iteration": 125,
+      "action": "improve_coverage",
+      "testsBefore": 477,
+      "testsAfter": 478,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:19:58.498Z"
+    },
+    {
+      "iteration": 126,
+      "action": "improve_coverage",
+      "testsBefore": 478,
+      "testsAfter": 479,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:20:51.541Z"
+    },
+    {
+      "iteration": 127,
+      "action": "improve_coverage",
+      "testsBefore": 479,
+      "testsAfter": 480,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:21:44.591Z"
+    },
+    {
+      "iteration": 128,
+      "action": "improve_coverage",
+      "testsBefore": 480,
+      "testsAfter": 481,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:22:37.650Z"
+    },
+    {
+      "iteration": 129,
+      "action": "improve_coverage",
+      "testsBefore": 481,
+      "testsAfter": 482,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:23:30.702Z"
+    },
+    {
+      "iteration": 130,
+      "action": "improve_coverage",
+      "testsBefore": 482,
+      "testsAfter": 483,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:24:23.753Z"
+    },
+    {
+      "iteration": 131,
+      "action": "improve_coverage",
+      "testsBefore": 483,
+      "testsAfter": 484,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:25:16.797Z"
+    },
+    {
+      "iteration": 132,
+      "action": "improve_coverage",
+      "testsBefore": 484,
+      "testsAfter": 485,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:26:09.841Z"
+    },
+    {
+      "iteration": 133,
+      "action": "improve_coverage",
+      "testsBefore": 485,
+      "testsAfter": 486,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:27:02.908Z"
+    },
+    {
+      "iteration": 134,
+      "action": "improve_coverage",
+      "testsBefore": 486,
+      "testsAfter": 487,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:27:55.961Z"
+    },
+    {
+      "iteration": 135,
+      "action": "improve_coverage",
+      "testsBefore": 487,
+      "testsAfter": 488,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:28:49.019Z"
+    },
+    {
+      "iteration": 136,
+      "action": "improve_coverage",
+      "testsBefore": 488,
+      "testsAfter": 489,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:29:42.069Z"
+    },
+    {
+      "iteration": 137,
+      "action": "improve_coverage",
+      "testsBefore": 489,
+      "testsAfter": 490,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:30:35.112Z"
+    },
+    {
+      "iteration": 138,
+      "action": "improve_coverage",
+      "testsBefore": 490,
+      "testsAfter": 491,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:31:28.191Z"
+    },
+    {
+      "iteration": 139,
+      "action": "improve_coverage",
+      "testsBefore": 491,
+      "testsAfter": 492,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:32:21.255Z"
+    },
+    {
+      "iteration": 140,
+      "action": "improve_coverage",
+      "testsBefore": 492,
+      "testsAfter": 493,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:33:14.337Z"
+    },
+    {
+      "iteration": 141,
+      "action": "improve_coverage",
+      "testsBefore": 493,
+      "testsAfter": 494,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:34:07.402Z"
+    },
+    {
+      "iteration": 142,
+      "action": "improve_coverage",
+      "testsBefore": 494,
+      "testsAfter": 495,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:35:00.451Z"
+    },
+    {
+      "iteration": 143,
+      "action": "improve_coverage",
+      "testsBefore": 495,
+      "testsAfter": 496,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:35:53.500Z"
+    },
+    {
+      "iteration": 144,
+      "action": "improve_coverage",
+      "testsBefore": 496,
+      "testsAfter": 497,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:36:46.559Z"
+    },
+    {
+      "iteration": 145,
+      "action": "improve_coverage",
+      "testsBefore": 497,
+      "testsAfter": 498,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:37:39.622Z"
+    },
+    {
+      "iteration": 146,
+      "action": "improve_coverage",
+      "testsBefore": 498,
+      "testsAfter": 499,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:38:32.680Z"
+    },
+    {
+      "iteration": 147,
+      "action": "improve_coverage",
+      "testsBefore": 499,
+      "testsAfter": 500,
+      "phase": "Phase 2",
+      "timestamp": "2026-03-23T19:39:25.732Z"
+    }
+  ],
+  "metrics": {
+    "testsPassing": 500
+  }
+}

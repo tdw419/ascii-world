@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const wx = Math.sin(x*0.02+t*0.3)*15 + Math.cos(y*0.015-t*0.2)*10;\n  const wy = Math.cos(y*0.02-t*0.25)*15 + Math.sin(x*0.018+t*0.35)*10;\n  const sx = x+wx, sy = y+wy;\n  const P = [2,3,5,7,11,13,17,19,23,29];\n  const src = [\n    [160+Math.sin(t*0.6)*100, 80+Math.cos(t*0.4)*50, 0.02*P[0], 2.0],\n    [320+Math.cos(t*0.5)*100, 160+Math.sin(t*0.7)*50, 0.01*P[1], 1.7],\n    [240+Math.sin(t*0.3+2)*140, 120+Math.cos(t*0.5+1)*90, 0.01*P[2], 2.3],\n    [120+Math.cos(t*0.8+1)*80, 180+Math.sin(t*0.6+3)*60, 0.01*P[3], 1.5],\n    [360+Math.sin(t*0.4+4)*90, 60+Math.cos(t*0.9+2)*70, 0.005*P[4], 2.6],\n    [240+Math.cos(t*0.35+5)*120, 200+Math.sin(t*0.55)*80, 0.004*P[5], 1.9]\n  ];\n  let aS=0, iS=0;\n  for(let si=0;si<6;si++){\n    const[sX,sY,f,sp]=src[si];\n    const d=Math.sqrt((sx-sX)**2+(sy-sY)**2);\n    aS+=Math.sin(d*f-t*sp)*P[si]/7;\n    iS+=Math.sin(d*f*0.7+t*sp*0.6+1.5)*P[si]/7;\n  }\n  const act=aS/6, inh=iS/6;\n  const bg=(Math.sin(sx*0.04*P[0]+sy*0.025+t*0.8)+Math.sin(sx*0.03-sy*0.04*P[1]+t*1.1)+Math.sin(sx*0.05+sy*0.05*P[2]+t*0.5))/3+Math.sin((sx+sy)*0.07+t*2.5)*0.3+Math.sin((sx-sy)*0.11-t*2)*0.2;\n  const dist=Math.sqrt((sx-cx)**2+(sy-cy)**2), ang=Math.atan2(sy-cy,sx-cx);\n  const spiral=(Math.sin(dist*0.05-ang*P[2]-t*1.5)+Math.sin(dist*0.04+ang*P[3]-t*1.2))*0.4;\n  const reaction=Math.tanh((act-inh*0.7+bg*0.3+spiral)*2.5);\n  const cell=Math.tanh((Math.sin(sx*0.15)*Math.sin(sy*0.15)+Math.sin((sx+sy)*0.1+t)*0.5)*1.5)*0.3;\n  const blend=reaction*0.6+cell*0.2, v=blend*0.5+0.5;\n  const pal=[[4,4,18],[8,15,65],[15,50,160],[0,150,200],[0,230,160],[160,240,40],[240,160,0],[240,40,70],[240,0,140],[130,0,230],[4,4,18]];\n  const idx=v*(pal.length-1), i=Math.min(idx|0,pal.length-2), f=idx-i;\n  const lum=0.85+Math.sin(reaction*Math.PI)*0.15, edge=Math.abs(reaction)>0.7?1.35:1.0;\n  let r=(pal[i][0]+(pal[i+1][0]-pal[i][0])*f)*lum*edge;\n  let g=(pal[i][1]+(pal[i+1][1]-pal[i][1])*f)*lum*edge;\n  let b=(pal[i][2]+(pal[i+1][2]-pal[i][2])*f)*lum;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS framebuffer, but visually empty."
+  },
+  "timestamp": 1774547743859,
+  "filename": "gen257_1774547743859"
+}

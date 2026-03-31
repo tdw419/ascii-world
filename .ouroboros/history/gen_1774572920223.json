@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const wx = Math.sin(x*0.02+t*0.3)*15+Math.cos(y*0.015-t*0.2)*10+Math.sin((x+y)*0.008+t*0.15)*8;\n  const wy = Math.cos(y*0.02-t*0.25)*15+Math.sin(x*0.018+t*0.35)*10+Math.cos((x-y)*0.009-t*0.18)*7;\n  const sx = x+wx, sy = y+wy;\n  const p2=Math.sin(t*2)*.5+.5, p3=Math.sin(t*3+1)*.5+.5, p5=Math.sin(t*5+2)*.5+.5, p7=Math.sin(t*7+3)*.5+.5;\n  const src = [\n    [160+Math.sin(t*.6)*100,80+Math.cos(t*.4)*50,.08+p2*.02,2+p3*.3],\n    [320+Math.cos(t*.5)*100,160+Math.sin(t*.7)*50,.1+p5*.015,1.7+p7*.2],\n    [240+Math.sin(t*.3+2)*140,120+Math.cos(t*.5+1)*90,.06+p7*.01,2.3+p2*.15],\n    [120+Math.cos(t*.8+1)*80,180+Math.sin(t*.6+3)*60,.12+p3*.02,1.5+p5*.25],\n    [360+Math.sin(t*.4+4)*90,60+Math.cos(t*.9+2)*70,.07+p7*.018,2.6+p3*.2],\n    [240+Math.cos(t*.35+5)*120,200+Math.sin(t*.55)*80,.09+p2*.015,1.9+p5*.2],\n    [80+Math.sin(t*.45+3)*70,40+Math.cos(t*.65+1)*50,.11+p5*.02,2.1+p7*.3],\n    [400+Math.cos(t*.55+2)*60,200+Math.sin(t*.75+4)*45,.09+p3*.015,1.8+p2*.25]\n  ];\n  let aS=0, iS=0;\n  for(const[sX,sY,f,sp]of src){const d=Math.sqrt((sx-sX)**2+(sy-sY)**2);aS+=Math.sin(d*f-t*sp);iS+=Math.sin(d*f*.7+t*sp*.6+1.5);}\n  const act=aS/8, inh=iS/8;\n  const bg=(Math.sin(sx*.04+sy*.025+t*.8)+Math.sin(sx*.03-sy*.04+t*1.1))/2+Math.sin((sx+sy)*.12+t*2.5)*.2+Math.sin((sx-sy)*.1-t*2)*.2+Math.sin(sx*.07*p2+sy*.05*p3+t*1.5)*.15+Math.sin(sx*.03*p5-sy*.06*p7+t*.9)*.1;\n  const dist=Math.sqrt((sx-cx)**2+(sy-cy)**2), ang=Math.atan2(sy-cy,sx-cx);\n  const spiral=(Math.sin(dist*.05-ang*3-t*1.5)+Math.sin(dist*.04+ang*4-t*1.2))*.4+Math.sin(dist*.03*p7+ang*2*p5-t*2)*.2;\n  const reaction=Math.tanh((act-inh*.7+bg*.3+spiral)*2.2);\n  const crossFeed=Math.tanh((act*inh+bg*.2)*1.5)*.3;\n  const cell=Math.tanh((Math.sin(sx*.15)*Math.sin(sy*.15)+Math.sin((sx+sy)*.1+t)*.5)*1.5)*.3;\n  const layerId=Math.floor(sy/40)%7, layerY=sy%40;\n  const layerEdge=Math;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no mathematical patterns or useful UI information, making it extremely low in complexity and density."
+  },
+  "timestamp": 1774572920223,
+  "filename": "gen935_1774572920223"
+}

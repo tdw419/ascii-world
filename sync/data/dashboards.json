@@ -1,0 +1,1338 @@
+{
+  "version": 1,
+  "dashboards": {
+    "autoresearch": {
+      "name": "autoresearch",
+      "template": [
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            200,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            201,
+            "exp_0_200_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            201,
+            "exp_0_200_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            203,
+            "exp_0_200_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            100,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            101,
+            "exp_0_100_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            101,
+            "exp_0_100_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            103,
+            "exp_0_100_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            120,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            121,
+            "exp_0_120_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            121,
+            "exp_0_120_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            123,
+            "exp_0_120_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            140,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            141,
+            "exp_0_140_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            141,
+            "exp_0_140_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            143,
+            "exp_0_140_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            160,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            161,
+            "exp_0_160_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            161,
+            "exp_0_160_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            163,
+            "exp_0_160_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            180,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            181,
+            "exp_0_180_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            181,
+            "exp_0_180_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            183,
+            "exp_0_180_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            200,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            201,
+            "exp_0_200_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            201,
+            "exp_0_200_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            203,
+            "exp_0_200_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            220,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            221,
+            "exp_0_220_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            221,
+            "exp_0_220_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            223,
+            "exp_0_220_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            240,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            241,
+            "exp_0_240_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            241,
+            "exp_0_240_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            243,
+            "exp_0_240_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            260,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            261,
+            "exp_0_260_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            261,
+            "exp_0_260_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            263,
+            "exp_0_260_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            280,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            281,
+            "exp_0_280_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            281,
+            "exp_0_280_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            283,
+            "exp_0_280_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            120,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            121,
+            "exp_0_120_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            121,
+            "exp_0_120_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            123,
+            "exp_0_120_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            180,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            181,
+            "exp_0_180_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            181,
+            "exp_0_180_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            183,
+            "exp_0_180_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            240,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            241,
+            "exp_0_240_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            241,
+            "exp_0_240_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            243,
+            "exp_0_240_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            460,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            461,
+            "exp_0_460_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            461,
+            "exp_0_460_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            463,
+            "exp_0_460_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            700,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            701,
+            "exp_0_700_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            701,
+            "exp_0_700_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            703,
+            "exp_0_700_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            900,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            901,
+            "exp_0_900_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            901,
+            "exp_0_900_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            903,
+            "exp_0_900_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            980,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            981,
+            "exp_0_980_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            981,
+            "exp_0_980_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            983,
+            "exp_0_980_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            1020,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1021,
+            "exp_0_1020_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            1021,
+            "exp_0_1020_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1023,
+            "exp_0_1020_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            1360,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1361,
+            "exp_0_1360_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            1361,
+            "exp_0_1360_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1363,
+            "exp_0_1360_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            1600,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1601,
+            "exp_0_1600_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            1601,
+            "exp_0_1600_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1603,
+            "exp_0_1600_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            1620,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1621,
+            "exp_0_1620_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            1621,
+            "exp_0_1620_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            1623,
+            "exp_0_1620_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            2060,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2061,
+            "exp_0_2060_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            2061,
+            "exp_0_2060_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2063,
+            "exp_0_2060_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            2240,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2241,
+            "exp_0_2240_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            2241,
+            "exp_0_2240_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2243,
+            "exp_0_2240_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            2260,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2261,
+            "exp_0_2260_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            2261,
+            "exp_0_2260_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2263,
+            "exp_0_2260_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            2600,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2601,
+            "exp_0_2600_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            2601,
+            "exp_0_2600_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2603,
+            "exp_0_2600_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            2680,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2681,
+            "exp_0_2680_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            2681,
+            "exp_0_2680_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2683,
+            "exp_0_2680_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            2820,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2821,
+            "exp_0_2820_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            2821,
+            "exp_0_2820_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2823,
+            "exp_0_2820_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            2960,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2961,
+            "exp_0_2960_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            2961,
+            "exp_0_2960_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            2963,
+            "exp_0_2960_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            3240,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3241,
+            "exp_0_3240_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            3241,
+            "exp_0_3240_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3243,
+            "exp_0_3240_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            3340,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3341,
+            "exp_0_3340_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            3341,
+            "exp_0_3340_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3343,
+            "exp_0_3340_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            3500,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3501,
+            "exp_0_3500_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            3501,
+            "exp_0_3500_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3503,
+            "exp_0_3500_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            3640,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3641,
+            "exp_0_3640_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            3641,
+            "exp_0_3640_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3643,
+            "exp_0_3640_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            3760,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3761,
+            "exp_0_3760_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            3761,
+            "exp_0_3760_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            3763,
+            "exp_0_3760_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            4200,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            4201,
+            "exp_0_4200_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            4201,
+            "exp_0_4200_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            4203,
+            "exp_0_4200_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            4540,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            4541,
+            "exp_0_4540_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            4541,
+            "exp_0_4540_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            4543,
+            "exp_0_4540_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            4600,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            4601,
+            "exp_0_4600_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            4601,
+            "exp_0_4600_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            4603,
+            "exp_0_4600_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            5000,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            5001,
+            "exp_0_5000_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            5001,
+            "exp_0_5000_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            5003,
+            "exp_0_5000_message"
+          ]
+        },
+        {
+          "fn": "BOX",
+          "args": [
+            0,
+            6960,
+            20,
+            5
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            6961,
+            "exp_0_6960_status"
+          ]
+        },
+        {
+          "fn": "NUMBER",
+          "args": [
+            10,
+            6961,
+            "exp_0_6960_metric",
+            "0.0"
+          ]
+        },
+        {
+          "fn": "TEXT",
+          "args": [
+            1,
+            6963,
+            "exp_0_6960_message"
+          ]
+        }
+      ],
+      "alerts": [],
+      "created": 1774399503457
+    }
+  }
+}

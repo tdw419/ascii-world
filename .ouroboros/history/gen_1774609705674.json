@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const P = [2,3,5,7,11,13,17,19,23,29];\n  const wx = Math.sin(x*0.02+t*0.3)*15 + Math.cos(y*P[2]*0.003-t*0.2)*P[1]*5;\n  const wy = Math.cos(y*0.02-t*0.25)*15 + Math.sin(x*P[3]*0.003+t*0.35)*P[0]*7;\n  const sx = x+wx, sy = y+wy;\n  const src = [];\n  for(let i=0;i<8;i++){\n    const p=P[i], a=i*Math.PI*2/8+t*0.1;\n    src.push([cx+Math.cos(a)*(40+p*8)+Math.sin(t*0.2*p/7)*20, cy+Math.sin(a)*(30+p*6)+Math.cos(t*0.15*p/5)*15, 0.025+p*0.007, 0.6+p*0.12]);\n  }\n  let aS=0,iS=0;\n  for(const [sX,sY,f,sp] of src){\n    const d=Math.sqrt((sx-sX)**2+(sy-sY)**2);\n    aS+=Math.sin(d*f-t*sp); iS+=Math.sin(d*f*0.7+t*sp*0.6+1.5);\n  }\n  const act=aS/8, inh=iS/8;\n  let bg=0;\n  for(let i=0;i<5;i++) bg+=Math.sin(sx*0.015*P[i]+sy*0.01*P[i+1]+t*(0.3+i*0.2))/(i*0.7+1);\n  bg/=3;\n  const dist=Math.sqrt((sx-cx)**2+(sy-cy)**2), ang=Math.atan2(sy-cy,sx-cx);\n  const spiral=Math.sin(dist*0.05-ang*P[2]-t*1.5)*0.5+Math.sin(dist*0.04+ang*P[3]-t*1.2)*0.3;\n  const reaction=Math.tanh((act-inh*0.7+bg*0.3+spiral)*2.5);\n  const gx=x%(P[(x/30|0)%10]*5), gy=y%(P[(y/20|0)%10]*4);\n  const primeGrid=(gx<0.8||gy<0.8)?0.08:0;\n  const w1=x>15&&x<220&&y>15&&y<110;\n  const w1b=w1&&(x<18||x>217||y<18||y>107)?0.35:0;\n  const w1t=w1&&y<30?Math.sin(x*0.1+t)*0.1+0.15:0;\n  const w2=x>250&&x<465&&y>15&&y<85;\n  const w2b=w2&&(x<253||x>462||y<18||y>82)?0.3:0;\n  const w3=x>15&&x<160&&y>125&&y<225;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS framebuffer, but visually uninteresting."
+  },
+  "timestamp": 1774609705674,
+  "filename": "gen1612_1774609705674"
+}

@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const s1x = 160 + Math.sin(t * 0.6) * 100, s1y = 80 + Math.cos(t * 0.4) * 50;\n  const s2x = 320 + Math.cos(t * 0.5) * 100, s2y = 160 + Math.sin(t * 0.7) * 50;\n  const s3x = 240 + Math.sin(t * 0.3 + 2) * 140, s3y = 120 + Math.cos(t * 0.5 + 1) * 90;\n  const d1 = Math.sqrt((x - s1x) ** 2 + (y - s1y) ** 2);\n  const d2 = Math.sqrt((x - s2x) ** 2 + (y - s2y) ** 2);\n  const d3 = Math.sqrt((x - s3x) ** 2 + (y - s3y) ** 2);\n  const w1 = Math.sin(d1 * 0.08 - t * 2), w2 = Math.sin(d2 * 0.1 - t * 1.7), w3 = Math.sin(d3 * 0.06 - t * 2.3);\n  const w4 = Math.sin(x * 0.05 + y * 0.03 + t * 0.8), w5 = Math.sin(x * 0.03 - y * 0.05 + t * 1.1);\n  const w6 = Math.sin((x + y) * 0.15 + t * 3) * 0.15, w7 = Math.sin((x - y) * 0.12 - t * 2.5) * 0.15;\n  const activator = (w1 + w2 + w3) / 3, inhibitor = (w4 + w5) / 2;\n  const reaction = activator - inhibitor * 0.8 + w6 + w7;\n  const spot = Math.tanh(reaction * 2.5);\n  const cx = 240, cy = 120, dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);\n  const ang = Math.atan2(y - cy, x - cx);\n  const radial = Math.sin(dist * 0.04 - t * 1.5), angular = Math.sin(ang * 6 + t * 0.4);\n  const pattern2 = Math.tanh((radial + angular * 0.5) * 2);\n  const blend = spot * 0.6 + pattern2 * 0.4;\n  const v = blend * 0.5 + 0.5;\n  const pal = [[12,20,72],[18,105,128],[210,175,45],[195,75,55],[12,20,72]];\n  const idx = v * (pal.length - 1), i = Math.min(idx | 0, pal.length - 2), f = idx - i;\n  const lum = 0.85 + Math.sin(reaction * Math.PI) * 0.15;\n  return [\n    Math.min(255, (pal[i][0] + (pal[i+1][0] - pal[i][0]) * f) * lum) | 0,\n    Math.min(255, (pal[i][1] + (pal[i+1][1] - pal[i][1]) * f) * lum) | 0,\n    Math.min(255, (pal[i][2] + (pal[i+1][2] - pal[i][2]) * f) * lum) | 0\n  ];\n}",
+  "score": {
+    "coherence": 8,
+    "harmony": 7,
+    "complexity": 9,
+    "density": 6,
+    "total": 30,
+    "reason": "The image displays high coherence with smooth, flowing gradients and a central star-like pattern. Its color harmony is strong with warm and cool tones blending well. Complexity is high due to the intricate, fractal-like patterns. However, density is low as it lacks clear UI elements or information, making it more decorative than functional for an OS."
+  },
+  "timestamp": 1774491011835,
+  "filename": "gen2_1774491011835"
+}

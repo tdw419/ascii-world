@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const w1x = Math.sin(x*0.014+t*0.28)*22 + Math.cos(y*0.011-t*0.18)*16;\n  const w1y = Math.cos(y*0.014-t*0.22)*22 + Math.sin\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS framebuffer, but visually empty."
+  },
+  "timestamp": 1774508558465,
+  "filename": "gen502_1774508558465"
+}

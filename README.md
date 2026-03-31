@@ -43,7 +43,7 @@ npm install
 # Run tests
 npm test
 
-# Expected: 42 tests passing
+# Expected: 212+ tests passing (as of March 2026)
 
 # Start server
 npm start

@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  let u = x / 480, v = y / 240, T = t * 0.3;\n  let ca = 0, cb = 0, cc = 0;\n  for (let i = 1; i <= 6; i++) {\n    let f = i * 2.1 + 0.5, ph = T * (0.25 + i * 0.12);\n    ca += Math.sin(u * f * 1.6 + v * f * 0.7 + ph) / i;\n    cb += Math.cos(u * f * 0.9 - v * f * 1.5 + ph * 1.15) / i;\n    cc += Math.sin((u + v) * f * 0.8 - ph * 0.9 + u * f * 0.3) / i;\n  }\n  let rA = ca * ca - cb * cb + 0.5 * ca * cc;\n  let rB = cb * cb - cc * cc + 0.4 * cb * ca;\n  let rC = cc * cc - ca * ca + 0.35 * cc * cb;\n  let diff = Math.sin(rA * 4.2 + T) * Math.cos(rB * 3.8 - T * 0.6) * Math.sin(rC * 2.5 + T * 0.8);\n  let spots = Math.sin((rA + diff) * 14.0 + Math.sin(rB * 3.5) * 2.5);\n  let maze = Math.sin((rB + diff * 0.7) * 10.0 + Math.cos(rC * 4.0 + T) * 2.0);\n  let mitosis = Math.sin((rC + diff * 0.5) * 8.0 + Math.sin(rA * 5.0 - T * 0.5) * 1.8);\n  let p = spots * 0.4 + maze * 0.35 + mitosis * 0.25;\n  let edge = 1.0 / (1.0 + Math.exp(p * -5.5));\n  let inner = 1.0 / (1.0 + Math.exp((p - 0.15) * -6.0));\n  let glow = 1.0 / (1.0 + Math.exp((p + 0.2) * -4.0));\n  let detail = Math.sin(u * 47 + v * 31 + T * 2.0) * Math.cos(v * 37 - u * 23 - T * 1.5) * 0.08;\n  let hue = Math.atan2(rB, rA) * 0.5 + 0.5 + detail;\n  let sat = 0.7 + 0.3 * inner;\n  let val = 0.15 + 0.65 * edge + 0.2 * glow;\n  let h6 = hue * 6.0;\n  let hi = Math.floor(h6) % 6, hf = h6 - Math.floor(h6);\n  let pp = val * (1 - sat), qq = val * (1 - hf * sat), tt2 = val * (1 - (1 - hf) * sat);\n  let rr, gg, bb;\n  if (hi === 0) { rr = val; gg = tt2; bb = pp; }\n  else if (hi === 1) { rr = qq; gg = val; bb = pp; }\n  else if (hi === 2) { rr = pp; gg = val; bb = tt2; }\n  else if (hi === 3) { rr = pp; gg = qq; bb = val; }\n  else if (hi === 4) { rr = tt2; gg = pp; bb = val; }\n  else { rr = val; gg = pp; bb = qq; }\n  let warm = edge * glow * 0.15;\n  return [\n    Math.min(1, Math.max(0, rr + warm * 1.2)),\n    Math.min(1, Math.max(0, gg + warm * 0.5)),\n    Math.min(1, Math.max(0, bb + warm * 0.3))\n  ];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is entirely black, indicating no visual content or UI elements. While perfectly coherent and harmonious (as it lacks visual noise), it offers zero complexity or density, making it functionally useless for a minimal OS framebuffer display."
+  },
+  "timestamp": 1774490579010,
+  "filename": "gen8_1774490579010"
+}

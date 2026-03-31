@@ -1,0 +1,14 @@
+{
+  "generation": 5,
+  "style": "waves",
+  "code": "(x, y, t) => {\n  // Normalize coordinates\n  let nx = x / 480;\n  let ny = y / 240;\n  \n  // Wave layers - multiple frequencies for complexity\n  let w1 = Math.sin(nx * 12 + t * 0.8) * Math.cos(ny * 8 + t * 0.5);\n  let w2 = Math.sin(Math.sqrt((nx - 0.5) ** 2 + (ny - 0.5) ** 2) * 20 - t * 1.2);\n  let w3 = Math.sin(nx * 6 - ny * 4 + t * 0.6) * 0.5;\n  \n  // Combined wave\n  let wave = (w1 + w2 * 0.7 + w3) / 2.2;\n  \n  // Grid overlay\n  let gx = (x % 40 < 2) ? 1 : 0;\n  let gy = (y % 30 < 2) ? 1 : 0;\n  let grid = Math.max(gx, gy);\n  \n  // Color palette - deep ocean theme\n  let r = Math.floor((20 + wave * 30 + grid * 60) * (0.8 + w2 * 0.2));\n  let g = Math.floor((40 + wave * 60 + grid * 80 + w1 * 20) * (0.8 + w3 * 0.2));\n  let b = Math.floor((80 + wave * 80 + grid * 100 + w2 * 30) * (0.9 + w1 * 0.1));\n  \n  return [\n    Math.max(0, Math.min(255, r)),\n    Math.max(0, Math.min(255, g)),\n    Math.max(0, Math.min(255, b))\n  ];\n}",
+  "score": {
+    "coherence": 8,
+    "harmony": 7,
+    "complexity": 5,
+    "density": 3,
+    "total": 23,
+    "reason": "Coherent grid with smooth blur, harmonious cool tones, simple mathematical pattern, low UI utility due to sparse info density"
+  },
+  "png": "gen5_waves_1774489133848.png"
+}

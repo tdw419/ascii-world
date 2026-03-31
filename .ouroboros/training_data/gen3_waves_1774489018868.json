@@ -1,0 +1,14 @@
+{
+  "generation": 3,
+  "style": "waves",
+  "code": "(x, y, t) => { let nx = x * 0.01, ny = y * 0.015; let w = Math.sin(nx * 2.5 + t * 1.3 + Math.sin(ny * 3 + t * 0.7) * 2.5); w += Math.sin(ny * 3 - t * 0.9 + Math.cos(nx * 2 + t * 0.4) * 2); w += Math.sin((nx + ny) * 1.8 - t * 1.1) * 0.7; let dx = x - 240, dy = y - 120, dist = Math.sqrt(dx * dx + dy * dy); w += Math.sin(dist * 0.025 - t * 2.5) * 0.6; let sx = 240 + Math.cos(t * 0.6) * 120, sy = 120 + Math.sin(t * 0.45) * 60; w += Math.sin(Math.sqrt((x - sx) ** 2 + (y - sy) ** 2) * 0.04 - t * 3) * 0.5; w *= 0.22; w += (((x * 13 ^ y * 17 ^ (t * 50 | 0) * 7) & 7) - 3.5) * 0.005; let p = w * Math.PI * 2; let r = (Math.sin(p) * 0.5 + 0.5) * 200 + 30; let g = (Math.sin(p + 2.094) * 0.5 + 0.5) * 180 + 20; let b = (Math.sin(p + 4.189) * 0.5 + 0.5) * 230 + 25; let vig = Math.max(0, 1 - dist / 350); vig *= vig; return [Math.min(255, Math.max(0, r * vig)) | 0, Math.min(255, Math.max(0, g * vig)) | 0, Math.min(255, Math.max(0, b * vig)) | 0]; }",
+  "score": {
+    "coherence": 2,
+    "harmony": 3,
+    "complexity": 4,
+    "density": 2,
+    "total": 11,
+    "reason": "Blurry, incoherent color blend with no clear patterns or UI utility; clashing colors reduce harmony, while random noise limits complexity and density."
+  },
+  "png": "gen3_waves_1774489018868.png"
+}

@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const wx = Math.sin(x * 0.02 + t * 0.3) * 15 + Math.cos(y * 0.015 - t * 0.2) * 10;\n  const wy = Math.cos(y * 0.02 - t * 0.25) * 15 + Math.sin(x * 0.018 + t * 0.35) * 10;\n  const sx = x + wx, sy = y + wy;\n  const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];\n  const src = primes.slice(0, 8).map((p, i) => [\n    40 + (i * 53) % 400 + Math.sin(t * p * 0.05) * 35,\n    25 + (i * 41) % 190 + Math.cos(t * p * 0.04) * 25,\n    0.02 + p * 0.007, p * 0.14\n  ]);\n  let aS = 0, iS = 0;\n  for (const [sX, sY, f, sp] of src) {\n    const d = Math.sqrt((sx - sX) ** 2 + (sy - sY) ** 2);\n    aS += Math.sin(d * f - t * sp);\n    iS += Math.sin(d * f * 0.7 + t * sp * 0.6 + 1.5);\n  return [0, 0, 0];\n}}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS boot screen but visually empty."
+  },
+  "timestamp": 1774548504892,
+  "filename": "gen277_1774548504892"
+}

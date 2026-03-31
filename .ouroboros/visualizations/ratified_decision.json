@@ -1,0 +1,20 @@
+{
+  "input_query": "What is photosynthesis?",
+  "ratification": {
+    "level": "auto_approved",
+    "average_similarity": 0.211,
+    "path_count": 55,
+    "status": "approved",
+    "color": "green",
+    "confidence_breakdown": {
+      "high_confidence": 14,
+      "medium_confidence": 41,
+      "low_confidence": 0
+    },
+    "thresholds": {
+      "auto_approve": 0.21,
+      "pending": 0.15
+    }
+  },
+  "auto_execute": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "mandelbrot",
+  "timestamp": "2026-03-26T01:18:23.517Z",
+  "scores": {
+    "coherence": 9,
+    "harmony": 8,
+    "complexity": 10,
+    "density": 6,
+    "total": 33,
+    "reason": "The image displays a highly coherent fractal (likely a Mandelbrot set) with sharp, well-defined boundaries and no visual artifacts. The color gradient from yellow to green provides strong harmony and aesthetic appeal. Its mathematical complexity is maximal, showcasing intricate self-similar patterns. However, the density is low for a UI, as it's mostly decorative with minimal functional information."
+  }
+}

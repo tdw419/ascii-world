@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const P = [2,3,5,7,11,13], SI = 14;\n  let wx = 0, wy = 0;\n  for (let i = 0; i < 6; i++) {\n    const p = P[i];\n    wx += Math.sin(x*0.008*p + t*0.2*(p/7)) * (22/p);\n    wy += Math.cos(y*0.008*p - t*0.18*(p/5)) * (22/p);\n  }\n  const sPhase = (t*SI*0.22) % (Math.PI*2);\n  const sJump = Math.exp(-Math.pow(Math.abs(Math.sin(sPhase)), 6)*12) * Math.sin(t*47) * 14;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 1,
+    "harmony": 1,
+    "complexity": 1,
+    "density": 1,
+    "total": 4,
+    "reason": "Error: Vision API error: 400 Bad Request"
+  },
+  "timestamp": 1774561543292,
+  "filename": "gen620_1774561543292"
+}

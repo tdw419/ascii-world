@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const cx = 240, cy = 120;\n  const primes = [2, 3, 5, 7, 11, 13, 17, 19];\n  const wx = Math.sin(x*0.02+t*0.3)*15 + Math.cos(y*0.015-t*0.2)*10 + Math.sin(x*0.007*7-t*0.15)*8;\n  const wy = Math.cos(y*0.02-t*0.25)*15 + Math.sin(x*0.018+t*0.35)*10 + Math.cos(y*0.005*11+t*0.2)*6;\n  const sx = x + wx, sy = y + wy;\n  const src = [\n    [160+Math.sin(t*0.6)*100,80+Math.cos(t*0.4)*50,0.08,2.0],\n    [320+Math.cos(t*0.5)*100,160+Math.sin(t*0.7)*50,0.1,1.7],\n    [240+Math.sin(t*0.3+2)*140,120+Math.cos(t*0.5+1)*90,0.06,2.3],\n    [120+Math.cos(t*0.8+1)*80,180+Math.sin(t*0.6+3)*60,0.12,1.5],\n    [360+Math.sin(t*0.4+4)*90,60+Math.cos(t*0.9+2)*70,0.07,2.6],\n    [240+Math.cos(t*0.35+5)*120,200+Math.sin(t*0.55)*80,0.09,1.9],\n    [80+Math.sin(t*0.45)*60,40+Math.cos(t*0.65)*30,0.11,2.1],\n    [400+Math.cos(t*0.55)*70,200+Math.sin(t*0.75)*50,0.05,2.8]\n  ];\n  let aS = 0, iS = 0;\n  for (let j = 0; j < src.length; j++) {\n    const [sX, sY, f, sp] = src[j];\n    const d = Math.sqrt((sx-sX)**2 + (sy-sY)**2);\n    const pf = f * primes[j] * 0.3;\n    aS += Math.sin(d*pf - t*sp);\n    iS += Math.sin(d*pf*0.7 + t*sp*0.6 + 1.5);\n  }\n  const act = aS/8, inh = iS/8;\n  const bg = (Math.sin(sx*0.04+sy*0.025+t*0.8)+Math.sin(sx*0.03-sy*0.04+t*1.1))/2 + Math.sin((sx+sy)*0.12+t*2.5)*0.2 + Math.sin((sx-sy)*0.1-t*2)*0.2 + Math.sin(sx*0.039+sy*0.085-t*0.7)*0.15;\n  const dist = Math.sqrt((sx-cx)**2+(sy-cy)**2), ang = Math;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 1,
+    "harmony": 1,
+    "complexity": 1,
+    "density": 1,
+    "total": 4,
+    "reason": "Error: Vision API error: 400 Bad Request"
+  },
+  "timestamp": 1774566010164,
+  "filename": "gen748_1774566010164"
+}

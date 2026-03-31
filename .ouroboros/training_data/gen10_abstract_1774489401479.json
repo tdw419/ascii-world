@@ -1,0 +1,14 @@
+{
+  "generation": 10,
+  "style": "abstract",
+  "code": "(x, y, t) => {\n  let gx = x % 24, gy = y % 24;\n  let grid = ((gx === 0 | gy === 0) ? 1 : 0);\n  let dot = (gx === 12 & gy === 12) ? 1 : 0;\n  \n  // Multiple layered sine waves\n  let v1 = Math.sin(x * 0.02 + t * 1.3) * Math.cos(y * 0.03 - t * 0.7);\n  let v2 = Math.sin(Math.sqrt((x-240)**2 + (y-120)**2) * 0.05 - t * 2);\n  let v3 = Math.sin((x ^ y) * 0.01 + t);\n  let v4 = Math.cos(x * 0.01 * Math.sin(t * 0.5) + y * 0.01 * Math.cos(t * 0.3));\n  \n  let plasma = (v1 + v2 + v3 + v4) * 0.25;\n  \n  // Panel regions\n  let panel = (y < 20) | (y > 220) | (x < 16) | (x > 464);\n  let subpanel = (y > 20 & y < 40 & x > 200 & x < 460);\n  \n  // Color mapping\n  let r = Math.sin(plasma * Math.PI + t) * 127 + 128;\n  let g = Math.cos(plasma * Math.PI * 1.3 - t * 0.5) * 127 + 128;\n  let b = Math.sin(plasma * Math.PI * 0.7 + t * 0.8) * 80 + 60;\n  \n  // Apply grid and dots\n  r = r * (1 - grid * 0.7) + grid * 40;\n  g = g * (1 - grid * 0.7) + grid * 80;\n  b = b * (1 - grid * 0.7) + grid * 120;\n  \n  r = r * (1 - dot * 0.5) + dot * 200;\n  g = g * (1 - dot * 0.5) + dot * 220;\n  b = b * (1 - dot * 0.5) + dot * 255;\n  \n  // Apply panel darkening\n  r = r * (1 - panel * 0.6) + panel * 15;\n  g = g * (1 - panel * 0.6) + panel * 25;\n  b = b * (1 - panel * 0.6) + panel * 45;\n  \n  // Subpanel highlight\n  r = r * (1 - subpanel * 0.3) + subpanel * 100;\n  g = g * (1 - subpanel * 0.3) + subpanel * 150;\n  b = b * (1 - subpanel * 0.3) + subpanel * 200;\n  \n  return [\n    r & 255,\n    g & 255,\n    b & 255\n  ];\n}",
+  "score": {
+    "coherence": 8,
+    "harmony": 7,
+    "complexity": 5,
+    "density": 3,
+    "total": 23,
+    "reason": "Coherent grid and radial gradient with balanced colors, but simple pattern and low UI utility"
+  },
+  "png": "gen10_abstract_1774489401479.png"
+}

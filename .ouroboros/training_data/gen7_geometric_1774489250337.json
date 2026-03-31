@@ -1,0 +1,14 @@
+{
+  "generation": 7,
+  "style": "geometric",
+  "code": "(x, y, t) => {\n  // Normalize coordinates\n  const nx = x / 480;\n  const ny = y / 240;\n  \n  // Grid base\n  const gx = x % 40;\n  const gy = y % 30;\n  const gridIntensity = (gx < 1 || gy < 1) ? 40 : 0;\n  \n  // Hexagonal grid\n  const hx = (x * 0.0866 - y * 0.05);\n  const hy = (x * 0.05 + y * 0.0866);\n  const hexDist = Math.sqrt(((hx % 1) - 0.5) ** 2 + ((hy % 1) - 0.5) ** 2);\n  const hexBorder = hexDist > 0.4 ? 1 : 0;\n  \n  // Complex wave patterns\n  const wave1 = Math.sin(x * 0.02 + t) * Math.cos(y * 0.03 + t * 0.7);\n  const wave2 = Math.sin(Math.sqrt((x - 240) ** 2 + (y - 120) ** 2) * 0.05 - t * 2);\n  \n  // Bitwise patterns\n  const bit = ((x ^ y) & 31) / 31;\n  \n  // Combine\n  let r = gridIntensity + hexBorder * 30 + wave1 * 20;\n  let g = gridIntensity + hexBorder * 50 + wave2 * 30;\n  let b = 40 + hexBorder * 60 + bit * 20;\n  \n  return [r, g, b];\n}",
+  "score": {
+    "coherence": 8,
+    "harmony": 7,
+    "complexity": 5,
+    "density": 3,
+    "total": 23,
+    "reason": "Consistent grid-dot pattern (coherence 8), smooth dark gradients (harmony 7), simple geometric design (complexity 5), low density (3) from lack of UI-relevant info; total balances minimal visual integrity with limited utility for a minimal OS framebuffer."
+  },
+  "png": "gen7_geometric_1774489250337.png"
+}

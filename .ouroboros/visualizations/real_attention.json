@@ -1,0 +1,707 @@
+{
+  "input_text": "What is a prime number?",
+  "generated_text": "What is a prime number?",
+  "num_tokens": 6,
+  "num_layers": 6,
+  "attention": [
+    {
+      "layer": 0,
+      "num_heads": 12,
+      "seq_len": 6,
+      "top_connections": [
+        {
+          "from_token": 1,
+          "to_token": 0,
+          "weight": 0.6433834433555603
+        },
+        {
+          "from_token": 2,
+          "to_token": 0,
+          "weight": 0.49672722816467285
+        },
+        {
+          "from_token": 3,
+          "to_token": 0,
+          "weight": 0.3786984384059906
+        },
+        {
+          "from_token": 5,
+          "to_token": 0,
+          "weight": 0.37170031666755676
+        },
+        {
+          "from_token": 4,
+          "to_token": 0,
+          "weight": 0.31440815329551697
+        },
+        {
+          "from_token": 4,
+          "to_token": 3,
+          "weight": 0.1740093231201172
+        },
+        {
+          "from_token": 2,
+          "to_token": 1,
+          "weight": 0.1705465167760849
+        },
+        {
+          "from_token": 3,
+          "to_token": 1,
+          "weight": 0.10274095088243484
+        },
+        {
+          "from_token": 3,
+          "to_token": 2,
+          "weight": 0.10087362676858902
+        },
+        {
+          "from_token": 5,
+          "to_token": 1,
+          "weight": 0.09413338452577591
+        },
+        {
+          "from_token": 4,
+          "to_token": 2,
+          "weight": 0.08505844324827194
+        },
+        {
+          "from_token": 4,
+          "to_token": 1,
+          "weight": 0.08433586359024048
+        },
+        {
+          "from_token": 5,
+          "to_token": 3,
+          "weight": 0.06550198048353195
+        },
+        {
+          "from_token": 5,
+          "to_token": 2,
+          "weight": 0.06390184909105301
+        },
+        {
+          "from_token": 5,
+          "to_token": 4,
+          "weight": 0.05486702546477318
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "num_heads": 12,
+      "seq_len": 6,
+      "top_connections": [
+        {
+          "from_token": 1,
+          "to_token": 0,
+          "weight": 0.9294970631599426
+        },
+        {
+          "from_token": 2,
+          "to_token": 0,
+          "weight": 0.6787593364715576
+        },
+        {
+          "from_token": 3,
+          "to_token": 0,
+          "weight": 0.5593228340148926
+        },
+        {
+          "from_token": 5,
+          "to_token": 0,
+          "weight": 0.5328105092048645
+        },
+        {
+          "from_token": 4,
+          "to_token": 0,
+          "weight": 0.47609028220176697
+        },
+        {
+          "from_token": 4,
+          "to_token": 3,
+          "weight": 0.25336840748786926
+        },
+        {
+          "from_token": 2,
+          "to_token": 1,
+          "weight": 0.25114548206329346
+        },
+        {
+          "from_token": 3,
+          "to_token": 2,
+          "weight": 0.21250773966312408
+        },
+        {
+          "from_token": 3,
+          "to_token": 1,
+          "weight": 0.16854088008403778
+        },
+        {
+          "from_token": 4,
+          "to_token": 2,
+          "weight": 0.13211117684841156
+        },
+        {
+          "from_token": 5,
+          "to_token": 1,
+          "weight": 0.1114371195435524
+        },
+        {
+          "from_token": 4,
+          "to_token": 1,
+          "weight": 0.09710416942834854
+        },
+        {
+          "from_token": 5,
+          "to_token": 3,
+          "weight": 0.09182679653167725
+        },
+        {
+          "from_token": 5,
+          "to_token": 4,
+          "weight": 0.08832401037216187
+        },
+        {
+          "from_token": 5,
+          "to_token": 2,
+          "weight": 0.06460484117269516
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "num_heads": 12,
+      "seq_len": 6,
+      "top_connections": [
+        {
+          "from_token": 1,
+          "to_token": 0,
+          "weight": 0.9578051567077637
+        },
+        {
+          "from_token": 2,
+          "to_token": 0,
+          "weight": 0.6869401335716248
+        },
+        {
+          "from_token": 3,
+          "to_token": 0,
+          "weight": 0.6237004399299622
+        },
+        {
+          "from_token": 4,
+          "to_token": 0,
+          "weight": 0.5741005539894104
+        },
+        {
+          "from_token": 5,
+          "to_token": 0,
+          "weight": 0.5498674511909485
+        },
+        {
+          "from_token": 4,
+          "to_token": 3,
+          "weight": 0.2497604936361313
+        },
+        {
+          "from_token": 2,
+          "to_token": 1,
+          "weight": 0.2159639596939087
+        },
+        {
+          "from_token": 3,
+          "to_token": 2,
+          "weight": 0.17885111272335052
+        },
+        {
+          "from_token": 5,
+          "to_token": 4,
+          "weight": 0.14807429909706116
+        },
+        {
+          "from_token": 3,
+          "to_token": 1,
+          "weight": 0.09866028279066086
+        },
+        {
+          "from_token": 5,
+          "to_token": 1,
+          "weight": 0.07607152312994003
+        },
+        {
+          "from_token": 4,
+          "to_token": 1,
+          "weight": 0.06543063372373581
+        },
+        {
+          "from_token": 5,
+          "to_token": 3,
+          "weight": 0.0646662786602974
+        },
+        {
+          "from_token": 5,
+          "to_token": 2,
+          "weight": 0.060807883739471436
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "num_heads": 12,
+      "seq_len": 6,
+      "top_connections": [
+        {
+          "from_token": 1,
+          "to_token": 0,
+          "weight": 0.951056182384491
+        },
+        {
+          "from_token": 3,
+          "to_token": 0,
+          "weight": 0.9029548168182373
+        },
+        {
+          "from_token": 2,
+          "to_token": 0,
+          "weight": 0.7733068466186523
+        },
+        {
+          "from_token": 4,
+          "to_token": 0,
+          "weight": 0.7697415947914124
+        },
+        {
+          "from_token": 5,
+          "to_token": 0,
+          "weight": 0.750419557094574
+        },
+        {
+          "from_token": 2,
+          "to_token": 1,
+          "weight": 0.18996500968933105
+        },
+        {
+          "from_token": 5,
+          "to_token": 4,
+          "weight": 0.0945180356502533
+        },
+        {
+          "from_token": 4,
+          "to_token": 3,
+          "weight": 0.07660316675901413
+        },
+        {
+          "from_token": 4,
+          "to_token": 1,
+          "weight": 0.06529387086629868
+        },
+        {
+          "from_token": 5,
+          "to_token": 1,
+          "weight": 0.06288108974695206
+        }
+      ]
+    },
+    {
+      "layer": 4,
+      "num_heads": 12,
+      "seq_len": 6,
+      "top_connections": [
+        {
+          "from_token": 1,
+          "to_token": 0,
+          "weight": 0.9713082909584045
+        },
+        {
+          "from_token": 2,
+          "to_token": 0,
+          "weight": 0.9277960658073425
+        },
+        {
+          "from_token": 3,
+          "to_token": 0,
+          "weight": 0.9140098094940186
+        },
+        {
+          "from_token": 4,
+          "to_token": 0,
+          "weight": 0.8139354586601257
+        },
+        {
+          "from_token": 5,
+          "to_token": 0,
+          "weight": 0.8046071529388428
+        },
+        {
+          "from_token": 5,
+          "to_token": 4,
+          "weight": 0.07036031782627106
+        },
+        {
+          "from_token": 2,
+          "to_token": 1,
+          "weight": 0.05482575669884682
+        },
+        {
+          "from_token": 4,
+          "to_token": 2,
+          "weight": 0.05277242884039879
+        }
+      ]
+    },
+    {
+      "layer": 5,
+      "num_heads": 12,
+      "seq_len": 6,
+      "top_connections": [
+        {
+          "from_token": 1,
+          "to_token": 0,
+          "weight": 0.8537629246711731
+        },
+        {
+          "from_token": 3,
+          "to_token": 0,
+          "weight": 0.8025751709938049
+        },
+        {
+          "from_token": 2,
+          "to_token": 0,
+          "weight": 0.8016651272773743
+        },
+        {
+          "from_token": 4,
+          "to_token": 0,
+          "weight": 0.7151251435279846
+        },
+        {
+          "from_token": 5,
+          "to_token": 0,
+          "weight": 0.6339442133903503
+        },
+        {
+          "from_token": 2,
+          "to_token": 1,
+          "weight": 0.1368892788887024
+        },
+        {
+          "from_token": 3,
+          "to_token": 1,
+          "weight": 0.09339740127325058
+        },
+        {
+          "from_token": 4,
+          "to_token": 1,
+          "weight": 0.09174462407827377
+        },
+        {
+          "from_token": 5,
+          "to_token": 1,
+          "weight": 0.08503127098083496
+        },
+        {
+          "from_token": 4,
+          "to_token": 2,
+          "weight": 0.076082743704319
+        },
+        {
+          "from_token": 3,
+          "to_token": 2,
+          "weight": 0.070395328104496
+        },
+        {
+          "from_token": 5,
+          "to_token": 4,
+          "weight": 0.06271281093358994
+        },
+        {
+          "from_token": 4,
+          "to_token": 3,
+          "weight": 0.051664937287569046
+        }
+      ]
+    }
+  ],
+  "saccades": [
+    {
+      "tile_id": 38465,
+      "tile_coords": {
+        "x": 249,
+        "y": 144
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 0,
+      "intensity": 0.1740093231201172,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 4,
+      "from_token_text": " number",
+      "to_token": 3,
+      "to_token_text": " prime"
+    },
+    {
+      "tile_id": 38466,
+      "tile_coords": {
+        "x": 249,
+        "y": 145
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 0,
+      "intensity": 0.06550198048353195,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 3,
+      "to_token_text": " prime"
+    },
+    {
+      "tile_id": 38466,
+      "tile_coords": {
+        "x": 249,
+        "y": 145
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 0,
+      "intensity": 0.05486702546477318,
+      "semantic_similarity": 0.28599655628204346,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 4,
+      "to_token_text": " number"
+    },
+    {
+      "tile_id": 45380,
+      "tile_coords": {
+        "x": 167,
+        "y": 253
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 1,
+      "intensity": 0.25336840748786926,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 4,
+      "from_token_text": " number",
+      "to_token": 3,
+      "to_token_text": " prime"
+    },
+    {
+      "tile_id": 45381,
+      "tile_coords": {
+        "x": 167,
+        "y": 252
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 1,
+      "intensity": 0.09182679653167725,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 3,
+      "to_token_text": " prime"
+    },
+    {
+      "tile_id": 45381,
+      "tile_coords": {
+        "x": 167,
+        "y": 252
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 1,
+      "intensity": 0.08832401037216187,
+      "semantic_similarity": 0.28599655628204346,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 4,
+      "to_token_text": " number"
+    },
+    {
+      "tile_id": 52295,
+      "tile_coords": {
+        "x": 105,
+        "y": 194
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 2,
+      "intensity": 0.2497604936361313,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 4,
+      "from_token_text": " number",
+      "to_token": 3,
+      "to_token_text": " prime"
+    },
+    {
+      "tile_id": 52296,
+      "tile_coords": {
+        "x": 106,
+        "y": 194
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 2,
+      "intensity": 0.14807429909706116,
+      "semantic_similarity": 0.28599655628204346,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 4,
+      "to_token_text": " number"
+    },
+    {
+      "tile_id": 52296,
+      "tile_coords": {
+        "x": 106,
+        "y": 194
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 2,
+      "intensity": 0.0646662786602974,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 3,
+      "to_token_text": " prime"
+    },
+    {
+      "tile_id": 59211,
+      "tile_coords": {
+        "x": 43,
+        "y": 146
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 3,
+      "intensity": 0.0945180356502533,
+      "semantic_similarity": 0.28599655628204346,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 4,
+      "to_token_text": " number"
+    },
+    {
+      "tile_id": 59210,
+      "tile_coords": {
+        "x": 43,
+        "y": 147
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 3,
+      "intensity": 0.07660316675901413,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 4,
+      "from_token_text": " number",
+      "to_token": 3,
+      "to_token_text": " prime"
+    },
+    {
+      "tile_id": 66126,
+      "tile_coords": {
+        "x": 26,
+        "y": 272
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 4,
+      "intensity": 0.07036031782627106,
+      "semantic_similarity": 0.28599655628204346,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 4,
+      "to_token_text": " number"
+    },
+    {
+      "tile_id": 73041,
+      "tile_coords": {
+        "x": 94,
+        "y": 291
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 5,
+      "intensity": 0.06271281093358994,
+      "semantic_similarity": 0.28599655628204346,
+      "from_token": 5,
+      "from_token_text": "?",
+      "to_token": 4,
+      "to_token_text": " number"
+    },
+    {
+      "tile_id": 73040,
+      "tile_coords": {
+        "x": 95,
+        "y": 291
+      },
+      "doc_id": 2,
+      "doc_coords": {
+        "x": 5018,
+        "y": 429
+      },
+      "doc_category": "math",
+      "layer": 5,
+      "intensity": 0.051664937287569046,
+      "semantic_similarity": 0.5931795835494995,
+      "from_token": 4,
+      "from_token_text": " number",
+      "to_token": 3,
+      "to_token_text": " prime"
+    }
+  ]
+}

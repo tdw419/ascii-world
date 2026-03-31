@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  const PI = Math.PI, nx = x / 480, ny = y / 240;\n  const seeds = [];\n  for (let i = 0; i < 6; i++) {\n    const a = i * 2.399 + t * (0.18 + i * 0.04);\n    const r = 0.28 + 0.12 * Math.sin(t * 0.25 + i * 1.1);\n    seeds.push([0.5 + r * Math.cos(a), 0.5 + r * Math.sin(a) * 0.55, (5.5 + i * 1.8) * PI, t * (1.4 - i * 0.12) + i * 0.9]);\n  }\n  const waves = seeds.map(s => {\n    const dx = nx - s[0], dy = ny - s[1];\n    return Math.sin(Math.sqrt(dx * dx + dy * dy) * s[2] + s[3]);\n  });\n  let field = 0, cross = 0, n = waves.length;\n  for (let i = 0; i < n; i++) {\n    field += waves[i];\n    for (let j = i + 1; j < n; j++) cross += waves[i] * waves[j];\n  }\n  field /= n; cross /= (n * (n - 1) / 2);\n  let react = Math.tanh((field - cross * 0.85) * 3.8);\n  let detail = Math.tanh(Math.sin(field * PI * 3.2) * Math.cos(cross * PI * 2.1 + t * 0.35) * 2.8);\n  let p = react * 0.72 + detail * 0.28;\n  let base = 0.5 + 0.5 * p, warm = 0.5 + 0.5 * Math.sin(field * PI * 1.6 + t * 0.18);\n  let cool = 0.5 + 0.5 * Math.cos(cross * PI * 1.3 - t * 0.12);\n  let edge = Math.abs(react) < 0.35 ? 1.0 - Math.abs(react) / 0.35 : 0;\n  let r = base * 0.92 + warm * 0.52 + cool * 0.12 + edge * 0.65;\n  let g = base * 0.48 + warm * 0.28 + cool * 0.78 + edge * 0.52;\n  return [0, 0, 0];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS framebuffer, but visually empty."
+  },
+  "timestamp": 1774490851436,
+  "filename": "gen13_1774490851436"
+}

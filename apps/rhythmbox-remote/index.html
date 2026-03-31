@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>♪ Rhythmbox Remote</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #050508;
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+
+        .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #f85149;
+            transition: background 0.3s;
+        }
+        .status-dot.connected { background: #3fb950; }
+
+        /* ── ASCII Display ── */
+        .ascii-frame {
+            background: #0d1117;
+            border: 1px solid #00ff8844;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 0 30px rgba(0,255,136,0.05);
+            overflow-x: auto;
+        }
+
+        #ascii-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre;
+            color: #00ff88;
+        }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 16px;
+            max-width: 600px;
+        }
+
+        .btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            padding: 10px 18px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            background: #161b22;
+            color: #c9d1d9;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:hover { background: #21262d; border-color: #00ff88; color: #00ff88; }
+        .btn:active { background: #00ff8822; transform: scale(0.96); }
+        .btn.active { border-color: #00ff88; color: #00ff88; background: #00ff8811; }
+
+        .btn-large {
+            font-size: 20px;
+            padding: 12px 24px;
+        }
+
+        /* ── Volume Slider ── */
+        .volume-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .volume-label { color: #8b949e; font-size: 0.8rem; }
+
+        /* ── Progress Bar ── */
+        .progress-section {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #21262d;
+            border-radius: 3px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            border-radius: 3px;
+            transition: width 0.3s linear;
+        }
+
+        .progress-times {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+
+        /* ── Now Playing ── */
+        .now-playing {
+            text-align: center;
+            margin-bottom: 12px;
+            max-width: 600px;
+        }
+
+        .now-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e6edf3;
+            margin-bottom: 4px;
+        }
+
+        .now-artist {
+            font-size: 0.9rem;
+            color: #00ff88;
+        }
+
+        .now-album {
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        .now-status {
+            font-size: 0.75rem;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+
+        /* ── Playlists ── */
+        .playlists-section {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 8px;
+        }
+
+        .playlists-header {
+            font-size: 0.8rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .playlists-list {
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 4px;
+        }
+
+        .playlists-list.open { display: flex; }
+
+        .playlist-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.1s;
+        }
+        .playlist-item:hover { background: #161b22; }
+        .playlist-item.active {
+            background: #00ff8811;
+            color: #00ff88;
+            border-left: 3px solid #00ff88;
+        }
+
+        /* ── Rating ── */
+        .rating {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .star {
+            font-size: 20px;
+            cursor: pointer;
+            color: #30363d;
+            transition: color 0.1s;
+        }
+        .star:hover, .star.lit { color: #f0c000; }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .ascii-frame { display: none; }
+            .btn { padding: 12px 16px; }
+            .btn-large { padding: 14px 28px; font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="status-dot" id="statusDot"></div>
+    <h1>♪ Rhythmbox Remote</h1>
+</div>
+
+<!-- Now Playing -->
+<div class="now-playing">
+    <div class="now-title" id="nowTitle">—</div>
+    <div class="now-artist" id="nowArtist"></div>
+    <div class="now-album" id="nowAlbum"></div>
+    <div class="now-status" id="nowStatus"></div>
+</div>
+
+<!-- Progress -->
+<div class="progress-section">
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-times">
+        <span id="elapsed">0:00</span>
+        <span id="duration">0:00</span>
+    </div>
+</div>
+
+<!-- Transport Controls -->
+<div class="controls">
+    <button class="btn btn-large" onclick="send('prev')">⏮</button>
+    <button class="btn btn-large" onclick="send('play-pause')" id="btnPlayPause">⏯</button>
+    <button class="btn btn-large" onclick="send('next')">⏭</button>
+    <button class="btn" onclick="send('stop')">⏹</button>
+</div>
+
+<!-- Volume -->
+<div class="volume-section">
+    <button class="btn" onclick="send('vol-down')">🔉</button>
+    <span class="volume-label" id="volLabel">50%</span>
+    <button class="btn" onclick="send('vol-up')">🔊</button>
+</div>
+
+<!-- Rating -->
+<div class="rating" id="ratingStars">
+    <span class="star" onclick="send('rate-1')">★</span>
+    <span class="star" onclick="send('rate-2')">★</span>
+    <span class="star" onclick="send('rate-3')">★</span>
+    <span class="star" onclick="send('rate-4')">★</span>
+    <span class="star" onclick="send('rate-5')">★</span>
+</div>
+
+<!-- Shuffle / Repeat -->
+<div class="controls">
+    <button class="btn" id="btnShuffle" onclick="send('shuffle')">🔀 Shuffle</button>
+    <button class="btn" id="btnRepeat" onclick="send('repeat')">🔁 Repeat</button>
+</div>
+
+<!-- Playlists -->
+<div class="playlists-section">
+    <div class="playlists-header" onclick="togglePlaylists()">▸ Playlists <span id="plCount"></span></div>
+    <div class="playlists-list" id="playlistsList"></div>
+</div>
+
+<!-- ASCII Display (desktop) -->
+<div class="ascii-frame">
+    <div id="ascii-display">Connecting...</div>
+</div>
+
+<script>
+const WS_URL = `ws://${location.hostname}:${location.port}`;
+let ws;
+let reconnectTimeout;
+let currentState = {};
+
+function connect() {
+    try {
+        ws = new WebSocket(WS_URL);
+
+        ws.onopen = () => {
+            document.getElementById('statusDot').classList.add('connected');
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.type === 'state') {
+                    updateUI(msg);
+                }
+            } catch (e) {
+                console.error('Parse error:', e);
+            }
+        };
+
+        ws.onclose = () => {
+            document.getElementById('statusDot').classList.remove('connected');
+            scheduleReconnect();
+        };
+
+        ws.onerror = () => {
+            scheduleReconnect();
+        };
+    } catch (e) {
+        scheduleReconnect();
+    }
+}
+
+function scheduleReconnect() {
+    if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    reconnectTimeout = setTimeout(connect, 2000);
+}
+
+function send(cmd, arg) {
+    if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify({ type: 'command', cmd, arg }));
+    }
+}
+
+function selectPlaylist(name) {
+    send('playlist', name);
+}
+
+function togglePlaylists() {
+    const list = document.getElementById('playlistsList');
+    const header = document.querySelector('.playlists-header');
+    list.classList.toggle('open');
+    header.textContent = (list.classList.contains('open') ? '▾' : '▸') + 
+        ` Playlists (${document.getElementById('plCount').textContent})`;
+}
+
+function updateUI(msg) {
+    const { state, ascii, playlists, activePlaylist } = msg;
+    currentState = state;
+
+    // ASCII display
+    document.getElementById('ascii-display').textContent = ascii;
+
+    // Now playing
+    document.getElementById('nowTitle').textContent = state.title || '—';
+    document.getElementById('nowArtist').textContent = state.artist || '';
+    document.getElementById('nowAlbum').textContent = state.album || '';
+
+    const statusIcon = state.status === 'Playing' ? '▶' : state.status === 'Paused' ? '⏸' : '⏹';
+    document.getElementById('nowStatus').textContent = `${statusIcon} ${state.status}`;
+
+    // Progress
+    const pct = state.durationSec > 0 ? (state.positionSec / state.durationSec) * 100 : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('elapsed').textContent = state.elapsed || '0:00';
+    document.getElementById('duration').textContent = state.duration || '0:00';
+
+    // Volume
+    document.getElementById('volLabel').textContent = state.volume + '%';
+
+    // Playlists
+    if (playlists) {
+        document.getElementById('plCount').textContent = playlists.length;
+        const list = document.getElementById('playlistsList');
+        const wasOpen = list.classList.contains('open');
+        list.innerHTML = playlists.map(name => 
+            `<div class="playlist-item ${name === activePlaylist ? 'active' : ''}" 
+                  onclick="selectPlaylist('${name.replace(/'/g, "\\'")}')">${name === activePlaylist ? '► ' : '  '}${name}</div>`
+        ).join('');
+        if (wasOpen) list.classList.add('open');
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    switch(e.key) {
+        case ' ': e.preventDefault(); send('play-pause'); break;
+        case 'ArrowRight': send('next'); break;
+        case 'ArrowLeft': send('prev'); break;
+        case 'ArrowUp': e.preventDefault(); send('vol-up'); break;
+        case 'ArrowDown': e.preventDefault(); send('vol-down'); break;
+        case 's': send('shuffle'); break;
+        case 'r': send('repeat'); break;
+    }
+});
+
+connect();
+</script>
+
+</body>
+</html>

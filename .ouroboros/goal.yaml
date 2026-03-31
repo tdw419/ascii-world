@@ -1,0 +1,13 @@
+objective: "Implement high-performance Linux framebuffer console features from research doc"
+success_criteria: |
+  - Uint32Array bulk operations on PixelBuffer (4x faster clears/fills)
+  - Dirty row tracking with pwrite64-style partial flushes
+  - Raw terminal input with ANSI escape sequence state machine
+  - Stride-aware framebuffer writer (line_length vs xres)
+  - copyWithin-based scroll optimization
+  - Software shader engine (formula-to-pixel rendering)
+  - ANSI color mapping (8/256/TrueColor)
+max_iterations: 50
+max_time_hours: 4.0
+workspace: /home/jericho/zion/projects/ascii_world/ascii_world
+research_doc: /home/jericho/zion/docs/research/Framebuffer Console_ JavaScript to Pixels.md

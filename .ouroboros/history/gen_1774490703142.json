@@ -1,0 +1,13 @@
+{
+  "code": "(x, y, t) => {\n  let nx = x * 0.02, ny = y * 0.02;\n  let u = 0, v = 0;\n  for (let i = 0; i < 5; i++) {\n    let p = t * (0.25 + i * 0.07) + i * 1.257;\n    let dx = nx - Math.cos(p) * 5, dy = ny - Math.sin(p * 0.73 + i) * 4;\n    let d = Math.sqrt(dx * dx + dy * dy);\n    u += Math.sin(d * 2.8 - t * 0.4 + i) * Math.exp(-d * 0.12);\n    v += Math.cos(d * 3.5 + t * 0.35 + i * 0.7) * Math.exp(-d * 0.1);\n  }\n  u += Math.sin(nx * 2.0 + t * 0.18) * Math.sin(ny * 2.4 - t * 0.14) * 1.8;\n  v += Math.cos(nx * 2.6 - t * 0.22) * Math.cos(ny * 1.9 + t * 0.16) * 1.4;\n  let rd = 1.0 / (1.0 + Math.exp(-(u * u - v * v + u * v * 0.4) * 2.5));\n  let detail = Math.sin(u * 4 + v * 3) * 0.08;\n  let pv = Math.max(0, Math.min(1, rd + detail));\n  let h = (pv * 0.85 + 0.52) % 1;\n  let s = 0.65 + 0.25 * Math.sin(pv * 3.14);\n  let l = 0.28 + 0.47 * pv;\n  let c = (1 - Math.abs(2 * l - 1)) * s;\n  let hh = h * 6;\n  let xc = c * (1 - Math.abs(hh % 2 - 1));\n  let m = l - c * 0.5;\n  let r, g, b;\n  if (hh < 1) { r = c; g = xc; b = 0; }\n  else if (hh < 2) { r = xc; g = c; b = 0; }\n  else if (hh < 3) { r = 0; g = c; b = xc; }\n  else if (hh < 4) { r = 0; g = xc; b = c; }\n  else if (hh < 5) { r = xc; g = 0; b = c; }\n  else { r = c; g = 0; b = xc; }\n  return [r + m, g + m, b + m];\n}",
+  "score": {
+    "coherence": 10,
+    "harmony": 10,
+    "complexity": 1,
+    "density": 1,
+    "total": 22,
+    "reason": "The image is a solid black framebuffer, which is perfectly coherent and harmonious with no visual artifacts. However, it contains no patterns or information, making its complexity and density extremely low. This is functionally appropriate for a minimal OS boot screen but visually empty."
+  },
+  "timestamp": 1774490703142,
+  "filename": "gen10_1774490703142"
+}

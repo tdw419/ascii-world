@@ -2,25 +2,25 @@
   "version": 1,
   "items": {},
   "manifests": {
-    "pm_mnerwgb9_b": {
-      "id": "pm_mnerwgb9_b",
+    "pm_mnerzzag_b": {
+      "id": "pm_mnerzzag_b",
       "title": "Fwd A",
       "slug": "fwd-a",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774970994069,
-      "updated_at": 1774970994069
+      "created_at": 1774971158632,
+      "updated_at": 1774971158632
     },
-    "pm_mnerwgb9_c": {
-      "id": "pm_mnerwgb9_c",
+    "pm_mnerzzag_c": {
+      "id": "pm_mnerzzag_c",
       "title": "Fwd B",
       "slug": "fwd-b",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774970994069,
-      "updated_at": 1774970994069
+      "created_at": 1774971158632,
+      "updated_at": 1774971158632
     }
   }
 }

@@ -2,25 +2,25 @@
   "version": 1,
   "items": {},
   "manifests": {
-    "pm_mnetemwq_b": {
-      "id": "pm_mnetemwq_b",
+    "pm_mneti2x6_b": {
+      "id": "pm_mneti2x6_b",
       "title": "Fwd A",
       "slug": "fwd-a",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774973522042,
-      "updated_at": 1774973522042
+      "created_at": 1774973682762,
+      "updated_at": 1774973682762
     },
-    "pm_mnetemwq_c": {
-      "id": "pm_mnetemwq_c",
+    "pm_mneti2x6_c": {
+      "id": "pm_mneti2x6_c",
       "title": "Fwd B",
       "slug": "fwd-b",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774973522042,
-      "updated_at": 1774973522042
+      "created_at": 1774973682762,
+      "updated_at": 1774973682762
     }
   }
 }

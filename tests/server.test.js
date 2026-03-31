@@ -328,4 +328,272 @@ describe('PxOSServer', () => {
             }
         });
     });
+
+    // ── CMS Theme Editor HTTP API ────────────────────────────────
+
+    describe('CMS Theme Editor API', () => {
+        it('GET /api/cms/theme returns current theme', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme');
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.ok(data.theme);
+            assert.strictEqual(data.theme.name, 'default');
+        });
+
+        it('GET /api/cms/theme/preview returns text/plain preview', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/preview');
+            assert.strictEqual(res.status, 200);
+            assert.strictEqual(res.headers.get('content-type'), 'text/plain');
+            const text = await res.text();
+            assert.ok(text.includes('Theme Preview'));
+        });
+
+        it('POST /api/cms/theme/save persists theme', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'test-save', fg: [255, 0, 0, 255] }),
+            });
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.ok, true);
+            assert.ok(data.theme);
+            assert.deepStrictEqual(data.theme.fg, [255, 0, 0, 255]);
+        });
+
+        it('POST /api/cms/theme/save with theme object', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: { name: 'wrapped', bg: [0, 0, 0, 255] } }),
+            });
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.ok, true);
+            assert.strictEqual(data.theme.name, 'wrapped');
+        });
+
+        it('POST /api/cms/theme/reset resets to saved state', async () => {
+            // First save a theme
+            await fetch('http://localhost:3840/api/cms/theme/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'before-reset', fg: [100, 100, 100, 255] }),
+            });
+            // Modify via save again
+            await fetch('http://localhost:3840/api/cms/theme/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'modified', fg: [50, 50, 50, 255] }),
+            });
+            // Reset
+            const res = await fetch('http://localhost:3840/api/cms/theme/reset', {
+                method: 'POST',
+            });
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.ok, true);
+            assert.ok(data.theme);
+        });
+
+        it('GET /api/cms/theme/preset lists presets', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/preset');
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.ok(data.presets);
+            assert.ok(data.presets.default);
+            assert.ok(data.presets.terminal);
+            assert.ok(data.presets.amber);
+        });
+
+        it('GET /api/cms/theme/preset?name=terminal applies preset', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/preset?name=terminal');
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.ok, true);
+            assert.deepStrictEqual(data.theme.fg, [0, 255, 0, 255]);
+        });
+
+        it('GET /api/cms/theme/preset?name=nonexistent returns 404', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/preset?name=nonexistent');
+            assert.strictEqual(res.status, 404);
+            const data = await res.json();
+            assert.ok(data.error.includes('Unknown preset'));
+        });
+
+        it('POST /api/cms/theme/generate creates theme from description', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: 'dark blue ocean with glow' }),
+            });
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.ok, true);
+            assert.ok(data.theme);
+            assert.ok(data.theme.name.startsWith('ai-'));
+            assert.deepStrictEqual(data.theme.effects.glow, true);
+        });
+
+        it('POST /api/cms/theme/generate returns 400 without description', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+            });
+            assert.strictEqual(res.status, 400);
+            const data = await res.json();
+            assert.ok(data.error.includes('description'));
+        });
+
+        it('POST /api/cms/theme/generate handles sunset theme', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: 'sunset with rounded borders' }),
+            });
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.strictEqual(data.theme.borderStyle, 'rounded');
+            assert.deepStrictEqual(data.theme.fg, [255, 200, 100, 255]);
+        });
+
+        it('POST /api/cms/theme/generate handles retro terminal', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: 'retro terminal with scanlines' }),
+            });
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.deepStrictEqual(data.theme.fg, [0, 255, 0, 255]);
+            assert.strictEqual(data.theme.effects.scanlines, true);
+        });
+
+        it('POST /api/cms/theme/generate handles light pink theme', async () => {
+            const res = await fetch('http://localhost:3840/api/cms/theme/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: 'light pink theme' }),
+            });
+            assert.strictEqual(res.status, 200);
+            const data = await res.json();
+            assert.deepStrictEqual(data.theme.bg, [245, 245, 245, 255]);
+            assert.deepStrictEqual(data.theme.fg, [255, 105, 180, 255]);
+        });
+    });
+
+    // ── CMS Theme Editor WebSocket ────────────────────────────────
+
+    describe('CMS Theme Editor WebSocket', () => {
+        let WebSocket;
+        before(async () => {
+            const mod = await import('ws');
+            WebSocket = mod.default;
+        });
+
+        function connectWS() {
+            return new Promise((resolve, reject) => {
+                const ws = new WebSocket(`ws://localhost:3840`);
+                ws.on('open', () => resolve(ws));
+                ws.on('error', reject);
+            });
+        }
+
+        function waitForMessage(ws, type, timeout = 2000) {
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error(`Timeout waiting for ${type}`)), timeout);
+                ws.on('message', (raw) => {
+                    const msg = JSON.parse(raw.toString());
+                    if (msg.type === type) {
+                        clearTimeout(timer);
+                        resolve(msg);
+                    }
+                });
+            });
+        }
+
+        it('cms:theme:edit handles key press', async () => {
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:theme:updated');
+                ws.send(JSON.stringify({ type: 'cms:theme:edit', key: { name: 'tab' } }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.action.action, 'section-changed');
+                assert.ok(msg.theme);
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:theme:edit adjusts color', async () => {
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:theme:updated');
+                ws.send(JSON.stringify({ type: 'cms:theme:edit', key: { name: 'right' } }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.action.action, 'color-adjusted');
+                assert.ok(msg.theme);
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:theme:set sets a property', async () => {
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:theme:updated');
+                ws.send(JSON.stringify({ type: 'cms:theme:set', prop: 'fg', value: [255, 0, 0, 255] }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.action, 'set');
+                assert.deepStrictEqual(msg.theme.fg, [255, 0, 0, 255]);
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:theme:set invalid prop returns error', async () => {
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:theme:error');
+                ws.send(JSON.stringify({ type: 'cms:theme:set', prop: 'fg', value: [999, 0, 0] }));
+                const msg = await msgPromise;
+                assert.ok(msg.error);
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:theme:edit toggles effect', async () => {
+            const ws = await connectWS();
+            try {
+                // Tab to effects section
+                const tabPromise1 = waitForMessage(ws, 'cms:theme:updated');
+                ws.send(JSON.stringify({ type: 'cms:theme:edit', key: { name: 'tab' } }));
+                await tabPromise1;
+                const tabPromise2 = waitForMessage(ws, 'cms:theme:updated');
+                ws.send(JSON.stringify({ type: 'cms:theme:edit', key: { name: 'tab' } }));
+                await tabPromise2;
+
+                const msgPromise = waitForMessage(ws, 'cms:theme:updated');
+                ws.send(JSON.stringify({ type: 'cms:theme:edit', key: { name: 'enter' } }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.action.action, 'effect-toggled');
+            } finally {
+                ws.close();
+            }
+        });
+
+        it('cms:theme:edit escape returns cancel', async () => {
+            const ws = await connectWS();
+            try {
+                const msgPromise = waitForMessage(ws, 'cms:theme:updated');
+                ws.send(JSON.stringify({ type: 'cms:theme:edit', key: { name: 'escape' } }));
+                const msg = await msgPromise;
+                assert.strictEqual(msg.action.action, 'cancel');
+            } finally {
+                ws.close();
+            }
+        });
+    });
 });

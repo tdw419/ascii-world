@@ -357,6 +357,8 @@ export class PxOSServer {
                 this.handleCMSThemePreset(req, res, url);
             } else if (pathname === '/api/cms/theme/preview' && req.method === 'GET') {
                 this.handleCMSThemePreview(req, res);
+            } else if (pathname === '/api/cms/theme/generate' && req.method === 'POST') {
+                await this.handleCMSThemeGenerate(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -774,6 +776,95 @@ export class PxOSServer {
         const ascii = this.themeEditor.renderPreview();
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end(ascii);
+    }
+
+    async handleCMSThemeGenerate(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { description } = body ? JSON.parse(body) : {};
+            if (!description || typeof description !== 'string') {
+                return this.sendError(res, 400, 'description is required');
+            }
+            const generated = this._generateThemeFromDescription(description);
+            this.themeEditor.setTheme(generated);
+            const theme = this.themeEditor.getTheme();
+            this.sendJSON(res, 200, { ok: true, theme, description });
+        } catch (err) {
+            this.sendError(res, 500, `Theme generate error: ${err.message}`);
+        }
+    }
+
+    /**
+     * Generate a theme from a text description using keyword matching.
+     * Maps descriptive words to color values for a simple AI-like generation.
+     * @param {string} description
+     * @returns {Object}
+     */
+    _generateThemeFromDescription(description) {
+        const d = description.toLowerCase();
+        const theme = { ...DEFAULT_THEME, name: `ai-${d.slice(0, 20).replace(/\s+/g, '-')}` };
+
+        // Dark mode keywords
+        if (d.includes('dark') || d.includes('night') || d.includes('midnight')) {
+            theme.bg = [10, 10, 25, 255];
+            theme.fg = [200, 200, 220, 255];
+        }
+        // Light mode keywords
+        if (d.includes('light') || d.includes('bright') || d.includes('day')) {
+            theme.bg = [245, 245, 245, 255];
+            theme.fg = [30, 30, 30, 255];
+        }
+        // Color keyword mapping
+        const colorMap = {
+            red:    { fg: [255, 100, 100, 255], border: [200, 50, 50, 255], borderHighlight: [255, 80, 80, 255] },
+            green:  { fg: [100, 255, 100, 255], border: [50, 200, 50, 255], borderHighlight: [80, 255, 80, 255] },
+            blue:   { fg: [100, 150, 255, 255], border: [50, 80, 200, 255], borderHighlight: [80, 120, 255, 255] },
+            cyan:   { fg: [0, 255, 255, 255],   border: [0, 180, 180, 255], borderHighlight: [0, 220, 220, 255] },
+            purple: { fg: [180, 100, 255, 255], border: [120, 50, 200, 255], borderHighlight: [150, 80, 255, 255] },
+            orange: { fg: [255, 180, 50, 255],  border: [200, 120, 30, 255], borderHighlight: [255, 160, 40, 255] },
+            amber:  { fg: [255, 176, 0, 255],   border: [180, 120, 0, 255], borderHighlight: [255, 200, 50, 255] },
+            pink:   { fg: [255, 105, 180, 255], border: [200, 80, 140, 255], borderHighlight: [255, 120, 200, 255] },
+        };
+        for (const [keyword, colors] of Object.entries(colorMap)) {
+            if (d.includes(keyword)) {
+                Object.assign(theme, colors);
+            }
+        }
+        // Style keywords
+        if (d.includes('retro') || d.includes('terminal')) {
+            theme.fg = [0, 255, 0, 255];
+            theme.bg = [0, 0, 0, 255];
+            theme.border = [0, 180, 0, 255];
+        }
+        if (d.includes('ocean') || d.includes('sea')) {
+            theme.bg = [0, 20, 50, 255];
+            theme.fg = [100, 200, 255, 255];
+            theme.border = [0, 80, 150, 255];
+            theme.borderHighlight = [50, 150, 255, 255];
+        }
+        if (d.includes('sunset')) {
+            theme.bg = [40, 10, 20, 255];
+            theme.fg = [255, 200, 100, 255];
+            theme.border = [200, 80, 40, 255];
+            theme.borderHighlight = [255, 120, 60, 255];
+        }
+        if (d.includes('forest') || d.includes('nature')) {
+            theme.bg = [10, 30, 15, 255];
+            theme.fg = [150, 220, 150, 255];
+            theme.border = [40, 120, 50, 255];
+            theme.borderHighlight = [60, 180, 80, 255];
+        }
+        // Border style keywords
+        if (d.includes('double')) theme.borderStyle = 'double';
+        if (d.includes('rounded')) theme.borderStyle = 'rounded';
+        if (d.includes('bold') && !d.includes('border')) {} // no-op to avoid false positive
+        if (d.includes('no border') || d.includes('borderless')) theme.borderStyle = 'none';
+        // Effect keywords
+        if (d.includes('scanlines')) theme.effects = { ...theme.effects, scanlines: true };
+        if (d.includes('glow')) theme.effects = { ...theme.effects, glow: true };
+        if (d.includes('shadow')) theme.effects = { ...theme.effects, shadow: true };
+
+        return theme;
     }
 
     readBody(req) {

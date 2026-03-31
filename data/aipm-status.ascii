@@ -14,7 +14,7 @@
 │ ● ascii-world-core │ green   │ 1385/1385 │ 2p 12a                      │
 │ ● geometry-os-gpu  │ green   │ n/a      │ 1p 8a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
-│ ● glyphlang        │ green   │ 54/55    │ 2p 2a                       │
+│ ● glyphlang        │ green   │ 55/55    │ 2p 2a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
 │ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
 │ ● openmind         │ green   │ n/a      │ 2p 0a                       │
@@ -26,13 +26,13 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: 4f35954a0e32
+│ Commit: 2b880e402d3f
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── geometry-os-gpu (rust) ─────────────────────────────────────────────┐
-│ Status: GREEN | Consecutive failures: 0
+│ Status: GREEN | Consecutive failures: 1
 │ Commit: b369d1b98a7b
 │ Tests:  0/0 passing
 │ GitHub: tdw419/geometry-os
@@ -46,9 +46,9 @@
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── glyphlang (go) ─────────────────────────────────────────────┐
-│ Status: GREEN | Consecutive failures: 0
+│ Status: GREEN | Consecutive failures: 1
 │ Commit: 6fbeb98d3fad
-│ Tests:  54/55 passing
+│ Tests:  55/55 passing
 │ GitHub: tdw419/glyphlang
 └────────────────────────────────────────────────────────────────────┘
 
@@ -67,7 +67,7 @@
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── openmind (javascript) ─────────────────────────────────────────────┐
-│ Status: GREEN | Consecutive failures: 1
+│ Status: GREEN | Consecutive failures: 2
 │ Commit: 8b9f8a8525f1
 │ Tests:  0/0 passing
 │ GitHub: tdw419/openmind

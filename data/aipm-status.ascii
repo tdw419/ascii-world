@@ -12,9 +12,9 @@
 │ Project           │ Health │ Tests    │ Queue                       │
 ├───────────────────┼────────┼──────────┼──────────────────────────────┤
 │ ● ascii-world-core │ green   │ 1385/1385 │ 2p 12a                      │
-│ ● geometry-os-gpu  │ green   │ n/a      │ 1p 8a                       │
+│ ◉ geometry-os-gpu  │ red     │ n/a      │ 1p 7a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
-│ ● glyphlang        │ green   │ 55/55    │ 2p 2a                       │
+│ ◉ glyphlang        │ red     │ 55/55    │ 2p 1a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
 │ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
 │ ◉ openmind         │ red     │ n/a      │ 1p 0a                       │
@@ -26,13 +26,13 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: f4f161081cb1
+│ Commit: e1b8132e69a5
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── geometry-os-gpu (rust) ─────────────────────────────────────────────┐
-│ Status: GREEN | Consecutive failures: 2
+│ Status: RED | Consecutive failures: 3
 │ Commit: b369d1b98a7b
 │ Tests:  0/0 passing
 │ GitHub: tdw419/geometry-os
@@ -46,7 +46,7 @@
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── glyphlang (go) ─────────────────────────────────────────────┐
-│ Status: GREEN | Consecutive failures: 2
+│ Status: RED | Consecutive failures: 3
 │ Commit: 6fbeb98d3fad
 │ Tests:  55/55 passing
 │ GitHub: tdw419/glyphlang

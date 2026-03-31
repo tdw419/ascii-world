@@ -1,0 +1,9 @@
+{
+  "name": "sidebar-left",
+  "regions": [
+    { "name": "header", "x": "0", "y": "0", "w": "W", "h": "3" },
+    { "name": "sidebar", "x": "0", "y": "3", "w": "floor(W*0.275)", "h": "H-6" },
+    { "name": "body", "x": "floor(W*0.275)", "y": "3", "w": "W-floor(W*0.275)", "h": "H-6" },
+    { "name": "footer", "x": "0", "y": "H-3", "w": "W", "h": "3" }
+  ]
+}

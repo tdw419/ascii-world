@@ -11,28 +11,28 @@
 ├───────────────────┬────────┬──────────┬──────────────────────────────┤
 │ Project           │ Health │ Tests    │ Queue                       │
 ├───────────────────┼────────┼──────────┼──────────────────────────────┤
-│ ◉ ascii-world-core │ red     │ 1067/1065 │ 0p 11a                      │
-│ ◉ geometry-os-gpu  │ red     │ n/a      │ 0p 5a                       │
+│ ◉ ascii-world-core │ red     │ 1226/1224 │ 2p 13a                      │
+│ ◉ geometry-os-gpu  │ red     │ n/a      │ 1p 6a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
-│ ◉ glyphlang        │ red     │ 55/55    │ 5p 0a                       │
+│ ◉ glyphlang        │ red     │ 55/55    │ 1p 4a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
 │ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
-│ ● openmind         │ green   │ n/a      │ 0p 0a                       │
+│ ◉ openmind         │ red     │ n/a      │ 2p 0a                       │
 │ ● pixel-linux      │ green   │ n/a      │ 0p 0a                       │
 │ ● pixel-poc        │ green   │ n/a      │ 0p 0a                       │
 │ ● rhythmbox-tools  │ green   │ n/a      │ 0p 0a                       │
 └───────────────────┴────────┴──────────┴──────────────────────────────┘
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
-│ Status: RED | Consecutive failures: 6
-│ Commit: e9ee3f3f7b51
-│ Tests:  1067/1065 passing
+│ Status: RED | Consecutive failures: 7
+│ Commit: 0711798f3566
+│ Tests:  1226/1224 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── geometry-os-gpu (rust) ─────────────────────────────────────────────┐
-│ Status: RED | Consecutive failures: 3
-│ Commit: 78cf8f26af24
+│ Status: RED | Consecutive failures: 4
+│ Commit: a5317a2865a8
 │ Tests:  0/0 passing
 │ GitHub: tdw419/geometry-os
 └────────────────────────────────────────────────────────────────────┘
@@ -66,7 +66,7 @@
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── openmind (javascript) ─────────────────────────────────────────────┐
-│ Status: GREEN | Consecutive failures: 0
+│ Status: RED | Consecutive failures: 3
 │ Commit: b5663f692607
 │ Tests:  0/0 passing
 │ GitHub: tdw419/openmind

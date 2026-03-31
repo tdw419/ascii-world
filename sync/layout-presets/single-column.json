@@ -1,0 +1,8 @@
+{
+  "name": "single-column",
+  "regions": [
+    { "name": "header", "x": "0", "y": "0", "w": "W", "h": "3" },
+    { "name": "body", "x": "0", "y": "3", "w": "W", "h": "H-6" },
+    { "name": "footer", "x": "0", "y": "H-3", "w": "W", "h": "3" }
+  ]
+}

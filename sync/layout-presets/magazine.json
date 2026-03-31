@@ -1,0 +1,9 @@
+{
+  "name": "magazine",
+  "regions": [
+    { "name": "header", "x": "0", "y": "0", "w": "W", "h": "3" },
+    { "name": "left", "x": "0", "y": "3", "w": "floor(W/2)", "h": "H-6" },
+    { "name": "right", "x": "floor(W/2)", "y": "3", "w": "W-floor(W/2)", "h": "H-6" },
+    { "name": "footer", "x": "0", "y": "H-3", "w": "W", "h": "3" }
+  ]
+}

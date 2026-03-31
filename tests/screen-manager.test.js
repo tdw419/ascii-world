@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { ScreenManager } from '../sync/screen-manager.js';
+import { ScreenManager, Window } from '../sync/screen-manager.js';
 
 describe('ScreenManager', () => {
     it('creates grid with correct dimensions', () => {

@@ -1,0 +1,8 @@
+{
+  "name": "hero",
+  "regions": [
+    { "name": "hero", "x": "0", "y": "0", "w": "W", "h": "floor(H/2)" },
+    { "name": "body", "x": "0", "y": "floor(H/2)", "w": "W", "h": "H-floor(H/2)-3" },
+    { "name": "footer", "x": "0", "y": "H-3", "w": "W", "h": "3" }
+  ]
+}

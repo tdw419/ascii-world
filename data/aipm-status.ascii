@@ -11,7 +11,7 @@
 ├───────────────────┬────────┬──────────┬──────────────────────────────┤
 │ Project           │ Health │ Tests    │ Queue                       │
 ├───────────────────┼────────┼──────────┼──────────────────────────────┤
-│ ● ascii-world-core │ green   │ 1385/1385 │ 3p 13a                      │
+│ ● ascii-world-core │ green   │ 1385/1385 │ 2p 13a                      │
 │ ◉ geometry-os-gpu  │ red     │ n/a      │ 1p 7a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
 │ ◉ glyphlang        │ red     │ 55/55    │ 2p 1a                       │
@@ -26,7 +26,7 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: f997896d3268
+│ Commit: 2c5caf4990fb
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘

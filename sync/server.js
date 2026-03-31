@@ -22,6 +22,9 @@ import { runAllVCCTests } from './renderers/vcc-evaluator.js';
 import { GPUAgentBridge, GLYPH_TO_OPCODE, OPCODE_COLORS } from './gpu-agent-bridge.js';
 import { YouTubeScraper } from './youtube-scraper.js';
 import { YouTubeExtractor } from './youtube-extractor.js';
+import { ContentStore } from './content-store.js';
+import { Router } from './router.js';
+import { NavigationRenderer } from './navigation-renderer.js';
 import { readFileSync, writeFileSync, existsSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -72,6 +75,16 @@ export class PxOSServer {
         this.youtubeExtractor = new YouTubeExtractor();
         this.youtubeChannelsPath = './data/channels.json';
         this.youtubeChannels = this.loadYouTubeChannels();
+
+        // CMS: Router + Navigation
+        this.cmsContentStore = new ContentStore({
+            filePath: './data/cms-content.json',
+            saveDelay: 1000,
+        });
+        this.cmsRouter = new Router(this.cmsContentStore);
+        this.cmsNavRenderer = new NavigationRenderer(this.cmsRouter, {
+            style: 'horizontal',
+        });
 
         // Setup alert notifiers
         this.alertEngine.addNotifier((alert, rule) => {
@@ -322,6 +335,11 @@ export class PxOSServer {
                 await this.handleYouTubePersonalized(req, res);
             } else if (pathname === '/api/youtube/discover') {
                 await this.handleYouTubeDiscover(req, res, url);
+            // CMS Navigation & Routing
+            } else if (pathname === '/api/cms/nav' && req.method === 'GET') {
+                this.handleCMSNav(req, res);
+            } else if (pathname === '/api/cms/page' && req.method === 'GET') {
+                this.handleCMSPage(req, res, url);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -612,6 +630,22 @@ export class PxOSServer {
             changes: {}
         }));
 
+        ws.on('message', (raw) => {
+            try {
+                const msg = JSON.parse(raw.toString());
+                if (msg.type === 'cms:navigate' && msg.slug) {
+                    const result = this.cmsRouter.navigate(msg.slug);
+                    ws.send(JSON.stringify({ type: 'cms:page-change', ...result }));
+                } else if (msg.type === 'cms:back') {
+                    const result = this.cmsRouter.back();
+                    ws.send(JSON.stringify({ type: 'cms:navigation', action: 'back', result }));
+                } else if (msg.type === 'cms:forward') {
+                    const result = this.cmsRouter.forward();
+                    ws.send(JSON.stringify({ type: 'cms:navigation', action: 'forward', result }));
+                }
+            } catch {}
+        });
+
         ws.on('close', () => {
             this.clients.delete(ws);
             console.log(`WebSocket client disconnected. Total: ${this.clients.size}`);
@@ -630,6 +664,22 @@ export class PxOSServer {
                 client.send(data);
             }
         }
+    }
+
+    // ─────────────────────────────────────────────────────
+    // CMS Navigation & Routing Handlers
+    // ─────────────────────────────────────────────────────
+
+    handleCMSNav(req, res) {
+        const tree = this.cmsRouter.getNavigationTree();
+        const history = this.cmsRouter.getHistory();
+        this.sendJSON(res, 200, { tree, history });
+    }
+
+    handleCMSPage(req, res, url) {
+        const slug = url.searchParams.get('slug') || '';
+        const result = this.cmsRouter.resolve(slug);
+        this.sendJSON(res, 200, result);
     }
 
     readBody(req) {

@@ -2,25 +2,25 @@
   "version": 1,
   "items": {},
   "manifests": {
-    "pm_mnetw7ut_b": {
-      "id": "pm_mnetw7ut_b",
+    "pm_mnetzs64_b": {
+      "id": "pm_mnetzs64_b",
       "title": "Fwd A",
       "slug": "fwd-a",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774974342341,
-      "updated_at": 1774974342341
+      "created_at": 1774974508636,
+      "updated_at": 1774974508636
     },
-    "pm_mnetw7ut_c": {
-      "id": "pm_mnetw7ut_c",
+    "pm_mnetzs64_c": {
+      "id": "pm_mnetzs64_c",
       "title": "Fwd B",
       "slug": "fwd-b",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774974342341,
-      "updated_at": 1774974342341
+      "created_at": 1774974508636,
+      "updated_at": 1774974508636
     }
   }
 }

@@ -12,7 +12,7 @@
 │ Project           │ Health │ Tests    │ Queue                       │
 ├───────────────────┼────────┼──────────┼──────────────────────────────┤
 │ ● ascii-world-core │ green   │ 1385/1385 │ 2p 16a                      │
-│ ◉ geometry-os-gpu  │ red     │ n/a      │ 1p 8a                       │
+│ ◉ geometry-os-gpu  │ red     │ n/a      │ 1p 7a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
 │ ◉ glyphlang        │ red     │ 55/55    │ 0p 1a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
@@ -26,13 +26,13 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: 437d1c57472b
+│ Commit: a6f3afe72ac0
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── geometry-os-gpu (rust) ─────────────────────────────────────────────┐
-│ Status: RED | Consecutive failures: 6
+│ Status: RED | Consecutive failures: 7
 │ Commit: b369d1b98a7b
 │ Tests:  0/0 passing
 │ GitHub: tdw419/geometry-os

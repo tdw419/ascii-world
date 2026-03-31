@@ -12,12 +12,12 @@
 │ Project           │ Health │ Tests    │ Queue                       │
 ├───────────────────┼────────┼──────────┼──────────────────────────────┤
 │ ● ascii-world-core │ green   │ 1385/1385 │ 1p 15a                      │
-│ ◉ geometry-os-gpu  │ red     │ n/a      │ 1p 7a                       │
+│ ◉ geometry-os-gpu  │ red     │ n/a      │ 2p 8a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
 │ ◉ glyphlang        │ red     │ 55/55    │ 0p 1a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
 │ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
-│ ◉ openmind         │ red     │ n/a      │ 2p 1a                       │
+│ ◉ openmind         │ red     │ n/a      │ 2p 0a                       │
 │ ● pixel-linux      │ green   │ n/a      │ 0p 0a                       │
 │ ● pixel-poc        │ green   │ n/a      │ 0p 0a                       │
 │ ● rhythmbox-tools  │ green   │ n/a      │ 0p 0a                       │
@@ -26,7 +26,7 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: 540ddff90748
+│ Commit: 7fbd2b950202
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘
@@ -67,7 +67,7 @@
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── openmind (javascript) ─────────────────────────────────────────────┐
-│ Status: RED | Consecutive failures: 5
+│ Status: RED | Consecutive failures: 6
 │ Commit: 8b9f8a8525f1
 │ Tests:  0/0 passing
 │ GitHub: tdw419/openmind

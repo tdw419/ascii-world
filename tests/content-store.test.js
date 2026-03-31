@@ -359,4 +359,300 @@ describe('ContentStore', () => {
             assert.strictEqual(s.list().length, 0);
         });
     });
+
+    // ── Edge Cases & Extended Coverage ──────────────────────
+
+    describe('Edge Cases', () => {
+        // Content type coverage
+        it('creates all three content types', () => {
+            const page = store.create({ type: 'page', title: 'P' });
+            const post = store.create({ type: 'post', title: 'Q' });
+            const media = store.create({ type: 'media', title: 'R' });
+            assert.strictEqual(page.type, 'page');
+            assert.strictEqual(post.type, 'post');
+            assert.strictEqual(media.type, 'media');
+        });
+
+        // Type change via update
+        it('allows type change via update', () => {
+            const item = store.create({ type: 'page', title: 'T' });
+            const updated = store.update(item.id, { type: 'post' });
+            assert.strictEqual(updated.type, 'post');
+        });
+
+        // Metadata shallow copy on create (top-level keys are independent)
+        it('create copies metadata top-level keys', () => {
+            const meta = { author: 'j', count: 5 };
+            const item = store.create({ type: 'page', title: 'M', metadata: meta });
+            meta.author = 'changed';
+            assert.strictEqual(item.metadata.author, 'j');
+        });
+
+        // Update metadata replaces entirely
+        it('update replaces metadata entirely', () => {
+            const item = store.create({ type: 'page', title: 'T', metadata: { a: 1, b: 2 } });
+            const updated = store.update(item.id, { metadata: { c: 3 } });
+            assert.strictEqual(updated.metadata.a, undefined);
+            assert.strictEqual(updated.metadata.c, 3);
+        });
+
+        // Update metadata deep copy
+        it('update copies metadata (no reference leak)', () => {
+            const item = store.create({ type: 'page', title: 'T' });
+            const meta = { deep: true };
+            store.update(item.id, { metadata: meta });
+            meta.deep = false;
+            assert.strictEqual(store.read(item.id).metadata.deep, true);
+        });
+
+        // Delete doesn't affect other items
+        it('deleting one item does not affect others', () => {
+            const a = store.create({ type: 'page', title: 'A' });
+            const b = store.create({ type: 'page', title: 'B' });
+            store.delete(a.id);
+            assert.strictEqual(store.read(b.id).title, 'B');
+            assert.strictEqual(store.list().length, 1);
+        });
+
+        // List with empty filter
+        it('list with empty filter returns all', () => {
+            store.create({ type: 'page', title: 'A' });
+            store.create({ type: 'post', title: 'B' });
+            assert.strictEqual(store.list({}).length, 2);
+        });
+
+        // List filter by tag returns nothing when no tags match
+        it('list with non-existent tag returns empty', () => {
+            store.create({ type: 'page', title: 'A', metadata: { tags: ['x'] } });
+            assert.strictEqual(store.list({ tag: 'y' }).length, 0);
+        });
+
+        // List with non-array tags metadata
+        it('list tag filter handles non-array tags gracefully', () => {
+            store.create({ type: 'page', title: 'A', metadata: { tags: 'not-array' } });
+            assert.strictEqual(store.list({ tag: 'not-array' }).length, 0);
+        });
+
+        // Search with special regex-like characters
+        it('search handles regex special characters safely', () => {
+            store.create({ type: 'page', title: 'Price: $10.00' });
+            assert.strictEqual(store.search('$10.00').length, 1);
+            assert.strictEqual(store.search('Price.*').length, 0);
+        });
+
+        // Search with partial match
+        it('search matches partial words', () => {
+            store.create({ type: 'post', title: 'JavaScript', body: 'TypeScript is nice too' });
+            assert.strictEqual(store.search('script').length, 1);
+            assert.strictEqual(store.search('type').length, 1);
+        });
+
+        // Search with no results
+        it('search returns empty when nothing matches', () => {
+            store.create({ type: 'page', title: 'Hello World' });
+            assert.strictEqual(store.search('xyz').length, 0);
+        });
+
+        // Slug generation edge cases
+        it('slugify handles multiple special chars', () => {
+            const m = store.createManifest({ title: 'Hello!!! World??? 123...' });
+            assert.strictEqual(m.slug, 'hello-world-123');
+        });
+
+        it('slugify handles leading/trailing hyphens from special chars', () => {
+            const m = store.createManifest({ title: '---Hello World---' });
+            assert.strictEqual(m.slug, 'hello-world');
+        });
+
+        it('slugify handles all special characters', () => {
+            const m = store.createManifest({ title: '!@#$%^&*()' });
+            assert.strictEqual(m.slug, '');
+        });
+
+        // Manifest with all 4 regions
+        it('manifest can have all four regions', () => {
+            const m = store.createManifest({
+                title: 'Full Page',
+                layout: [
+                    { region: 'header', contentId: 'h1', formula: 'f1' },
+                    { region: 'body', contentId: 'b1', formula: null },
+                    { region: 'sidebar', contentId: null, inline: 'Side' },
+                    { region: 'footer', contentId: 'f1', formula: 'f2' },
+                ],
+            });
+            assert.strictEqual(m.layout.length, 4);
+            assert.strictEqual(m.layout[2].inline, 'Side');
+            assert.strictEqual(m.layout[3].formula, 'f2');
+        });
+
+        // Manifest with no layout
+        it('manifest with empty layout is valid', () => {
+            const m = store.createManifest({ title: 'Empty' });
+            assert.deepStrictEqual(m.layout, []);
+        });
+
+        // Manifest update slug
+        it('update changes slug', () => {
+            const m = store.createManifest({ title: 'Original' });
+            const updated = store.updateManifest(m.id, { slug: 'custom-slug' });
+            assert.strictEqual(updated.slug, 'custom-slug');
+        });
+
+        // Manifest update layout deep copy
+        it('update manifest copies layout deeply', () => {
+            const m = store.createManifest({ title: 'T', layout: [{ region: 'body', contentId: 'a' }] });
+            const layout = [{ region: 'header', contentId: 'b' }];
+            store.updateManifest(m.id, { layout });
+            layout[0].contentId = 'hacked';
+            assert.strictEqual(store.readManifest(m.id).layout[0].contentId, 'b');
+        });
+
+        // Manifest update preserves unmodified fields
+        it('update manifest preserves theme and metadata', () => {
+            const m = store.createManifest({ title: 'T', theme: 'dark', metadata: { key: 'val' } });
+            const updated = store.updateManifest(m.id, { title: 'New Title' });
+            assert.strictEqual(updated.theme, 'dark');
+            assert.strictEqual(updated.metadata.key, 'val');
+            assert.strictEqual(updated.title, 'New Title');
+        });
+
+        // Layout must be array
+        it('rejects non-array layout', () => {
+            assert.throws(() => store.createManifest({
+                title: 'Bad',
+                layout: 'not-array',
+            }), /Layout must be an array/);
+        });
+
+        // Validate contentId undefined treated as null
+        it('accepts undefined contentId in layout', () => {
+            const m = store.createManifest({
+                title: 'OK',
+                layout: [{ region: 'body' }],
+            });
+            assert.strictEqual(m.layout[0].contentId, undefined);
+        });
+
+        // File persistence round-trip with metadata
+        it('persists and restores metadata correctly', (t, done) => {
+            const s = new ContentStore({ filePath: testFile, saveDelay: 10 });
+            s.create({ type: 'page', title: 'Meta', metadata: { tags: ['a', 'b'], priority: 5 } });
+            setTimeout(() => {
+                const s2 = new ContentStore({ filePath: testFile });
+                const item = s2.list()[0];
+                assert.deepStrictEqual(item.metadata.tags, ['a', 'b']);
+                assert.strictEqual(item.metadata.priority, 5);
+                done();
+            }, 50);
+        });
+
+        // File persistence with bad version
+        it('ignores file with wrong version', () => {
+            mkdirSync(testDir, { recursive: true });
+            writeFileSync(testFile, JSON.stringify({ version: 99, items: {} }));
+            const s = new ContentStore({ filePath: testFile });
+            assert.strictEqual(s.list().length, 0);
+        });
+
+        // File persistence with corrupt JSON
+        it('handles corrupt JSON file gracefully', () => {
+            mkdirSync(testDir, { recursive: true });
+            writeFileSync(testFile, '{not valid json}');
+            const s = new ContentStore({ filePath: testFile });
+            assert.strictEqual(s.list().length, 0);
+        });
+
+        // Debounced save coalesces multiple writes
+        it('debounced save coalesces multiple creates', (t, done) => {
+            const s = new ContentStore({ filePath: testFile, saveDelay: 50 });
+            s.create({ type: 'page', title: 'A' });
+            s.create({ type: 'page', title: 'B' });
+            s.create({ type: 'page', title: 'C' });
+            setTimeout(() => {
+                const s2 = new ContentStore({ filePath: testFile });
+                assert.strictEqual(s2.list().length, 3);
+                done();
+            }, 150);
+        });
+
+        // Store without filePath works fine (in-memory only)
+        it('works without filePath (in-memory)', () => {
+            const s = new ContentStore();
+            s.create({ type: 'page', title: 'InMem' });
+            assert.strictEqual(s.list().length, 1);
+            s.saveNow(); // should be a no-op
+        });
+
+        // Cross-operation: create then search then update then search
+        it('search reflects updates', () => {
+            const item = store.create({ type: 'page', title: 'Alpha', body: 'Original' });
+            store.update(item.id, { body: 'Updated content here' });
+            const results = store.search('Updated');
+            assert.strictEqual(results.length, 1);
+            assert.strictEqual(results[0].body, 'Updated content here');
+        });
+
+        // Cross-operation: create manifest with contentId, verify contentId survives round-trip
+        it('manifest contentId survives read round-trip', () => {
+            const item = store.create({ type: 'page', title: 'Bound' });
+            const m = store.createManifest({
+                title: 'Bound Page',
+                layout: [{ region: 'body', contentId: item.id, formula: null }],
+            });
+            const read = store.readManifest(m.id);
+            assert.strictEqual(read.layout[0].contentId, item.id);
+        });
+
+        // Manifest update with new metadata
+        it('update manifest replaces metadata', () => {
+            const m = store.createManifest({ title: 'T', metadata: { old: true } });
+            const updated = store.updateManifest(m.id, { metadata: { new: true } });
+            assert.strictEqual(updated.metadata.old, undefined);
+            assert.strictEqual(updated.metadata.new, true);
+        });
+
+        // Default theme is null
+        it('manifest defaults theme to null', () => {
+            const m = store.createManifest({ title: 'No Theme' });
+            assert.strictEqual(m.theme, null);
+        });
+
+        // Default metadata is empty object
+        it('manifest defaults metadata to empty object', () => {
+            const m = store.createManifest({ title: 'No Meta' });
+            assert.deepStrictEqual(m.metadata, {});
+        });
+
+        // Content body can be long
+        it('handles long body content', () => {
+            const longBody = 'x'.repeat(100000);
+            const item = store.create({ type: 'post', title: 'Long', body: longBody });
+            assert.strictEqual(store.read(item.id).body.length, 100000);
+        });
+
+        // Search matches both title and body
+        it('search returns item matching either title or body', () => {
+            store.create({ type: 'page', title: 'Alpha', body: 'no match' });
+            store.create({ type: 'page', title: 'no match', body: 'Alpha' });
+            const results = store.search('alpha');
+            assert.strictEqual(results.length, 2);
+        });
+
+        // Validate layout with formula field
+        it('layout region preserves formula', () => {
+            const m = store.createManifest({
+                title: 'Formula',
+                layout: [{ region: 'body', contentId: 'x', formula: '=SUM(A1:A10)' }],
+            });
+            assert.strictEqual(m.layout[0].formula, '=SUM(A1:A10)');
+        });
+
+        // contentId with undefined is allowed
+        it('layout with undefined contentId passes validation', () => {
+            assert.doesNotThrow(() => store.createManifest({
+                title: 'OK',
+                layout: [{ region: 'header' }],
+            }));
+        });
+    });
 });

@@ -1,3 +1,8 @@
 node_modules/
 *.log
 .DS_Store
+.youtube-cookies.txt
+data/aipm-status.ascii
+data/cms-content.json
+data/dashboards.json
+.autoresearch/

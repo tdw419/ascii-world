@@ -41,7 +41,7 @@ This roadmap guides the autonomous AI agent through strategic phases of codebase
 **Milestones:**
 - [ ] Implement RGB animation mode in console
 - [ ] Add mouse input support for framebuffer
-- [ ] Create window/panel system in ScreenManager
+- [x] Create window/panel system in ScreenManager
 - [ ] Add formula history and recall
 
 **Current Focus:** RGB animation mode

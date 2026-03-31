@@ -14,7 +14,7 @@
 │ ◉ ascii-world-core │ red     │ 1226/1224 │ 2p 13a                      │
 │ ◉ geometry-os-gpu  │ red     │ n/a      │ 1p 6a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
-│ ◉ glyphlang        │ red     │ 55/55    │ 1p 4a                       │
+│ ◉ glyphlang        │ red     │ 53/55    │ 1p 3a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
 │ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
 │ ◉ openmind         │ red     │ n/a      │ 2p 0a                       │
@@ -45,9 +45,9 @@
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── glyphlang (go) ─────────────────────────────────────────────┐
-│ Status: RED | Consecutive failures: 3
-│ Commit: 23b146994f5e
-│ Tests:  55/55 passing
+│ Status: RED | Consecutive failures: 4
+│ Commit: 8f7ddeed82da
+│ Tests:  53/55 passing
 │ GitHub: tdw419/glyphlang
 └────────────────────────────────────────────────────────────────────┘
 

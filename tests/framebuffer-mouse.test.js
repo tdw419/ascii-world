@@ -179,12 +179,10 @@ describe('FramebufferMouse - hit regions', () => {
 });
 
 describe('FramebufferMouse - paint mode', () => {
-    let pb, mouse, fbm;
-
-    beforeEach(() => {
-        pb = new PixelBuffer(100, 100);
-        mouse = new MouseInput({ width: 100, height: 100 });
-        fbm = new FramebufferMouse({
+    it('paints pixel at click position', () => {
+        const pb = new PixelBuffer(100, 100);
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
             pixelBuffer: pb,
             mouse,
             paintMode: true,
@@ -192,13 +190,6 @@ describe('FramebufferMouse - paint mode', () => {
             showCursor: false,
         });
         fbm.start();
-    });
-
-    afterEach(() => {
-        fbm.stop();
-    });
-
-    it('paints pixel at click position', () => {
         mouse.feedPacket(ps2Packet(0, 50, -50));
         mouse.feedPacket(ps2Packet(1, 0, 0));
         mouse.feedPacket(ps2Packet(0, 0, 0));
@@ -207,9 +198,21 @@ describe('FramebufferMouse - paint mode', () => {
         assert.strictEqual(pixel[0], 255);
         assert.strictEqual(pixel[1], 0);
         assert.strictEqual(pixel[2], 0);
+        fbm.stop();
     });
 
     it('paints along drag path', () => {
+        const pb = new PixelBuffer(100, 100);
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
+            pixelBuffer: pb,
+            mouse,
+            paintMode: true,
+            brushColor: [255, 0, 0, 255],
+            showCursor: false,
+        });
+        fbm.start();
+
         mouse.feedPacket(ps2Packet(0, 10, -10));
         mouse.feedPacket(ps2Packet(1, 0, 0)); // press at (10,10)
         mouse.feedPacket(ps2Packet(1, 20, 0)); // drag to (30,10)
@@ -220,11 +223,13 @@ describe('FramebufferMouse - paint mode', () => {
             const pixel = pb.getPixel(x, 10);
             assert.strictEqual(pixel[0], 255, `pixel at x=${x} should be red`);
         }
+        fbm.stop();
     });
 
     it('uses brushSize for larger strokes', () => {
-        fbm.stop();
-        fbm = new FramebufferMouse({
+        const pb = new PixelBuffer(100, 100);
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
             pixelBuffer: pb,
             mouse,
             paintMode: true,
@@ -248,11 +253,13 @@ describe('FramebufferMouse - paint mode', () => {
 
         const diag = pb.getPixel(51, 51);
         assert.strictEqual(diag[1], 255);
+        fbm.stop();
     });
 
     it('does not paint when paintMode is false', () => {
-        fbm.stop();
-        fbm = new FramebufferMouse({
+        const pb = new PixelBuffer(100, 100);
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
             pixelBuffer: pb,
             mouse,
             paintMode: false,
@@ -268,18 +275,16 @@ describe('FramebufferMouse - paint mode', () => {
         const pixel = pb.getPixel(50, 50);
         // Should remain default (0,0,0,0)
         assert.strictEqual(pixel[0], 0);
+        fbm.stop();
     });
 });
 
 describe('FramebufferMouse - cursor rendering', () => {
-    let pb, mouse, fbm;
-
-    beforeEach(() => {
-        pb = new PixelBuffer(100, 100);
-        // Fill with known color so we can detect cursor changes
+    it('renders cursor at mouse position on move', () => {
+        const pb = new PixelBuffer(100, 100);
         pb.fill(10, 10, 20, 255);
-        mouse = new MouseInput({ width: 100, height: 100 });
-        fbm = new FramebufferMouse({
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
             pixelBuffer: pb,
             mouse,
             showCursor: true,
@@ -287,13 +292,7 @@ describe('FramebufferMouse - cursor rendering', () => {
             paintMode: false,
         });
         fbm.start();
-    });
 
-    afterEach(() => {
-        fbm.stop();
-    });
-
-    it('renders cursor at mouse position on move', () => {
         // Move mouse to (50, 50) — dy=-50 means screen y = 0-(-50)=50
         mouse.feedPacket(ps2Packet(0, 50, -50));
 
@@ -301,9 +300,22 @@ describe('FramebufferMouse - cursor rendering', () => {
         const center = pb.getPixel(50, 50);
         assert.strictEqual(center[0], 255); // R of yellow
         assert.strictEqual(center[1], 255); // G of yellow
+        fbm.stop();
     });
 
     it('restores previous pixels when cursor moves away', () => {
+        const pb = new PixelBuffer(100, 100);
+        pb.fill(10, 10, 20, 255);
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
+            pixelBuffer: pb,
+            mouse,
+            showCursor: true,
+            cursorColor: [255, 255, 0, 255],
+            paintMode: false,
+        });
+        fbm.start();
+
         // Move to (50, 50)
         mouse.feedPacket(ps2Packet(0, 50, -50));
 
@@ -322,9 +334,22 @@ describe('FramebufferMouse - cursor rendering', () => {
         // New cursor position should show cursor color
         const newCursor = pb.getPixel(60, 60);
         assert.strictEqual(newCursor[0], 255);
+        fbm.stop();
     });
 
     it('stop restores cursor region', () => {
+        const pb = new PixelBuffer(100, 100);
+        pb.fill(10, 10, 20, 255);
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
+            pixelBuffer: pb,
+            mouse,
+            showCursor: true,
+            cursorColor: [255, 255, 0, 255],
+            paintMode: false,
+        });
+        fbm.start();
+
         mouse.feedPacket(ps2Packet(0, 50, -50));
         assert.strictEqual(pb.getPixel(50, 50)[0], 255);
 
@@ -335,6 +360,18 @@ describe('FramebufferMouse - cursor rendering', () => {
     });
 
     it('cursor arms extend in crosshair pattern', () => {
+        const pb = new PixelBuffer(100, 100);
+        pb.fill(10, 10, 20, 255);
+        const mouse = new MouseInput({ width: 100, height: 100 });
+        const fbm = new FramebufferMouse({
+            pixelBuffer: pb,
+            mouse,
+            showCursor: true,
+            cursorColor: [255, 255, 0, 255],
+            paintMode: false,
+        });
+        fbm.start();
+
         mouse.feedPacket(ps2Packet(0, 50, -50));
 
         // Horizontal arms
@@ -345,6 +382,7 @@ describe('FramebufferMouse - cursor rendering', () => {
         assert.strictEqual(pb.getPixel(50, 51)[0], 255); // bottom
         // Diagonal should NOT be cursor
         assert.strictEqual(pb.getPixel(49, 49)[0], 10); // bg
+        fbm.stop();
     });
 });
 
@@ -382,8 +420,10 @@ describe('FramebufferMouse - paintAt', () => {
         assert.strictEqual(pb.getPixel(25, 26)[0], 255);
         // Corner (sqrt(2) > 1, so this is within radius 2)
         assert.strictEqual(pb.getPixel(26, 26)[0], 255);
-        // 2 pixels away (edge of radius)
-        assert.strictEqual(pb.getPixel(27, 25)[0], 0); // outside circle
+        // 2 pixels away on axis is within radius (distance=2, radius=2)
+        assert.strictEqual(pb.getPixel(27, 25)[0], 255);
+        // 3 pixels away (outside circle, distance=3 > radius=2)
+        assert.strictEqual(pb.getPixel(28, 25)[0], 0);
     });
 
     it('ignores out-of-bounds coordinates gracefully', () => {
@@ -507,7 +547,7 @@ describe('FramebufferMouse - start/stop lifecycle', () => {
         const mouse = new MouseInput({ width: 100, height: 100 });
         const fbm = new FramebufferMouse({ mouse });
         fbm.start();
-        assert.strictEqual(fbm._listeners.length, 7);
+        assert.strictEqual(fbm._listeners.length, 8);
         fbm.stop();
         assert.strictEqual(fbm._listeners.length, 0);
     });

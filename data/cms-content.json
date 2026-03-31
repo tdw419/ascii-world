@@ -2,25 +2,25 @@
   "version": 1,
   "items": {},
   "manifests": {
-    "pm_mneswma9_b": {
-      "id": "pm_mneswma9_b",
+    "pm_mnet07ip_b": {
+      "id": "pm_mnet07ip_b",
       "title": "Fwd A",
       "slug": "fwd-a",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774972681425,
-      "updated_at": 1774972681425
+      "created_at": 1774972848913,
+      "updated_at": 1774972848913
     },
-    "pm_mneswma9_c": {
-      "id": "pm_mneswma9_c",
+    "pm_mnet07ip_c": {
+      "id": "pm_mnet07ip_c",
       "title": "Fwd B",
       "slug": "fwd-b",
       "layout": [],
       "theme": null,
       "metadata": {},
-      "created_at": 1774972681425,
-      "updated_at": 1774972681425
+      "created_at": 1774972848913,
+      "updated_at": 1774972848913
     }
   }
 }

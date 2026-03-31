@@ -12,12 +12,12 @@
 │ Project           │ Health │ Tests    │ Queue                       │
 ├───────────────────┼────────┼──────────┼──────────────────────────────┤
 │ ● ascii-world-core │ green   │ 1385/1385 │ 1p 13a                      │
-│ ◉ geometry-os-gpu  │ red     │ n/a      │ 2p 8a                       │
+│ ◉ geometry-os-gpu  │ red     │ n/a      │ 2p 7a                       │
 │ ● glass-box-monitor │ green   │ n/a      │ 0p 0a                       │
-│ ◉ glyphlang        │ red     │ 55/55    │ 1p 2a                       │
+│ ◉ glyphlang        │ red     │ 55/55    │ 1p 1a                       │
 │ ● glyphlang-source │ green   │ 48/49    │ 0p 0a                       │
 │ ● openclaw-glass   │ green   │ n/a      │ 0p 0a                       │
-│ ◉ openmind         │ red     │ n/a      │ 2p 0a                       │
+│ ◉ openmind         │ red     │ n/a      │ 0p 0a                       │
 │ ● pixel-linux      │ green   │ n/a      │ 0p 0a                       │
 │ ● pixel-poc        │ green   │ n/a      │ 0p 0a                       │
 │ ● rhythmbox-tools  │ green   │ n/a      │ 0p 0a                       │
@@ -26,13 +26,13 @@
 
 ┌─── ascii-world-core (javascript) ─────────────────────────────────────────────┐
 │ Status: GREEN | Consecutive failures: 0
-│ Commit: 30dd984bc5da
+│ Commit: 7f776f3c7dc6
 │ Tests:  1385/1385 passing
 │ GitHub: tdw419/ascii-world
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── geometry-os-gpu (rust) ─────────────────────────────────────────────┐
-│ Status: RED | Consecutive failures: 3
+│ Status: RED | Consecutive failures: 4
 │ Commit: b369d1b98a7b
 │ Tests:  0/0 passing
 │ GitHub: tdw419/geometry-os
@@ -46,7 +46,7 @@
 └────────────────────────────────────────────────────────────────────┘
 
 ┌─── glyphlang (go) ─────────────────────────────────────────────┐
-│ Status: RED | Consecutive failures: 3
+│ Status: RED | Consecutive failures: 4
 │ Commit: 6fbeb98d3fad
 │ Tests:  55/55 passing
 │ GitHub: tdw419/glyphlang

@@ -22,6 +22,8 @@ import { runAllVCCTests } from './renderers/vcc-evaluator.js';
 import { GPUAgentBridge, GLYPH_TO_OPCODE, OPCODE_COLORS } from './gpu-agent-bridge.js';
 import { YouTubeScraper } from './youtube-scraper.js';
 import { YouTubeExtractor } from './youtube-extractor.js';
+import { exportPNG } from './publish/png-export.js';
+import { compileHTML } from './publish/html-compiler.js';
 import { ContentStore } from './content-store.js';
 import { Router } from './router.js';
 import { NavigationRenderer } from './navigation-renderer.js';
@@ -359,6 +361,11 @@ export class PxOSServer {
                 this.handleCMSThemePreview(req, res);
             } else if (pathname === '/api/cms/theme/generate' && req.method === 'POST') {
                 await this.handleCMSThemeGenerate(req, res);
+            // CMS Export API
+            } else if (pathname === '/api/cms/export/png' && req.method === 'POST') {
+                await this.handleCMSExportPNG(req, res);
+            } else if (pathname === '/api/cms/export/html' && req.method === 'POST') {
+                await this.handleCMSExportHTML(req, res);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -865,6 +872,89 @@ export class PxOSServer {
         if (d.includes('shadow')) theme.effects = { ...theme.effects, shadow: true };
 
         return theme;
+    }
+
+    // ─────────────────────────────────────────────────────
+    // CMS Export Handlers
+    // ─────────────────────────────────────────────────────
+
+    async handleCMSExportPNG(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { asciiContent, scale = 1, slug } = body ? JSON.parse(body) : {};
+
+            let content = asciiContent || '';
+            if (!content && slug) {
+                const result = this.cmsRouter.resolve(slug);
+                if (result.manifest) {
+                    content = this._manifestToASCII(result.manifest);
+                }
+            }
+
+            if (!content) {
+                return this.sendError(res, 400, 'asciiContent or slug is required');
+            }
+
+            const png = await exportPNG({ asciiContent: content, scale });
+            res.writeHead(200, {
+                'Content-Type': 'image/png',
+                'Content-Length': png.length,
+            });
+            res.end(png);
+        } catch (err) {
+            this.sendError(res, 500, `PNG export error: ${err.message}`);
+        }
+    }
+
+    async handleCMSExportHTML(req, res) {
+        try {
+            const body = await this.readBody(req);
+            const { slug, manifestId } = body ? JSON.parse(body) : {};
+
+            const targetSlug = slug || '';
+            const result = this.cmsRouter.resolve(targetSlug);
+            const manifest = manifestId
+                ? this.cmsContentStore.readManifest(manifestId)
+                : result.manifest;
+
+            if (!manifest) {
+                return this.sendError(res, 404, 'Page not found');
+            }
+
+            const navTree = this.cmsRouter.getNavigationTree();
+            const theme = this.themeEditor.getTheme();
+            const html = compileHTML(manifest, this.cmsContentStore, {
+                theme,
+                navigationTree: navTree,
+                currentSlug: targetSlug,
+            });
+
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Content-Length': Buffer.byteLength(html),
+            });
+            res.end(html);
+        } catch (err) {
+            this.sendError(res, 500, `HTML export error: ${err.message}`);
+        }
+    }
+
+    /**
+     * Convert a manifest's layout to simple ASCII content string.
+     */
+    _manifestToASCII(manifest) {
+        if (!manifest || !manifest.layout) return '';
+        return manifest.layout
+            .map(r => {
+                if (r.inline) return r.inline;
+                if (r.contentId) {
+                    const item = this.cmsContentStore.read(r.contentId);
+                    return item ? item.body : '';
+                }
+                return '';
+            })
+            .filter(Boolean)
+            .join('\n');
     }
 
     readBody(req) {

@@ -1,0 +1,7 @@
+{
+    "name": "content-editor",
+    "version": "1.0.0",
+    "description": "AI Content Editor — inline content editing in the terminal",
+    "regions": ["body"],
+    "dependencies": []
+}

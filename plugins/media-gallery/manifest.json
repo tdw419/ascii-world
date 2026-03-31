@@ -1,0 +1,7 @@
+{
+    "name": "media-gallery",
+    "version": "1.0.0",
+    "description": "Media Gallery — renders ASCII art images in a grid",
+    "regions": ["body"],
+    "dependencies": []
+}

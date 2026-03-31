@@ -1,0 +1,7 @@
+{
+    "name": "nav-menu",
+    "version": "1.0.0",
+    "description": "Navigation Menu — renders horizontal menu bar from router navigation tree",
+    "regions": ["header"],
+    "dependencies": []
+}

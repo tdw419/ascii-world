@@ -1,0 +1,7 @@
+{
+    "name": "analytics",
+    "version": "1.0.0",
+    "description": "Analytics — tracks page views, navigation events, renders dashboard",
+    "regions": ["footer"],
+    "dependencies": []
+}

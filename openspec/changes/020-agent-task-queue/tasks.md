@@ -40,9 +40,9 @@
 - [x] 5.5 Add JS agent SDK equivalent methods in agents/sdk.js
 
 ## 6. Tests
-- [ ] 6.1 Add tests/task-model.test.js: validate, serialize, isExpired
-- [ ] 6.2 Add tests/task-store.test.js: create, get, list, claim, complete, fail, stats, persist
-- [ ] 6.3 Add tests/task-api.test.js: all REST endpoints via supertest
+- [x] 6.1 Add tests/task-model.test.js: validate, serialize, isExpired
+- [x] 6.2 Add tests/task-store.test.js: create, get, list, claim, complete, fail, stats, persist
+- [x] 6.3 Add tests/task-api.test.js: all REST endpoints via supertest
 - [x] 6.4 Add tests/task-formulas.test.js: TASK_QUEUE_STATUS, TASK_COUNT, TASK_LIST
 
 ## 7. Documentation

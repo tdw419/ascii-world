@@ -1,10 +1,10 @@
 # Tasks: Agent Observability
 
 ## 1. Agent Metric Ingestion
-- [ ] 1.1 Add POST /api/v1/agents/:id/metrics endpoint: accepts {key, value}, stores as agent:{id}:{key} in TimeSeriesStore
-- [ ] 1.2 Add GET /api/v1/agents/:id/metrics endpoint: returns latest values for all agent metrics
-- [ ] 1.3 Add GET /api/v1/agents/:id/metrics/:key/history endpoint: returns time-series data for specific metric
-- [ ] 1.4 Add automatic metric scraping from agent config (if agent reports system metrics)
+- [x] 1.1 Add POST /api/v1/agents/:id/metrics endpoint: accepts {key, value}, stores as agent:{id}:{key} in TimeSeriesStore
+- [x] 1.2 Add GET /api/v1/agents/:id/metrics endpoint: returns latest values for all agent metrics
+- [x] 1.3 Add GET /api/v1/agents/:id/metrics/:key/history endpoint: returns time-series data for specific metric
+- [x] 1.4 Add automatic metric scraping from agent config (if agent reports system metrics)
 
 ## 2. Agent Log Aggregation
 - [ ] 2.1 Create sync/agent-log-store.js: in-memory ring buffer per agent (max 1000 entries), stores {timestamp, level, message}

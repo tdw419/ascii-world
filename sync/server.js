@@ -32,6 +32,7 @@ import { ThemeEditor, DEFAULT_THEME, THEME_PRESETS } from './theme-editor.js';
 import { AiArchitect } from './ai-architect.js';
 import { AiRefiner } from './ai-refiner.js';
 import { AgentRegistry } from './agent-registry.js';
+import { AgentLogStore } from './agent-log-store.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -127,6 +128,9 @@ export class PxOSServer {
 
         // Agent Registry
         this.agentRegistry = new AgentRegistry({ filePath: './data/agents.json' });
+
+        // Agent Log Store (ring buffer per agent)
+        this.agentLogStore = new AgentLogStore({ maxEntries: 1000 });
     }
 
     async start() {
@@ -432,6 +436,11 @@ export class PxOSServer {
                 this.handleListAgents(req, res);
             } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/heartbeat$/) && req.method === 'PUT') {
                 await this.handleAgentHeartbeat(req, res, pathname);
+            // Agent Logs API
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/logs$/) && req.method === 'POST') {
+                await this.handlePostAgentLogs(req, res, pathname, url);
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/logs$/) && req.method === 'GET') {
+                this.handleGetAgentLogs(req, res, pathname, url);
             // Agent Metrics API
             } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/metrics\/[^/]+\/history$/) && req.method === 'GET') {
                 this.handleGetAgentMetricHistory(req, res, pathname);
@@ -1140,6 +1149,48 @@ export class PxOSServer {
         if (!removed) return this.sendError(res, 404, 'Agent not found');
         res.writeHead(204);
         res.end();
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Agent Logs API
+
+    async handlePostAgentLogs(req, res, pathname, url) {
+        const id = pathname.replace('/api/v1/agents/', '').replace('/logs', '');
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+
+        const body = await this.readBody(req);
+        let data;
+        try { data = JSON.parse(body); } catch { return this.sendError(res, 400, 'Invalid JSON'); }
+
+        if (!data.message || typeof data.message !== 'string') {
+            return this.sendError(res, 400, 'message is required and must be a string');
+        }
+
+        const validLevels = ['error', 'warn', 'info'];
+        const level = data.level || 'info';
+        if (!validLevels.includes(level)) {
+            return this.sendError(res, 400, `level must be one of: ${validLevels.join(', ')}`);
+        }
+
+        const entry = this.agentLogStore.append(id, { level, message: data.message });
+
+        // Broadcast via WebSocket
+        this.broadcast({ type: 'agent:log', agentId: id, entry });
+
+        this.sendJSON(res, 201, entry);
+    }
+
+    handleGetAgentLogs(req, res, pathname, url) {
+        const id = pathname.replace('/api/v1/agents/', '').replace('/logs', '');
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+
+        const limit = parseInt(url.searchParams.get('limit')) || 50;
+        const level = url.searchParams.get('level') || undefined;
+
+        const logs = this.agentLogStore.getLogs(id, { limit, level });
+        this.sendJSON(res, 200, { agentId: id, logs });
     }
 
     // ─────────────────────────────────────────────────────

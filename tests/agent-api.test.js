@@ -19,7 +19,7 @@ function request(method, path, body) {
         const options = {
             hostname: url.hostname,
             port: url.port,
-            path: url.pathname,
+            path: url.pathname + url.search,
             method,
             headers: { 'Content-Type': 'application/json' },
         };
@@ -311,6 +311,116 @@ describe('Agent Registry REST API', () => {
             const h2 = await request('GET', `/api/v1/agents/${a2.body.id}/metrics/cpu/history`);
             assert.equal(h1.body.history[0].v, 0.9);
             assert.equal(h2.body.history[0].v, 0.1);
+        });
+    });
+
+    describe('POST /api/v1/agents/:id/logs', () => {
+        it('appends a log entry and returns 201', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'LogBot' });
+            const res = await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'error', message: 'something broke',
+            });
+            assert.equal(res.status, 201);
+            assert.equal(res.body.level, 'error');
+            assert.equal(res.body.message, 'something broke');
+            assert.ok(res.body.timestamp > 0);
+        });
+
+        it('defaults level to info', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'DefaultLevel' });
+            const res = await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                message: 'just info',
+            });
+            assert.equal(res.status, 201);
+            assert.equal(res.body.level, 'info');
+        });
+
+        it('rejects missing message', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'NoMsg' });
+            const res = await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'info',
+            });
+            assert.equal(res.status, 400);
+            assert.ok(res.body.error.includes('message'));
+        });
+
+        it('rejects invalid level', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'BadLevel' });
+            const res = await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'debug', message: 'test',
+            });
+            assert.equal(res.status, 400);
+            assert.ok(res.body.error.includes('level'));
+        });
+
+        it('returns 404 for unknown agent', async () => {
+            const res = await request('POST', '/api/v1/agents/ghost/logs', {
+                level: 'info', message: 'nobody home',
+            });
+            assert.equal(res.status, 404);
+        });
+    });
+
+    describe('GET /api/v1/agents/:id/logs', () => {
+        it('returns log entries for an agent', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'LogReader' });
+            await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'info', message: 'first',
+            });
+            await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'error', message: 'second',
+            });
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/logs`);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.agentId, created.body.id);
+            assert.equal(res.body.logs.length, 2);
+            assert.equal(res.body.logs[0].message, 'first');
+            assert.equal(res.body.logs[1].message, 'second');
+        });
+
+        it('respects limit parameter', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'Limited' });
+            for (let i = 0; i < 10; i++) {
+                await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                    message: `msg-${i}`,
+                });
+            }
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/logs?limit=3`);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.logs.length, 3);
+            assert.equal(res.body.logs[0].message, 'msg-7');
+            assert.equal(res.body.logs[2].message, 'msg-9');
+        });
+
+        it('filters by level', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'FilterBot' });
+            await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'error', message: 'e1',
+            });
+            await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'info', message: 'i1',
+            });
+            await request('POST', `/api/v1/agents/${created.body.id}/logs`, {
+                level: 'error', message: 'e2',
+            });
+
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/logs?level=error`);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.logs.length, 2);
+            assert.equal(res.body.logs[0].message, 'e1');
+            assert.equal(res.body.logs[1].message, 'e2');
+        });
+
+        it('returns empty logs for agent with no logs', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'NoLogs' });
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/logs`);
+            assert.equal(res.status, 200);
+            assert.deepStrictEqual(res.body.logs, []);
+        });
+
+        it('returns 404 for unknown agent', async () => {
+            const res = await request('GET', '/api/v1/agents/no-such/logs');
+            assert.equal(res.status, 404);
         });
     });
 });

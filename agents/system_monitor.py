@@ -3,6 +3,7 @@
 pxOS System Monitor Agent
 
 Collects system metrics and posts them to the pxOS server for visualization.
+Uses the Agent SDK for registration and heartbeats.
 
 Usage:
     python system_monitor.py
@@ -21,6 +22,8 @@ try:
 except ImportError:
     print("Error: psutil not installed. Run: pip install psutil")
     exit(1)
+
+from sdk import AgentSDK
 
 
 def collect_metrics():
@@ -157,6 +160,22 @@ def main():
     print(f"Server: {args.url}")
     print(f"Interval: {args.interval}s")
     print()
+
+    # Register with Agent Registry
+    sdk = AgentSDK(base_url=args.url)
+    try:
+        agent = sdk.register(
+            name="System Monitor",
+            capabilities=["system-metrics", "cpu", "memory", "disk"],
+            config={"interval": args.interval},
+        )
+        print(f"Registered agent: {agent['id']} (status: {agent.get('status', 'unknown')})")
+        # Start background heartbeat every 30s
+        sdk.start_heartbeat(interval=30)
+    except Exception as e:
+        print(f"Warning: Agent registration failed: {e}")
+        print("Continuing without agent registration...")
+    print()
     
     # Load template
     if args.template:
@@ -197,6 +216,15 @@ def main():
                       f"CPU: {cells['cpu']*100:5.1f}% | "
                       f"MEM: {cells['mem_gb']:5.1f}/{cells['mem_total_gb']:.0f}GB | "
                       f"DISK: {cells['disk_gb']:5.1f}/{cells['disk_total_gb']:.0f}GB")
+
+            # Report key metrics via agent-scoped time-series keys
+            if sdk.agent_id:
+                try:
+                    sdk.report_metric("cpu", cells["cpu"])
+                    sdk.report_metric("mem", cells["mem"])
+                    sdk.report_metric("disk", cells["disk"])
+                except Exception:
+                    pass  # Metric reporting failures are non-fatal
             
             if args.once:
                 break
@@ -205,6 +233,8 @@ def main():
             
     except KeyboardInterrupt:
         print("\nStopped.")
+    finally:
+        sdk.stop_heartbeat()
 
 
 if __name__ == '__main__':

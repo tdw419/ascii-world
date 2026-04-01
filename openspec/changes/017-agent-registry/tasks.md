@@ -30,10 +30,10 @@
 - [x] 4.6 Wire AgentRegistry into server startup (create, load, start liveness)
 
 ## 5. Python SDK Updates
-- [ ] 5.1 Add register(name, capabilities, config) method to agents/sdk.py that POSTs to /api/v1/agents
-- [ ] 5.2 Add heartbeat() method that PUTs to /api/v1/agents/:id/heartbeat on interval
-- [ ] 5.3 Add reportMetric(key, value) method that POSTs metric to time-series with agent-scoped key
-- [ ] 5.4 Update agents/system_monitor.py to use register() on startup and heartbeat loop
+- [x] 5.1 Add register(name, capabilities, config) method to agents/sdk.py that POSTs to /api/v1/agents
+- [x] 5.2 Add heartbeat() method that PUTs to /api/v1/agents/:id/heartbeat on interval
+- [x] 5.3 Add reportMetric(key, value) method that POSTs metric to time-series with agent-scoped key
+- [x] 5.4 Update agents/system_monitor.py to use register() on startup and heartbeat loop
 
 ## 6. Tests
 - [ ] 6.1 Add tests/agent-model.test.js: validate, serialize, deserialize

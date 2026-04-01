@@ -22,12 +22,12 @@
 - [x] 3.3 Emit 'agent:offline' and 'agent:error' events on status transitions
 
 ## 4. REST API Endpoints
-- [ ] 4.1 Add POST /api/v1/agents endpoint to server.js: calls registry.register(body), returns 201 with agent
-- [ ] 4.2 Add GET /api/v1/agents endpoint: returns registry.list() as JSON array
-- [ ] 4.3 Add GET /api/v1/agents/:id endpoint: returns agent or 404
-- [ ] 4.4 Add PUT /api/v1/agents/:id/heartbeat endpoint: calls registry.heartbeat(id), returns 200
-- [ ] 4.5 Add DELETE /api/v1/agents/:id endpoint: calls registry.remove(id), returns 204
-- [ ] 4.6 Wire AgentRegistry into server startup (create, load, start liveness)
+- [x] 4.1 Add POST /api/v1/agents endpoint to server.js: calls registry.register(body), returns 201 with agent
+- [x] 4.2 Add GET /api/v1/agents endpoint: returns registry.list() as JSON array
+- [x] 4.3 Add GET /api/v1/agents/:id endpoint: returns agent or 404
+- [x] 4.4 Add PUT /api/v1/agents/:id/heartbeat endpoint: calls registry.heartbeat(id), returns 200
+- [x] 4.5 Add DELETE /api/v1/agents/:id endpoint: calls registry.remove(id), returns 204
+- [x] 4.6 Wire AgentRegistry into server startup (create, load, start liveness)
 
 ## 5. Python SDK Updates
 - [ ] 5.1 Add register(name, capabilities, config) method to agents/sdk.py that POSTs to /api/v1/agents
@@ -38,7 +38,7 @@
 ## 6. Tests
 - [ ] 6.1 Add tests/agent-model.test.js: validate, serialize, deserialize
 - [x] 6.2 Add tests/agent-registry.test.js: register, get, list, heartbeat, remove, persist, load
-- [ ] 6.3 Add tests/agent-api.test.js: POST/GET/PUT/DELETE agent endpoints via supertest
+- [x] 6.3 Add tests/agent-api.test.js: POST/GET/PUT/DELETE agent endpoints via supertest
 - [x] 6.4 Add test for liveness check marking agents offline
 
 ## 7. Documentation

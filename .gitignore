@@ -6,3 +6,4 @@ data/aipm-status.ascii
 data/cms-content.json
 data/dashboards.json
 .autoresearch/
+.test-fixtures/

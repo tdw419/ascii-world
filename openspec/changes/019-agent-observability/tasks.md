@@ -7,11 +7,11 @@
 - [x] 1.4 Add automatic metric scraping from agent config (if agent reports system metrics)
 
 ## 2. Agent Log Aggregation
-- [ ] 2.1 Create sync/agent-log-store.js: in-memory ring buffer per agent (max 1000 entries), stores {timestamp, level, message}
-- [ ] 2.2 Add POST /api/v1/agents/:id/logs endpoint: appends log entry to agent's buffer
-- [ ] 2.3 Add GET /api/v1/agents/:id/logs endpoint: returns last N log entries (default 50, param ?limit=N)
-- [ ] 2.4 Add WebSocket broadcast on new log entries: emit 'agent:log' event with {agentId, entry}
-- [ ] 2.5 Add log level filtering on GET endpoint (param ?level=error|warn|info)
+- [x] 2.1 Create sync/agent-log-store.js: in-memory ring buffer per agent (max 1000 entries), stores {timestamp, level, message}
+- [x] 2.2 Add POST /api/v1/agents/:id/logs endpoint: appends log entry to agent's buffer
+- [x] 2.3 Add GET /api/v1/agents/:id/logs endpoint: returns last N log entries (default 50, param ?limit=N)
+- [x] 2.4 Add WebSocket broadcast on new log entries: emit 'agent:log' event with {agentId, entry}
+- [x] 2.5 Add log level filtering on GET endpoint (param ?level=error|warn|info)
 
 ## 3. Agent Alert Rules
 - [ ] 3.1 Add built-in rule: agent-down triggers when agent status transitions to offline or error

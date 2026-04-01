@@ -281,4 +281,47 @@ describe('Audit Trail API Integration', () => {
             assert.ok(entry.data !== undefined, 'entry should have data');
         }
     });
+
+    it('audit trail records agent.registered with capabilities', async () => {
+        const reg = await request('POST', '/api/v1/agents', {
+            name: 'CapAuditBot',
+            capabilities: ['monitor', 'heal'],
+        });
+        const agentId = reg.body.id;
+        const audit = await request('GET', `/api/v1/audit?agentId=${agentId}`);
+        const ev = audit.body.find(e => e.event === 'agent.registered');
+        assert.ok(ev);
+        assert.deepStrictEqual(ev.data.capabilities, ['monitor', 'heal']);
+    });
+
+    it('audit trail records agent.task-assigned with taskId', async () => {
+        const reg = await request('POST', '/api/v1/agents', { name: 'TaskAuditBot' });
+        const agentId = reg.body.id;
+        await request('POST', `/api/v1/agents/${agentId}/tasks`, {
+            taskId: 'audit-task-42',
+        });
+        const audit = await request('GET', `/api/v1/audit?agentId=${agentId}`);
+        const ev = audit.body.find(e => e.event === 'agent.task-assigned');
+        assert.ok(ev);
+        assert.equal(ev.data.agentId, agentId);
+        assert.equal(ev.data.taskId, 'audit-task-42');
+    });
+
+    it('audit timestamps are valid ISO strings', async () => {
+        const audit = await request('GET', '/api/v1/audit');
+        assert.ok(audit.body.length > 0);
+        for (const entry of audit.body) {
+            const d = new Date(entry.timestamp);
+            assert.ok(!isNaN(d.getTime()), `${entry.timestamp} should be a valid date`);
+        }
+    });
+
+    it('GET /api/v1/audit without params returns all entries', async () => {
+        const audit = await request('GET', '/api/v1/audit');
+        assert.equal(audit.status, 200);
+        assert.ok(Array.isArray(audit.body));
+        // Should include entries from all agents
+        const agentIds = new Set(audit.body.map(e => e.data.agentId).filter(Boolean));
+        assert.ok(agentIds.size >= 2, 'should have entries from multiple agents');
+    });
 });

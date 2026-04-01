@@ -21,18 +21,18 @@
 - [x] 3.5 Register these rules in alert-engine.js with agent scope
 
 ## 4. Audit Trail
-- [ ] 4.1 Create sync/audit-trail.js: append-only JSONL writer to data/audit.jsonl
-- [ ] 4.2 Log event: agent.registered with {agentId, name, capabilities}
-- [ ] 4.3 Log event: agent.heartbeat-lost with {agentId, lastSeen}
-- [ ] 4.4 Log event: agent.status-change with {agentId, from, to}
-- [ ] 4.5 Log event: agent.task-assigned with {agentId, taskId}
-- [ ] 4.6 Add GET /api/v1/audit endpoint: returns recent audit entries (param ?agentId=X for filtering)
+- [x] 4.1 Create sync/audit-trail.js: append-only JSONL writer to data/audit.jsonl
+- [x] 4.2 Log event: agent.registered with {agentId, name, capabilities}
+- [x] 4.3 Log event: agent.heartbeat-lost with {agentId, lastSeen}
+- [x] 4.4 Log event: agent.status-change with {agentId, from, to}
+- [x] 4.5 Log event: agent.task-assigned with {agentId, taskId}
+- [x] 4.6 Add GET /api/v1/audit endpoint: returns recent audit entries (param ?agentId=X for filtering)
 
 ## 5. Tests
-- [ ] 5.1 Add tests/agent-metrics.test.js: test metric ingestion, retrieval, and history endpoints
-- [ ] 5.2 Add tests/agent-logs.test.js: test log posting, retrieval, level filtering, WebSocket broadcast
-- [ ] 5.3 Add tests/agent-alerts.test.js: test agent-down, heartbeat-miss, error-spike rules
-- [ ] 5.4 Add tests/audit-trail.test.js: test event logging and retrieval
+- [x] 5.1 Add tests/agent-metrics.test.js: test metric ingestion, retrieval, and history endpoints
+- [x] 5.2 Add tests/agent-logs.test.js: test log posting, retrieval, level filtering, WebSocket broadcast
+- [x] 5.3 Add tests/agent-alerts.test.js: test agent-down, heartbeat-miss, error-spike rules
+- [x] 5.4 Add tests/audit-trail.test.js: test event logging and retrieval
 
 ## 6. Documentation
 - [ ] 6.1 Update README with agent observability API reference

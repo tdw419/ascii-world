@@ -3,7 +3,7 @@
 pxOS Agent SDK
 
 Provides a Python client for registering with the pxOS Agent Registry,
-sending heartbeats, and reporting metrics via the time-series store.
+sending heartbeats, reporting metrics, and working with the task queue.
 
 Usage:
     from sdk import AgentSDK
@@ -14,6 +14,12 @@ Usage:
 
     # Later...
     sdk.report_metric("cpu", 0.75)
+
+    # Task queue
+    task = sdk.claim_task()
+    if task:
+        result = do_work(task)
+        sdk.complete_task(task["id"], result)
 """
 
 import json
@@ -180,3 +186,92 @@ class AgentSDK:
 
         scoped_key = f"agent:{self.agent_id}:{key}"
         return self._request("POST", "/api/v1/cells", {scoped_key: value})
+
+    # ── Task Queue Methods ──
+
+    def claim_task(self):
+        """
+        Claim the highest-priority pending task from the queue.
+
+        GETs pending tasks, then PUTs claim on the first one.
+
+        Returns:
+            dict with the claimed task data, or None if no pending tasks.
+
+        Raises:
+            RuntimeError: If the agent is not registered or the request fails.
+        """
+        if not self.agent_id:
+            raise RuntimeError("Agent not registered. Call register() first.")
+
+        # Get pending tasks
+        tasks = self._request("GET", "/api/v1/tasks?status=pending")
+        if not tasks or len(tasks) == 0:
+            return None
+
+        # Claim the first (highest priority, oldest) pending task
+        task_id = tasks[0]["id"]
+        return self._request("PUT", f"/api/v1/tasks/{task_id}/claim", {
+            "agentId": self.agent_id,
+        })
+
+    def complete_task(self, task_id, result=None):
+        """
+        Mark a task as completed with an optional result.
+
+        PUTs to /api/v1/tasks/:id/complete.
+
+        Args:
+            task_id: The task ID to complete.
+            result: Optional JSON-serializable result.
+
+        Returns:
+            dict with the completed task data.
+
+        Raises:
+            RuntimeError: If the request fails (e.g., task not found).
+        """
+        return self._request("PUT", f"/api/v1/tasks/{task_id}/complete", {
+            "result": result,
+        })
+
+    def fail_task(self, task_id, error):
+        """
+        Mark a task as failed with an error message.
+
+        PUTs to /api/v1/tasks/:id/fail.
+
+        Args:
+            task_id: The task ID to fail.
+            error: Error message string.
+
+        Returns:
+            dict with the failed task data.
+
+        Raises:
+            RuntimeError: If the request fails (e.g., task not found).
+        """
+        return self._request("PUT", f"/api/v1/tasks/{task_id}/fail", {
+            "error": error,
+        })
+
+    def create_task(self, payload, priority=None):
+        """
+        Create a new task in the queue.
+
+        POSTs to /api/v1/tasks.
+
+        Args:
+            payload: JSON-serializable dict with task payload.
+            priority: Optional priority (0=low, 1=normal, 2=high).
+
+        Returns:
+            dict with the created task data.
+
+        Raises:
+            RuntimeError: If the request fails (e.g., invalid payload).
+        """
+        body = {"payload": payload}
+        if priority is not None:
+            body["priority"] = priority
+        return self._request("POST", "/api/v1/tasks", body)

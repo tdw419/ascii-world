@@ -33,11 +33,11 @@
 - [x] 4.4 Create templates/task-queue.json: dashboard template showing queue stats as pixel blocks
 
 ## 5. Agent SDK Task Methods
-- [ ] 5.1 Add claimTask() to Python agent SDK: GET pending tasks, PUT claim, returns Task or None
-- [ ] 5.2 Add completeTask(taskId, result) to Python SDK: PUT complete
-- [ ] 5.3 Add failTask(taskId, error) to Python SDK: PUT fail
-- [ ] 5.4 Add createTask(payload, priority) to Python SDK: POST create
-- [ ] 5.5 Add JS agent SDK equivalent methods in agents/sdk.js
+- [x] 5.1 Add claimTask() to Python agent SDK: GET pending tasks, PUT claim, returns Task or None
+- [x] 5.2 Add completeTask(taskId, result) to Python SDK: PUT complete
+- [x] 5.3 Add failTask(taskId, error) to Python SDK: PUT fail
+- [x] 5.4 Add createTask(payload, priority) to Python SDK: POST create
+- [x] 5.5 Add JS agent SDK equivalent methods in agents/sdk.js
 
 ## 6. Tests
 - [ ] 6.1 Add tests/task-model.test.js: validate, serialize, isExpired

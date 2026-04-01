@@ -26,3 +26,26 @@
 - **[discovery]** (from SEC-3) Agent strategy: created 3 files, modified 7 files, added tests
 
 - **[discovery]** (from SEC-3) Tests improved by 21 (1850 -> 1871)
+
+- **[pattern]** (from SEC-4) [modified] .youtube-cookies.txt
+
+- **[pattern]** (from SEC-4) [modified] sync/pixel-formula-engine.js
+
+- **[pattern]** (from SEC-4) [added] tests/task-formulas.test.js
+
+- **[pattern]** (from SEC-4) [added] templates/task-queue.json
+
+- **[pattern]** (from SEC-4) [added] .test-fixtures/task-store/deep-1775048672693/sub/tasks.json
+
+- **[discovery]** (from SEC-4) Agent strategy: created 3 files, modified 6 files, added tests
+
+- **[discovery]** (from SEC-4) Tests improved by 19 (1871 -> 1890)
+
+## SEC-5: Agent SDK Task Methods
+- Python SDK already existed at `agents/sdk.py` with register/heartbeat/metric methods. Added 4 task methods: claimTask, completeTask, failTask, createTask.
+- Created new `agents/sdk.js` as the JS equivalent. Uses native `fetch` (Node 18+) with optional injectable fetch for testing.
+- `claimTask()` in both SDKs does GET pending tasks then PUT claim on the first (highest priority) result, matching the queue semantics.
+- Port conflicts are a real issue: agent-logs.test.js already uses 13842, task-api.test.js uses 13841. Used 13843 for the new SDK test.
+- Using `beforeEach` to reset the TaskStore and create a fresh SDK instance per test prevents cross-test contamination from persisted tasks.
+- Tests improved by 15 (1890 -> 1905).
+- Files: modified agents/sdk.py, created agents/sdk.js, created tests/task-sdk.test.js

@@ -1,0 +1,189 @@
+[
+  {
+    "id": "fb69cacd-fcd3-44f8-bba0-17cbeabe9b21",
+    "name": "sdk-test-agent",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:14:16.446Z"
+  },
+  {
+    "id": "c12e9db2-a72b-4196-af94-26b773cfce47",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:23.982Z"
+  },
+  {
+    "id": "3840288b-ec51-430c-bba4-9c673ce97ebc",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:23.985Z"
+  },
+  {
+    "id": "46312d77-1b68-4e6a-a793-118a65bbc270",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:23.994Z"
+  },
+  {
+    "id": "092a91b5-0f18-41fe-94d2-97210fc8d6f5",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:23.996Z"
+  },
+  {
+    "id": "446d3e09-6bf8-4a6c-9f95-867b8eb1a2e6",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:23.999Z"
+  },
+  {
+    "id": "0ba26721-7d6e-4187-af93-854888a0fb22",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:24.004Z"
+  },
+  {
+    "id": "a1f713e4-5a8a-4b3d-b49d-b15afde5b11e",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:24.008Z"
+  },
+  {
+    "id": "bc72e819-f8aa-48f2-8327-5ed1c84c3b2e",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:15:24.010Z"
+  },
+  {
+    "id": "b5e79f5e-959d-45af-801a-97db9a1d301e",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.851Z"
+  },
+  {
+    "id": "648da189-3048-42d2-a275-db4572332d7b",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.854Z"
+  },
+  {
+    "id": "ebf945f8-8a4e-4a91-9fe4-43e597254d4b",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.859Z"
+  },
+  {
+    "id": "ff155cee-a4b3-4ff8-83bc-ebebc1f970a1",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.862Z"
+  },
+  {
+    "id": "92af4323-7a71-4901-913c-c10b52e5af08",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.866Z"
+  },
+  {
+    "id": "1736a8e2-7902-47f9-8d83-a051ab9602fb",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.872Z"
+  },
+  {
+    "id": "1d41adcf-5f3e-4d1e-9edd-05cd6422c918",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.876Z"
+  },
+  {
+    "id": "1e8c4189-dddd-434d-8855-893506834ca1",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:36:43.879Z"
+  }
+]

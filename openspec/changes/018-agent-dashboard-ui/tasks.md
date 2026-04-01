@@ -8,10 +8,10 @@
 - [x] 1.5 Add AGENT_NAME(agentId) to formula engine: returns agent name string
 
 ## 2. Agent Card Component
-- [ ] 2.1 Create ui/agent-card.js: renders a single agent as a pixel block with name, status badge, last activity
-- [ ] 2.2 Status badge rendering: green (online), yellow (offline), red (error), gray (unknown)
-- [ ] 2.3 Capability tags rendered as small text below agent name
-- [ ] 2.4 Timestamp rendering for lastHeartbeat (relative: "2m ago", "5s ago")
+- [x] 2.1 Create ui/agent-card.js: renders a single agent as a pixel block with name, status badge, last activity
+- [x] 2.2 Status badge rendering: green (online), yellow (offline), red (error), gray (unknown)
+- [x] 2.3 Capability tags rendered as small text below agent name
+- [x] 2.4 Timestamp rendering for lastHeartbeat (relative: "2m ago", "5s ago")
 
 ## 3. Agent Grid View
 - [ ] 3.1 Create ui/agent-grid.js: fetches GET /api/v1/agents, renders Agent Card for each in a grid layout

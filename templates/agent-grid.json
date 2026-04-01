@@ -1,0 +1,17 @@
+{
+  "name": "Agent Grid",
+  "template": [
+    {
+      "fn": "TEXT",
+      "args": [0, 0, "Agent Grid"]
+    },
+    {
+      "fn": "BAR",
+      "args": [0, 1, "agent_count", 40]
+    }
+  ],
+  "alerts": [],
+  "type": "agent-grid",
+  "source": "ui/agent-grid.js",
+  "refreshInterval": 5000
+}

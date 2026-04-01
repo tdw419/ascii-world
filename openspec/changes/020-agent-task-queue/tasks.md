@@ -18,13 +18,13 @@
 - [x] 2.9 Add getStats() method: returns {pending: N, running: N, completed: N, failed: N}
 
 ## 3. REST API Endpoints
-- [ ] 3.1 Add POST /api/v1/tasks to server.js: body {payload, priority?}, calls store.create(), returns 201 with task
-- [ ] 3.2 Add GET /api/v1/tasks to server.js: query params ?status=&agentId=, calls store.list(filters)
-- [ ] 3.3 Add GET /api/v1/tasks/:id to server.js: returns task or 404
-- [ ] 3.4 Add PUT /api/v1/tasks/:id/claim to server.js: body {agentId}, calls store.claim(agentId), returns task or 404
-- [ ] 3.5 Add PUT /api/v1/tasks/:id/complete to server.js: body {result}, calls store.complete(id, result)
-- [ ] 3.6 Add PUT /api/v1/tasks/:id/fail to server.js: body {error}, calls store.fail(id, error)
-- [ ] 3.7 Add GET /api/v1/tasks/stats to server.js: returns store.getStats()
+- [x] 3.1 Add POST /api/v1/tasks to server.js: body {payload, priority?}, calls store.create(), returns 201 with task
+- [x] 3.2 Add GET /api/v1/tasks to server.js: query params ?status=&agentId=, calls store.list(filters)
+- [x] 3.3 Add GET /api/v1/tasks/:id to server.js: returns task or 404
+- [x] 3.4 Add PUT /api/v1/tasks/:id/claim to server.js: body {agentId}, calls store.claim(agentId), returns task or 404
+- [x] 3.5 Add PUT /api/v1/tasks/:id/complete to server.js: body {result}, calls store.complete(id, result)
+- [x] 3.6 Add PUT /api/v1/tasks/:id/fail to server.js: body {error}, calls store.fail(id, error)
+- [x] 3.7 Add GET /api/v1/tasks/stats to server.js: returns store.getStats()
 
 ## 4. Queue Visualization
 - [ ] 4.1 Add TASK_QUEUE_STATUS() formula function: returns {pending, running, completed, failed} counts as formatted string

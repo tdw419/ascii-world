@@ -34,6 +34,7 @@ import { AiRefiner } from './ai-refiner.js';
 import { AgentRegistry } from './agent-registry.js';
 import { AgentLogStore } from './agent-log-store.js';
 import { AuditTrail } from './audit-trail.js';
+import { TaskStore } from './task-store.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -135,6 +136,9 @@ export class PxOSServer {
 
         // Audit Trail (append-only JSONL)
         this.auditTrail = new AuditTrail({ filePath: './data/audit.jsonl' });
+
+        // Task Store (agent task queue)
+        this.taskStore = new TaskStore({ dataPath: './data/tasks.json' });
     }
 
     async start() {
@@ -270,7 +274,7 @@ export class PxOSServer {
 
         // CORS headers
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
         if (req.method === 'OPTIONS') {
@@ -484,6 +488,21 @@ export class PxOSServer {
             // Audit Trail API
             } else if (pathname === '/api/v1/audit' && req.method === 'GET') {
                 this.handleGetAudit(req, res, url);
+            // Task Queue API
+            } else if (pathname === '/api/v1/tasks' && req.method === 'POST') {
+                await this.handleCreateTask(req, res);
+            } else if (pathname === '/api/v1/tasks' && req.method === 'GET') {
+                this.handleListTasks(req, res, url);
+            } else if (pathname === '/api/v1/tasks/stats' && req.method === 'GET') {
+                this.handleTaskStats(req, res);
+            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+\/claim$/) && req.method === 'PUT') {
+                await this.handleClaimTask(req, res, pathname);
+            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+\/complete$/) && req.method === 'PUT') {
+                await this.handleCompleteTask(req, res, pathname);
+            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+\/fail$/) && req.method === 'PUT') {
+                await this.handleFailTask(req, res, pathname);
+            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+$/) && req.method === 'GET') {
+                this.handleGetTask(req, res, pathname);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -1900,6 +1919,78 @@ export class PxOSServer {
             glyphToOpcode: GLYPH_TO_OPCODE,
             opcodeColors: OPCODE_COLORS
         });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Task Queue API
+    // ─────────────────────────────────────────────────────
+
+    async handleCreateTask(req, res) {
+        const body = await this.readBody(req);
+        const data = JSON.parse(body);
+        if (!data.payload || typeof data.payload !== 'object' || Array.isArray(data.payload)) {
+            return this.sendError(res, 400, 'payload is required and must be a JSON object');
+        }
+        const task = this.taskStore.create(data.payload, data.priority);
+        this.sendJSON(res, 201, task.toJSON());
+    }
+
+    handleListTasks(req, res, url) {
+        const status = url.searchParams.get('status') || undefined;
+        const agentId = url.searchParams.get('agentId') || undefined;
+        const filters = {};
+        if (status) filters.status = status;
+        if (agentId) filters.agentId = agentId;
+        const tasks = this.taskStore.list(filters).map(t => t.toJSON());
+        this.sendJSON(res, 200, tasks);
+    }
+
+    handleGetTask(req, res, pathname) {
+        const id = pathname.replace('/api/v1/tasks/', '');
+        const task = this.taskStore.get(id);
+        if (!task) return this.sendError(res, 404, 'Task not found');
+        this.sendJSON(res, 200, task.toJSON());
+    }
+
+    async handleClaimTask(req, res, pathname) {
+        const id = pathname.replace('/api/v1/tasks/', '').replace('/claim', '');
+        const body = await this.readBody(req);
+        const data = JSON.parse(body);
+        if (!data.agentId) {
+            return this.sendError(res, 400, 'agentId is required');
+        }
+        const task = this.taskStore.get(id);
+        if (!task) return this.sendError(res, 404, 'Task not found');
+        if (task.status !== 'pending') {
+            return this.sendError(res, 409, 'Task is not pending');
+        }
+        task.status = 'running';
+        task.agentId = data.agentId;
+        task.startedAt = new Date().toISOString();
+        this.sendJSON(res, 200, task.toJSON());
+    }
+
+    async handleCompleteTask(req, res, pathname) {
+        const id = pathname.replace('/api/v1/tasks/', '').replace('/complete', '');
+        const body = await this.readBody(req);
+        const data = JSON.parse(body);
+        const task = this.taskStore.complete(id, data.result);
+        if (!task) return this.sendError(res, 404, 'Task not found');
+        this.sendJSON(res, 200, task.toJSON());
+    }
+
+    async handleFailTask(req, res, pathname) {
+        const id = pathname.replace('/api/v1/tasks/', '').replace('/fail', '');
+        const body = await this.readBody(req);
+        const data = JSON.parse(body);
+        const task = this.taskStore.fail(id, data.error);
+        if (!task) return this.sendError(res, 404, 'Task not found');
+        this.sendJSON(res, 200, task.toJSON());
+    }
+
+    handleTaskStats(req, res) {
+        const stats = this.taskStore.getStats();
+        this.sendJSON(res, 200, stats);
     }
 }
 

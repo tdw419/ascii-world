@@ -27,11 +27,11 @@
 - [x] 4.5 Register detail view route in dashboard template system
 
 ## 5. Integration and Tests
-- [ ] 5.1 Add tests/agent-formulas.test.js: test all AGENT_* formula functions with mock registry
-- [ ] 5.2 Add test that agent grid template renders correctly with mock agent data
-- [ ] 5.3 Add test that agent detail view fetches and displays agent data
+- [x] 5.1 Add tests/agent-formulas.test.js: test all AGENT_* formula functions with mock registry
+- [x] 5.2 Add test that agent grid template renders correctly with mock agent data
+- [x] 5.3 Add test that agent detail view fetches and displays agent data
 
 ## 6. Documentation
-- [ ] 6.1 Update README with agent formula functions reference
-- [ ] 6.2 Add agent dashboard templates section to README
+- [x] 6.1 Update README with agent formula functions reference
+- [x] 6.2 Add agent dashboard templates section to README
 - [ ] 6.3 Commit and push

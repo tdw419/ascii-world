@@ -52,3 +52,13 @@
 - **[pattern]** (from SEC-4) [modified] data/aipm-status.ascii
 
 - **[discovery]** (from SEC-4) Agent strategy: created 2 files, modified 3 files, added tests
+
+- **[pattern]** (from SEC-5) [added] tests/agent-formulas.test.js
+
+- **[pattern]** (from SEC-5) [modified] data/cms-content.json
+
+- **[pattern]** (from SEC-5) [modified] data/dashboards.json
+
+- **[discovery]** (from SEC-5) Agent strategy: created 1 file, modified 2 files, added tests, fix attempt
+
+- **[discovery]** (from SEC-5) Tests improved by 23 (1604 -> 1627)

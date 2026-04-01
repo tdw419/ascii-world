@@ -366,5 +366,83 @@ describe('AgentRegistry', () => {
             assert.notEqual(reg._livenessTimer, firstTimer);
             reg.stopLivenessCheck();
         });
+
+        it('persists status change to disk on liveness transition', () => {
+            const reg = createRegistry();
+            const { agent } = reg.register({ name: 'PersistOff' });
+            agent.lastHeartbeat = new Date(Date.now() - 61_000).toISOString();
+            agent.status = 'online';
+
+            reg._checkLiveness();
+
+            const arr = JSON.parse(readFileSync(TMP_FILE, 'utf-8'));
+            assert.equal(arr.length, 1);
+            assert.equal(arr[0].status, 'offline');
+        });
+    });
+
+    describe('register edge cases', () => {
+        it('replaces existing agent with same id', () => {
+            const reg = createRegistry();
+            const { agent: first } = reg.register({ id: 'dup-1', name: 'First' });
+            const { agent: second } = reg.register({ id: 'dup-1', name: 'Second' });
+            assert.equal(reg.get('dup-1').name, 'Second');
+            assert.equal(reg.list().length, 1);
+        });
+
+        it('persists after heartbeat', () => {
+            const reg = createRegistry();
+            const { agent } = reg.register({ name: 'HBPersist' });
+            reg.heartbeat(agent.id);
+            const arr = JSON.parse(readFileSync(TMP_FILE, 'utf-8'));
+            assert.equal(arr[0].status, 'online');
+            assert.ok(arr[0].lastHeartbeat);
+        });
+
+        it('persists after update', () => {
+            const reg = createRegistry();
+            const { agent } = reg.register({ name: 'UpPersist' });
+            reg.update(agent.id, { name: 'Updated' });
+            const arr = JSON.parse(readFileSync(TMP_FILE, 'utf-8'));
+            assert.equal(arr[0].name, 'Updated');
+        });
+    });
+
+    describe('load() merging', () => {
+        it('merges loaded agents with existing in-memory agents', () => {
+            const reg = createRegistry();
+            reg.register({ name: 'InMemory' });
+
+            // Write a different agent to disk
+            const diskAgent = new Agent({ name: 'FromDisk' });
+            writeFileSync(TMP_FILE, JSON.stringify([diskAgent.toJSON()]));
+
+            reg.load();
+            const names = reg.list().map(a => a.name);
+            assert.ok(names.includes('InMemory'));
+            assert.ok(names.includes('FromDisk'));
+        });
+    });
+
+    describe('liveness with multiple agents', () => {
+        it('processes all agents in a single pass', () => {
+            const reg = createRegistry();
+            const { agent: a1 } = reg.register({ name: 'One' });
+            const { agent: a2 } = reg.register({ name: 'Two' });
+            const { agent: a3 } = reg.register({ name: 'Three' });
+
+            a1.lastHeartbeat = new Date(Date.now() - 61_000).toISOString();
+            a1.status = 'online';
+            a2.lastHeartbeat = new Date(Date.now() - 121_000).toISOString();
+            a2.status = 'online';
+            a3.lastHeartbeat = new Date().toISOString();
+            a3.status = 'online';
+
+            reg._checkLiveness();
+
+            assert.equal(a1.status, 'offline');
+            assert.equal(a2.status, 'error');
+            assert.equal(a3.status, 'online');
+        });
     });
 });

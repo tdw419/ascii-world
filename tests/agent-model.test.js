@@ -148,5 +148,54 @@ describe('Agent Model', () => {
             const round = Agent.fromJSON(agent.toJSON());
             assert.deepStrictEqual(round.toJSON(), agent.toJSON());
         });
+
+        it('handles empty object input', () => {
+            const restored = Agent.fromJSON({});
+            assert.ok(restored instanceof Agent);
+            assert.equal(restored.name, '');
+            assert.equal(restored.status, 'offline');
+            assert.deepStrictEqual(restored.capabilities, []);
+        });
+    });
+
+    describe('validate() edge cases', () => {
+        it('returns error for non-string name (number)', () => {
+            const errors = Agent.validate({ name: 42 });
+            assert.ok(errors.length >= 1);
+            assert.ok(errors[0].includes('name'));
+        });
+
+        it('returns error for config as array', () => {
+            const errors = Agent.validate({ name: 'X', config: [1, 2] });
+            assert.equal(errors.length, 1);
+            assert.ok(errors[0].includes('config'));
+        });
+
+        it('returns error for config as null', () => {
+            const errors = Agent.validate({ name: 'X', config: null });
+            assert.equal(errors.length, 1);
+            assert.ok(errors[0].includes('config'));
+        });
+
+        it('accepts empty capabilities array', () => {
+            const errors = Agent.validate({ name: 'X', capabilities: [] });
+            assert.deepStrictEqual(errors, []);
+        });
+
+        it('accepts empty config object', () => {
+            const errors = Agent.validate({ name: 'X', config: {} });
+            assert.deepStrictEqual(errors, []);
+        });
+
+        it('returns error for undefined input', () => {
+            const errors = Agent.validate(undefined);
+            assert.ok(errors.length >= 1);
+            assert.ok(errors[0].includes('required'));
+        });
+
+        it('ignores unknown fields without error', () => {
+            const errors = Agent.validate({ name: 'X', extra: 'ignored', meta: true });
+            assert.deepStrictEqual(errors, []);
+        });
     });
 });

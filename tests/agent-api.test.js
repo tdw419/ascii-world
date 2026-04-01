@@ -147,4 +147,25 @@ describe('Agent Registry REST API', () => {
             assert.equal(res.status, 404);
         });
     });
+
+    describe('GET /api/v1/agents after operations', () => {
+        it('reflects heartbeat status in list', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'ListHB' });
+            await request('PUT', `/api/v1/agents/${created.body.id}/heartbeat`);
+            const list = await request('GET', '/api/v1/agents');
+            const found = list.body.find(a => a.id === created.body.id);
+            assert.ok(found);
+            assert.equal(found.status, 'online');
+        });
+
+        it('returns empty array after all agents deleted', async () => {
+            const a1 = await request('POST', '/api/v1/agents', { name: 'Tmp1' });
+            const a2 = await request('POST', '/api/v1/agents', { name: 'Tmp2' });
+            await request('DELETE', `/api/v1/agents/${a1.body.id}`);
+            await request('DELETE', `/api/v1/agents/${a2.body.id}`);
+            const list = await request('GET', '/api/v1/agents');
+            const remaining = list.body.filter(a => a.id === a1.body.id || a.id === a2.body.id);
+            assert.equal(remaining.length, 0);
+        });
+    });
 });

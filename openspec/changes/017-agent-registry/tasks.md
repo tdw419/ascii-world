@@ -36,7 +36,7 @@
 - [x] 5.4 Update agents/system_monitor.py to use register() on startup and heartbeat loop
 
 ## 6. Tests
-- [ ] 6.1 Add tests/agent-model.test.js: validate, serialize, deserialize
+- [x] 6.1 Add tests/agent-model.test.js: validate, serialize, deserialize
 - [x] 6.2 Add tests/agent-registry.test.js: register, get, list, heartbeat, remove, persist, load
 - [x] 6.3 Add tests/agent-api.test.js: POST/GET/PUT/DELETE agent endpoints via supertest
 - [x] 6.4 Add test for liveness check marking agents offline

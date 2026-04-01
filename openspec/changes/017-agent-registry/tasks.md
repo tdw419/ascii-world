@@ -42,6 +42,6 @@
 - [x] 6.4 Add test for liveness check marking agents offline
 
 ## 7. Documentation
-- [ ] 7.1 Update README with Agent Registry section (API endpoints, data model)
-- [ ] 7.2 Update README with Python SDK register/heartbeat/reportMetric usage
+- [x] 7.1 Update INTEGRATION.md with Agent Registry section (API endpoints, data model)
+- [x] 7.2 Update INTEGRATION.md with Python SDK register/heartbeat/reportMetric usage
 - [ ] 7.3 Commit and push

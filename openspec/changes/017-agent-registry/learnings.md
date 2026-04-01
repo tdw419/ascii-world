@@ -76,3 +76,7 @@
 - **[discovery]** (from SEC-6) Agent strategy: modified 2 files
 
 - **[discovery]** (from SEC-6 retry) Tests improved by 16 (1446 -> 1462). Added edge-case tests for validate (non-string name, config-as-array, config-as-null, undefined input), fromJSON empty object, registry duplicate ID, persist-on-heartbeat, persist-on-update, load merging, multi-agent liveness pass, API list-after-heartbeat, API empty-after-delete.
+
+- **[discovery]** (from SEC-6) Agent strategy: modified 8 files
+
+- **[discovery]** (from SEC-6) Tests improved by 16 (1446 -> 1462)

@@ -42,3 +42,17 @@
 - **[pattern]** (from SEC-2) [modified] openspec/changes/017-agent-registry/tasks.md
 
 - **[discovery]** (from SEC-2) Agent strategy: modified 3 files
+
+- **[pattern]** (from SEC-3) [modified] sync/agent-registry.js
+
+- **[pattern]** (from SEC-3) [modified] tests/agent-registry.test.js
+
+- **[pattern]** (from SEC-3) [modified] data/cms-content.json
+
+- **[pattern]** (from SEC-3) [modified] data/dashboards.json
+
+- **[pattern]** (from SEC-3) [modified] data/aipm-status.ascii
+
+- **[discovery]** (from SEC-3) Agent strategy: modified 6 files, fix attempt
+
+- **[discovery]** (from SEC-3) Tests improved by 11 (1425 -> 1436)

@@ -31,6 +31,7 @@ import { NavigationRenderer } from './navigation-renderer.js';
 import { ThemeEditor, DEFAULT_THEME, THEME_PRESETS } from './theme-editor.js';
 import { AiArchitect } from './ai-architect.js';
 import { AiRefiner } from './ai-refiner.js';
+import { AgentRegistry } from './agent-registry.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -123,6 +124,9 @@ export class PxOSServer {
             console.log(`[ALERT] ${alert.severity.toUpperCase()}: ${alert.message}`);
             this.broadcast({ type: 'alert', alert });
         });
+
+        // Agent Registry
+        this.agentRegistry = new AgentRegistry({ filePath: './data/agents.json' });
     }
 
     async start() {
@@ -155,6 +159,10 @@ export class PxOSServer {
         // Load cartridges
         const cartridges = this.cartridgeStore.loadAll();
         console.log(`Loaded ${cartridges.length} cartridges`);
+
+        // Load agent registry and start liveness check
+        this.agentRegistry.load();
+        this.agentRegistry.startLivenessCheck();
 
         // Subscribe to cartridge state changes
         this.cartridgeStore.subscribe((event) => {
@@ -200,6 +208,9 @@ export class PxOSServer {
         
         // Stop GPU Agent Bridge
         await this.gpuAgentBridge.stop();
+
+        // Stop agent registry liveness check
+        this.agentRegistry.stopLivenessCheck();
 
         return new Promise((resolve) => {
             if (this.wss) {
@@ -414,6 +425,17 @@ export class PxOSServer {
                 await this.handleCMSArchitect(req, res);
             } else if (pathname === '/api/cms/refine' && req.method === 'POST') {
                 await this.handleCMSRefine(req, res);
+            // Agent Registry API
+            } else if (pathname === '/api/v1/agents' && req.method === 'POST') {
+                await this.handleRegisterAgent(req, res);
+            } else if (pathname === '/api/v1/agents' && req.method === 'GET') {
+                this.handleListAgents(req, res);
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/heartbeat$/) && req.method === 'PUT') {
+                await this.handleAgentHeartbeat(req, res, pathname);
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+$/) && req.method === 'GET') {
+                this.handleGetAgent(req, res, pathname);
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+$/) && req.method === 'DELETE') {
+                this.handleDeleteAgent(req, res, pathname);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -1071,6 +1093,46 @@ export class PxOSServer {
             })
             .filter(Boolean)
             .join('\n');
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Agent Registry REST API
+
+    async handleRegisterAgent(req, res) {
+        const body = await this.readBody(req);
+        const data = JSON.parse(body);
+        const { agent, errors } = this.agentRegistry.register(data);
+        if (errors.length > 0) {
+            return this.sendError(res, 400, errors.join('; '));
+        }
+        this.sendJSON(res, 201, agent.toJSON());
+    }
+
+    handleListAgents(req, res) {
+        const agents = this.agentRegistry.list().map(a => a.toJSON());
+        this.sendJSON(res, 200, agents);
+    }
+
+    handleGetAgent(req, res, pathname) {
+        const id = pathname.replace('/api/v1/agents/', '');
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+        this.sendJSON(res, 200, agent.toJSON());
+    }
+
+    async handleAgentHeartbeat(req, res, pathname) {
+        const id = pathname.replace('/api/v1/agents/', '').replace('/heartbeat', '');
+        const found = this.agentRegistry.heartbeat(id);
+        if (!found) return this.sendError(res, 404, 'Agent not found');
+        this.sendJSON(res, 200, { ok: true });
+    }
+
+    handleDeleteAgent(req, res, pathname) {
+        const id = pathname.replace('/api/v1/agents/', '');
+        const removed = this.agentRegistry.remove(id);
+        if (!removed) return this.sendError(res, 404, 'Agent not found');
+        res.writeHead(204);
+        res.end();
     }
 
     readBody(req) {

@@ -33,6 +33,7 @@ import { AiArchitect } from './ai-architect.js';
 import { AiRefiner } from './ai-refiner.js';
 import { AgentRegistry } from './agent-registry.js';
 import { AgentLogStore } from './agent-log-store.js';
+import { AuditTrail } from './audit-trail.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -131,6 +132,9 @@ export class PxOSServer {
 
         // Agent Log Store (ring buffer per agent)
         this.agentLogStore = new AgentLogStore({ maxEntries: 1000 });
+
+        // Audit Trail (append-only JSONL)
+        this.auditTrail = new AuditTrail({ filePath: './data/audit.jsonl' });
     }
 
     async start() {
@@ -167,6 +171,28 @@ export class PxOSServer {
         // Load agent registry and start liveness check
         this.agentRegistry.load();
         this.agentRegistry.startLivenessCheck();
+
+        // Subscribe to agent liveness events for audit trail
+        this.agentRegistry.addEventListener('agent:offline', (e) => {
+            const agent = e.detail.agent;
+            this.auditTrail.append('agent.heartbeat-lost', {
+                agentId: agent.id,
+                lastSeen: agent.lastHeartbeat,
+            });
+            this.auditTrail.append('agent.status-change', {
+                agentId: agent.id,
+                from: 'online',
+                to: 'offline',
+            });
+        });
+        this.agentRegistry.addEventListener('agent:error', (e) => {
+            const agent = e.detail.agent;
+            this.auditTrail.append('agent.status-change', {
+                agentId: agent.id,
+                from: 'offline',
+                to: 'error',
+            });
+        });
 
         // Subscribe to cartridge state changes
         this.cartridgeStore.subscribe((event) => {
@@ -450,8 +476,14 @@ export class PxOSServer {
                 this.handleGetAgentMetrics(req, res, pathname);
             } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+$/) && req.method === 'GET') {
                 this.handleGetAgent(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+$/) && req.method === 'DELETE') {
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^\/]+$/) && req.method === 'DELETE') {
                 this.handleDeleteAgent(req, res, pathname);
+            // Agent Task Assignment API
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^\/]+\/tasks$/) && req.method === 'POST') {
+                await this.handleAssignTask(req, res, pathname);
+            // Audit Trail API
+            } else if (pathname === '/api/v1/audit' && req.method === 'GET') {
+                this.handleGetAudit(req, res, url);
             } else {
                 this.sendError(res, 404, 'Not found');
             }
@@ -1121,6 +1153,11 @@ export class PxOSServer {
         if (errors.length > 0) {
             return this.sendError(res, 400, errors.join('; '));
         }
+        this.auditTrail.append('agent.registered', {
+            agentId: agent.id,
+            name: agent.name,
+            capabilities: agent.capabilities,
+        });
         this.sendJSON(res, 201, agent.toJSON());
     }
 
@@ -1138,8 +1175,17 @@ export class PxOSServer {
 
     async handleAgentHeartbeat(req, res, pathname) {
         const id = pathname.replace('/api/v1/agents/', '').replace('/heartbeat', '');
-        const found = this.agentRegistry.heartbeat(id);
-        if (!found) return this.sendError(res, 404, 'Agent not found');
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+        const prevStatus = agent.status;
+        this.agentRegistry.heartbeat(id);
+        if (prevStatus !== 'online') {
+            this.auditTrail.append('agent.status-change', {
+                agentId: id,
+                from: prevStatus,
+                to: 'online',
+            });
+        }
         this.sendJSON(res, 200, { ok: true });
     }
 
@@ -1246,6 +1292,40 @@ export class PxOSServer {
         const tsKey = `agent:${id}:${key}`;
         const history = this.timeSeriesStore.getHistory(tsKey);
         this.sendJSON(res, 200, { agentId: id, key, history });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Agent Task Assignment
+
+    async handleAssignTask(req, res, pathname) {
+        const id = pathname.replace('/api/v1/agents/', '').replace('/tasks', '');
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+
+        const body = await this.readBody(req);
+        let data;
+        try { data = JSON.parse(body); } catch { return this.sendError(res, 400, 'Invalid JSON'); }
+
+        if (!data.taskId || typeof data.taskId !== 'string') {
+            return this.sendError(res, 400, 'taskId is required and must be a string');
+        }
+
+        this.auditTrail.append('agent.task-assigned', {
+            agentId: id,
+            taskId: data.taskId,
+        });
+
+        this.sendJSON(res, 201, { ok: true, agentId: id, taskId: data.taskId });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Audit Trail API
+
+    handleGetAudit(req, res, url) {
+        const agentId = url.searchParams.get('agentId') || undefined;
+        const limit = parseInt(url.searchParams.get('limit')) || undefined;
+        const entries = this.auditTrail.query({ agentId, limit });
+        this.sendJSON(res, 200, entries);
     }
 
     readBody(req) {

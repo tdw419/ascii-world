@@ -14,11 +14,11 @@
 - [x] 2.5 Add log level filtering on GET endpoint (param ?level=error|warn|info)
 
 ## 3. Agent Alert Rules
-- [ ] 3.1 Add built-in rule: agent-down triggers when agent status transitions to offline or error
-- [ ] 3.2 Add built-in rule: agent-heartbeat-miss triggers when lastHeartbeat exceeds configurable threshold
-- [ ] 3.3 Add built-in rule: agent-error-spike triggers when error log count in last 5 min exceeds threshold
-- [ ] 3.4 Add built-in rule: agent-timeout triggers when a running task exceeds max duration
-- [ ] 3.5 Register these rules in alert-engine.js with agent scope
+- [x] 3.1 Add built-in rule: agent-down triggers when agent status transitions to offline or error
+- [x] 3.2 Add built-in rule: agent-heartbeat-miss triggers when lastHeartbeat exceeds configurable threshold
+- [x] 3.3 Add built-in rule: agent-error-spike triggers when error log count in last 5 min exceeds threshold
+- [x] 3.4 Add built-in rule: agent-timeout triggers when a running task exceeds max duration
+- [x] 3.5 Register these rules in alert-engine.js with agent scope
 
 ## 4. Audit Trail
 - [ ] 4.1 Create sync/audit-trail.js: append-only JSONL writer to data/audit.jsonl

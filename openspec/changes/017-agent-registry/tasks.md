@@ -6,15 +6,15 @@
 - [x] 1.3 Add Agent.toJSON() and Agent.fromJSON(row) serialization methods
 
 ## 2. Agent Registry Store
-- [ ] 2.1 Create sync/agent-registry.js with AgentRegistry class using Map for in-memory storage
-- [ ] 2.2 Add register(data) method: creates Agent, stores in map, persists to data/agents.json
-- [ ] 2.3 Add get(id) method: returns agent or null
-- [ ] 2.4 Add list() method: returns all agents as array
-- [ ] 2.5 Add heartbeat(id) method: updates lastHeartbeat, sets status to online
-- [ ] 2.6 Add update(id, changes) method: patches agent fields
-- [ ] 2.7 Add remove(id) method: deletes agent from map and persists
-- [ ] 2.8 Add load() method: reads data/agents.json on startup
-- [ ] 2.9 Add persist() private method: writes map to data/agents.json
+- [x] 2.1 Create sync/agent-registry.js with AgentRegistry class using Map for in-memory storage
+- [x] 2.2 Add register(data) method: creates Agent, stores in map, persists to data/agents.json
+- [x] 2.3 Add get(id) method: returns agent or null
+- [x] 2.4 Add list() method: returns all agents as array
+- [x] 2.5 Add heartbeat(id) method: updates lastHeartbeat, sets status to online
+- [x] 2.6 Add update(id, changes) method: patches agent fields
+- [x] 2.7 Add remove(id) method: deletes agent from map and persists
+- [x] 2.8 Add load() method: reads data/agents.json on startup
+- [x] 2.9 Add persist() private method: writes map to data/agents.json
 
 ## 3. Heartbeat Liveness Check
 - [ ] 3.1 Add startLivenessCheck(intervalMs=30000) method to AgentRegistry
@@ -37,7 +37,7 @@
 
 ## 6. Tests
 - [ ] 6.1 Add tests/agent-model.test.js: validate, serialize, deserialize
-- [ ] 6.2 Add tests/agent-registry.test.js: register, get, list, heartbeat, remove, persist, load
+- [x] 6.2 Add tests/agent-registry.test.js: register, get, list, heartbeat, remove, persist, load
 - [ ] 6.3 Add tests/agent-api.test.js: POST/GET/PUT/DELETE agent endpoints via supertest
 - [ ] 6.4 Add test for liveness check marking agents offline
 

@@ -35,7 +35,7 @@
 - [x] 5.4 Add tests/audit-trail.test.js: test event logging and retrieval
 
 ## 6. Documentation
-- [ ] 6.1 Update README with agent observability API reference
-- [ ] 6.2 Document built-in agent alert rules
-- [ ] 6.3 Document audit trail format and query endpoint
-- [ ] 6.4 Commit and push
+- [x] 6.1 Update README with agent observability API reference
+- [x] 6.2 Document built-in agent alert rules
+- [x] 6.3 Document audit trail format and query endpoint
+- [x] 6.4 Commit and push

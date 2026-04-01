@@ -1,10 +1,10 @@
 # Tasks: Agent Task Queue
 
 ## 1. Task Data Model
-- [ ] 1.1 Create sync/task-model.js with Task class: id (uuid), agentId (nullable), status (pending|running|completed|failed), payload (JSON object), result (JSON, nullable), error (string, nullable), createdAt, startedAt, completedAt, priority (0=low, 1=normal, 2=high)
-- [ ] 1.2 Add Task.validate(data) static method: ensure payload exists and is valid JSON
-- [ ] 1.3 Add Task.toJSON() and Task.fromJSON() serialization methods
-- [ ] 1.4 Add Task.isExpired(timeoutMs) method for timeout detection
+- [x] 1.1 Create sync/task-model.js with Task class: id (uuid), agentId (nullable), status (pending|running|completed|failed), payload (JSON object), result (JSON, nullable), error (string, nullable), createdAt, startedAt, completedAt, priority (0=low, 1=normal, 2=high)
+- [x] 1.2 Add Task.validate(data) static method: ensure payload exists and is valid JSON
+- [x] 1.3 Add Task.toJSON() and Task.fromJSON() serialization methods
+- [x] 1.4 Add Task.isExpired(timeoutMs) method for timeout detection
 
 ## 2. Task Store
 - [ ] 2.1 Create sync/task-store.js with TaskStore class using Map for in-memory storage

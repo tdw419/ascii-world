@@ -185,5 +185,357 @@
     "lastHeartbeat": null,
     "config": {},
     "createdAt": "2026-04-01T13:36:43.879Z"
+  },
+  {
+    "id": "b24af944-58db-4ace-aeda-b2445ee9d90b",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.037Z"
+  },
+  {
+    "id": "03f944d6-df95-47c3-8efa-4c9121f9e75a",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.041Z"
+  },
+  {
+    "id": "17edcfbe-31d0-4358-b626-ea96aa8e9eef",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.045Z"
+  },
+  {
+    "id": "f2c14aeb-8aa3-4957-b28f-869e648c4490",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.048Z"
+  },
+  {
+    "id": "663608b4-1ea3-417f-b74b-947fb2a938ee",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.052Z"
+  },
+  {
+    "id": "bdc5bc56-b3c2-441c-b304-08468c5adc57",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.057Z"
+  },
+  {
+    "id": "efd45f08-782c-412c-8721-aea45fd9f0a4",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.061Z"
+  },
+  {
+    "id": "872a90a9-3ac3-4e07-98ed-1e60558b722c",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T13:46:50.063Z"
+  },
+  {
+    "id": "a98426b3-2c1e-42c7-9e3a-3cd18ca71044",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.718Z"
+  },
+  {
+    "id": "2c146120-e1ab-44e8-8998-5183c967db32",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.720Z"
+  },
+  {
+    "id": "f5e7115a-7e24-4d1f-aed3-02452a137543",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.725Z"
+  },
+  {
+    "id": "4a55df75-1979-4058-af20-24ccb972cc8a",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.728Z"
+  },
+  {
+    "id": "962fe234-cca0-4f70-96d0-1c244bf14ccb",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.731Z"
+  },
+  {
+    "id": "fce852ad-d322-4405-a78e-8d0731a37220",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.737Z"
+  },
+  {
+    "id": "bd2e7de5-1cf8-4716-a3d8-b64db8d40902",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.741Z"
+  },
+  {
+    "id": "298f6ea8-fa61-4706-9106-cd2dda96a743",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:08:28.743Z"
+  },
+  {
+    "id": "8b74e31f-4fa8-48e7-851c-3bad79129322",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.923Z"
+  },
+  {
+    "id": "bf358242-a7e9-488d-872f-592b99882d44",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.926Z"
+  },
+  {
+    "id": "0c22705d-eb45-403b-89f5-58a3da092eb6",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.932Z"
+  },
+  {
+    "id": "94f8c1a4-9a0f-49fb-899d-974c926846da",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.935Z"
+  },
+  {
+    "id": "8b72def3-43da-4503-a104-dfb2f575d40a",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.938Z"
+  },
+  {
+    "id": "8b02232e-8458-49e0-9fc8-bde60caae55a",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.944Z"
+  },
+  {
+    "id": "7998ddb1-c106-455e-9b84-aa042f97a803",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.948Z"
+  },
+  {
+    "id": "60d5dd72-182e-401e-babd-e7a64d01e552",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:15:56.950Z"
+  },
+  {
+    "id": "011fac33-b680-4a1f-8436-ef6371eb711e",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.455Z"
+  },
+  {
+    "id": "e2458d76-4e12-4a16-8391-051fac5846ae",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.460Z"
+  },
+  {
+    "id": "f0d0dbc3-e08a-4667-86b9-ee9533022e4a",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.465Z"
+  },
+  {
+    "id": "b5f0ba10-02d7-4213-bfc2-07137ba0ab15",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.468Z"
+  },
+  {
+    "id": "8bacfd32-f07f-4df5-b780-d75cb4276435",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.472Z"
+  },
+  {
+    "id": "49ae6c00-8712-4f06-8d64-6aa685aa07ca",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.479Z"
+  },
+  {
+    "id": "9893ef81-9af6-4d8e-b47d-9a7174819b28",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.482Z"
+  },
+  {
+    "id": "9e4d0383-9da1-422c-8012-71a25ef5b2c3",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:16:14.485Z"
   }
 ]

@@ -46,7 +46,7 @@
 - [x] 6.4 Add tests/task-formulas.test.js: TASK_QUEUE_STATUS, TASK_COUNT, TASK_LIST
 
 ## 7. Documentation
-- [ ] 7.1 Update README with Task Queue API reference
-- [ ] 7.2 Update README with queue visualization formulas
-- [ ] 7.3 Update README with SDK task methods usage
+- [x] 7.1 Update README with Task Queue API reference
+- [x] 7.2 Update README with queue visualization formulas
+- [x] 7.3 Update README with SDK task methods usage
 - [ ] 7.4 Commit and push

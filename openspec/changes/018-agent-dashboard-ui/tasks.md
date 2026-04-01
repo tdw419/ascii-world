@@ -1,11 +1,11 @@
 # Tasks: Agent Dashboard UI
 
 ## 1. Agent Formula Functions
-- [ ] 1.1 Add AGENT_STATUS(agentId) to formula engine: looks up agent in registry, returns status string or "unknown"
-- [ ] 1.2 Add AGENT_LIST() to formula engine: returns comma-separated list of all registered agent IDs
-- [ ] 1.3 Add AGENT_METRIC(agentId, metricName) to formula engine: queries time-series for agent:{id}:{metric}, returns latest value
-- [ ] 1.4 Add AGENT_COUNT() to formula engine: returns number of registered agents
-- [ ] 1.5 Add AGENT_NAME(agentId) to formula engine: returns agent name string
+- [x] 1.1 Add AGENT_STATUS(agentId) to formula engine: looks up agent in registry, returns status string or "unknown"
+- [x] 1.2 Add AGENT_LIST() to formula engine: returns comma-separated list of all registered agent IDs
+- [x] 1.3 Add AGENT_METRIC(agentId, metricName) to formula engine: queries time-series for agent:{id}:{metric}, returns latest value
+- [x] 1.4 Add AGENT_COUNT() to formula engine: returns number of registered agents
+- [x] 1.5 Add AGENT_NAME(agentId) to formula engine: returns agent name string
 
 ## 2. Agent Card Component
 - [ ] 2.1 Create ui/agent-card.js: renders a single agent as a pixel block with name, status badge, last activity

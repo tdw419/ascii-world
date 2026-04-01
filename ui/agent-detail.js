@@ -225,7 +225,8 @@ export class AgentDetail {
      * @param {number} [options.nowMs] - Reference timestamp for relative time (testing)
      * @returns {{ buffer: PixelBuffer, widthCells: number, heightCells: number }}
      */
-    render(agent, detail = {}, options = {}) {
+    render(agent, detail, options = {}) {
+        if (detail === null || detail === undefined) detail = {};
         const cellW = this.atlas.glyphW;
         const cellH = this.atlas.glyphH;
         const totalRows = this.calcHeight();

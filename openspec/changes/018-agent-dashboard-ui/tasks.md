@@ -14,17 +14,17 @@
 - [x] 2.4 Timestamp rendering for lastHeartbeat (relative: "2m ago", "5s ago")
 
 ## 3. Agent Grid View
-- [ ] 3.1 Create ui/agent-grid.js: fetches GET /api/v1/agents, renders Agent Card for each in a grid layout
-- [ ] 3.2 Add auto-refresh interval (poll every 5s)
-- [ ] 3.3 Add sorting options: by name, by status, by last heartbeat
-- [ ] 3.4 Register grid as a dashboard template: templates/agent-grid.json
+- [x] 3.1 Create ui/agent-grid.js: fetches GET /api/v1/agents, renders Agent Card for each in a grid layout
+- [x] 3.2 Add auto-refresh interval (poll every 5s)
+- [x] 3.3 Add sorting options: by name, by status, by last heartbeat
+- [x] 3.4 Register grid as a dashboard template: templates/agent-grid.json
 
 ## 4. Agent Detail View
-- [ ] 4.1 Create ui/agent-detail.js: renders full detail page for one agent using GET /api/v1/agents/:id
-- [ ] 4.2 Metrics sparkline section: render last 20 values of key metrics as mini bar charts
-- [ ] 4.3 Recent logs section: show last 10 log entries from agent log endpoint
-- [ ] 4.4 Task history section: show last 10 tasks assigned to this agent
-- [ ] 4.5 Register detail view route in dashboard template system
+- [x] 4.1 Create ui/agent-detail.js: renders full detail page for one agent using GET /api/v1/agents/:id
+- [x] 4.2 Metrics sparkline section: render last 20 values of key metrics as mini bar charts
+- [x] 4.3 Recent logs section: show last 10 log entries from agent log endpoint
+- [x] 4.4 Task history section: show last 10 tasks assigned to this agent
+- [x] 4.5 Register detail view route in dashboard template system
 
 ## 5. Integration and Tests
 - [ ] 5.1 Add tests/agent-formulas.test.js: test all AGENT_* formula functions with mock registry

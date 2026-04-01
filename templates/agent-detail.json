@@ -1,0 +1,13 @@
+{
+  "name": "Agent Detail",
+  "template": [
+    {
+      "fn": "TEXT",
+      "args": [0, 0, "Agent Detail"]
+    }
+  ],
+  "alerts": [],
+  "type": "agent-detail",
+  "source": "ui/agent-detail.js",
+  "refreshInterval": 5000
+}

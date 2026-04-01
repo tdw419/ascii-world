@@ -537,5 +537,2029 @@
     "lastHeartbeat": null,
     "config": {},
     "createdAt": "2026-04-01T14:16:14.485Z"
+  },
+  {
+    "id": "a3d736ae-2a75-4747-af3c-167c01cfdeba",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.072Z"
+  },
+  {
+    "id": "76b1d6c3-c6b3-4b96-ae86-f295712114f4",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.075Z"
+  },
+  {
+    "id": "9a6d076c-68eb-4c0d-b777-091ffda3f9c4",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.081Z"
+  },
+  {
+    "id": "0a7d3429-856f-4436-b052-09d1df28e108",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.084Z"
+  },
+  {
+    "id": "9a627742-0d3f-44f2-a422-56f0f9504f48",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.088Z"
+  },
+  {
+    "id": "2b4d56be-06e5-417d-a30d-5845cdb67447",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.098Z"
+  },
+  {
+    "id": "d96e5c82-d90b-479c-bc3d-85a3527a8b39",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.103Z"
+  },
+  {
+    "id": "1b578002-8ed9-4944-bdf1-ec3f488cbfcf",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T14:17:55.106Z"
+  },
+  {
+    "id": "45ad8d58-fed7-4c78-aaae-b902e4489b7c",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.030Z"
+  },
+  {
+    "id": "dfe7b523-9428-4759-95df-e324125f4ac6",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.033Z"
+  },
+  {
+    "id": "38bcaa27-3cef-4955-b340-ba964efa6e34",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.038Z"
+  },
+  {
+    "id": "45ab7022-695b-49aa-bcfd-882b06903f92",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.041Z"
+  },
+  {
+    "id": "bea4c227-8997-4b86-9ca2-463a6ac4a16a",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.044Z"
+  },
+  {
+    "id": "934e43af-ab7d-47b1-9f94-573eadd25f96",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.049Z"
+  },
+  {
+    "id": "29facb4e-cabe-40b6-807b-be2efe1e1482",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.053Z"
+  },
+  {
+    "id": "232528d9-bca3-4e81-b4dc-37927fe6449a",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:05:06.055Z"
+  },
+  {
+    "id": "1344414a-2f58-4c8b-95e1-b6ef0cdb57fe",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.101Z"
+  },
+  {
+    "id": "a9025556-4eba-4c95-9b9d-854d2aeb62ca",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.105Z"
+  },
+  {
+    "id": "7311ccd3-577b-4143-8d45-34d1981410b0",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.110Z"
+  },
+  {
+    "id": "8101d80d-60cf-4e03-af7b-de7e55e38a47",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.113Z"
+  },
+  {
+    "id": "03f4d0a4-e487-467a-b12b-c6426976a55c",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.117Z"
+  },
+  {
+    "id": "32f74545-89ad-4336-acb1-2f0837ec6574",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.124Z"
+  },
+  {
+    "id": "3ee5a3b5-83ca-4a8c-b9ca-7f5bdde0092d",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.127Z"
+  },
+  {
+    "id": "97c4b95f-f8e9-4235-82a8-918f2406b4c7",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:10:37.130Z"
+  },
+  {
+    "id": "e2fbf540-2f1d-4ff8-951a-e10c67eb8243",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.179Z"
+  },
+  {
+    "id": "adfdea20-4a03-4b6a-b9aa-315379cb5f4b",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.182Z"
+  },
+  {
+    "id": "8660c90f-209f-4299-b45b-ddff2c6c60e6",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.186Z"
+  },
+  {
+    "id": "13c8343a-c395-4f44-837e-f60360a87119",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.189Z"
+  },
+  {
+    "id": "0153e415-6caa-4ac5-ad31-136c7b3c27dc",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.192Z"
+  },
+  {
+    "id": "dcbae355-f7b2-47c0-8c7b-b1319a3543be",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.199Z"
+  },
+  {
+    "id": "9beb5693-90e9-4fde-81d2-b49a81721e7a",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.202Z"
+  },
+  {
+    "id": "4e4b3498-502e-4f95-a7af-d1881cba8e5e",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:15:24.205Z"
+  },
+  {
+    "id": "ef01d389-fa9a-45de-8341-dba9eb8cd435",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.768Z"
+  },
+  {
+    "id": "3da0c0c7-6269-455b-86e5-fe76ac167754",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.771Z"
+  },
+  {
+    "id": "21ee9cce-47d1-4bed-a739-c8ab53e90c2f",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.776Z"
+  },
+  {
+    "id": "9c5e871e-b66d-41b0-ab31-fa46525beaa3",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.779Z"
+  },
+  {
+    "id": "ef4b6b37-7b10-49a5-9a6f-efe935bed43c",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.782Z"
+  },
+  {
+    "id": "cfcbe317-4afb-40b4-9cfa-721cdfd68791",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.787Z"
+  },
+  {
+    "id": "491a5ee4-0670-4f42-9b6d-30e4bc9fe6c2",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.791Z"
+  },
+  {
+    "id": "0d70d06b-5a00-464b-84b0-78cb9375a157",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:22:40.794Z"
+  },
+  {
+    "id": "271d5f51-6f84-4987-a4ae-146fbfac8586",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.388Z"
+  },
+  {
+    "id": "c3fa9f94-10d3-4909-9d61-fe8fb5496d54",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.391Z"
+  },
+  {
+    "id": "66b4336f-fa0f-41c7-a11c-7c89bc0bd680",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.396Z"
+  },
+  {
+    "id": "90b66feb-08a0-447f-a143-ef889cbb3404",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.399Z"
+  },
+  {
+    "id": "1ca660dc-df35-4b16-84b5-4e5cc602da97",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.402Z"
+  },
+  {
+    "id": "fa711e61-7797-4138-9387-bf5fba8db426",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.408Z"
+  },
+  {
+    "id": "e135fd3a-ec2b-4865-9fce-aa0a34d90af2",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.411Z"
+  },
+  {
+    "id": "91388ce4-5699-46e3-8e1f-af2b7adab989",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:24:51.413Z"
+  },
+  {
+    "id": "f3d7790f-359c-45f7-bf9c-cdbd4ceb6da8",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.053Z"
+  },
+  {
+    "id": "6717c266-b75f-4b34-aa04-6e5d4e0727ee",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.057Z"
+  },
+  {
+    "id": "f3e7b591-9126-452b-960e-abad6f728ebc",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.062Z"
+  },
+  {
+    "id": "ee62f17c-5a86-4250-93b8-67da954cdae3",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.065Z"
+  },
+  {
+    "id": "850e8141-bad1-4d1d-b574-6a1b4a6edc48",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.068Z"
+  },
+  {
+    "id": "ae461051-0766-445e-bf91-5c35817db205",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.074Z"
+  },
+  {
+    "id": "3bb6d26d-793e-42ee-a45d-b7d6febc1d11",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.079Z"
+  },
+  {
+    "id": "5d387dc6-ebba-4a2f-92a2-a143c98f3178",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:28:04.081Z"
+  },
+  {
+    "id": "4b399cd7-b9b5-4f66-b7b9-bdcd70b024c3",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.405Z"
+  },
+  {
+    "id": "e8f78aa6-e762-4f94-ab6f-82b3eaeffcf3",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.408Z"
+  },
+  {
+    "id": "72e7193c-6afd-4b16-b848-32aae4c192b1",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.412Z"
+  },
+  {
+    "id": "74c3ce5d-889a-4537-b8ba-5fc9fd4576d6",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.415Z"
+  },
+  {
+    "id": "3d6596e7-50be-414f-86c2-162969ef7ba0",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.418Z"
+  },
+  {
+    "id": "87f2a604-66c9-4fb1-8209-9b25ac617709",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.426Z"
+  },
+  {
+    "id": "2bb1f948-359f-4570-9ac5-4f0d13abd6d4",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.429Z"
+  },
+  {
+    "id": "b69bef31-6d56-44e8-b99e-d5f02d9d3233",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:33:14.431Z"
+  },
+  {
+    "id": "840c5956-db3b-430c-a08e-6170f7293647",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.549Z"
+  },
+  {
+    "id": "030a7556-163b-41aa-b6bd-a950867bf859",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.553Z"
+  },
+  {
+    "id": "79a2c887-fdcd-4aeb-802c-761f130658c6",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.557Z"
+  },
+  {
+    "id": "f0d39d66-1daa-46b5-89c2-f44744f9cdc8",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.560Z"
+  },
+  {
+    "id": "11a75d11-bdf9-424a-9654-40b98ca9c188",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.563Z"
+  },
+  {
+    "id": "d2c61eaa-04ff-499d-a194-2aae5a36d208",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.570Z"
+  },
+  {
+    "id": "c933eac4-0b4c-4176-bb9d-5be4504571d9",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.573Z"
+  },
+  {
+    "id": "ea22f5fb-7417-43c9-8805-e2e1063a81c8",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:43:22.575Z"
+  },
+  {
+    "id": "c8622075-a69c-49ce-bba1-ce8104c55f69",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.667Z"
+  },
+  {
+    "id": "dc4c91f6-a753-4b06-97a1-0fc76050a0dc",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.670Z"
+  },
+  {
+    "id": "7a0455a0-92d6-4427-aab9-75dff7e52e38",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.675Z"
+  },
+  {
+    "id": "9c181cb0-44c1-46dd-bc6b-5b0d87d9f0a2",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.678Z"
+  },
+  {
+    "id": "fbe5947d-b1c6-4895-96dc-3e4c629767fb",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.682Z"
+  },
+  {
+    "id": "43121179-c302-484c-a581-9b1470fbe0b5",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.689Z"
+  },
+  {
+    "id": "43f81a44-e633-4d6d-8c68-c6f98d479505",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.692Z"
+  },
+  {
+    "id": "38c50594-0bd2-4219-8da3-e56048ff51eb",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T16:53:30.694Z"
+  },
+  {
+    "id": "f818f123-a090-4b79-aa56-5a9806e8186a",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.185Z"
+  },
+  {
+    "id": "381fb651-f7a4-4113-a783-9b181ac27b15",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.188Z"
+  },
+  {
+    "id": "5966afc1-0536-4ac9-96e1-c5bff8af7bf1",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.192Z"
+  },
+  {
+    "id": "e04443c6-00dc-4a90-b668-812dff056f7a",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.195Z"
+  },
+  {
+    "id": "7f20d7a1-4ec5-4ac5-a3e1-52540f85da87",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.198Z"
+  },
+  {
+    "id": "a73a2375-cdf4-4dd4-a4ff-4639c1d0183d",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.205Z"
+  },
+  {
+    "id": "ba3e39c2-aa0f-4a19-8d75-3ece1bc49be8",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.208Z"
+  },
+  {
+    "id": "1e8f5a7c-3f74-4092-84e8-843f674f92f1",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:03:39.210Z"
+  },
+  {
+    "id": "2d91d3b2-cc55-4144-a19f-fcac229f7c52",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.770Z"
+  },
+  {
+    "id": "113889d3-3465-4866-838f-aa6714e75cbb",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.773Z"
+  },
+  {
+    "id": "1652a38d-d296-4cc4-93d6-855755f68082",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.782Z"
+  },
+  {
+    "id": "404a2090-8f72-4aa4-a68c-b11fcac24a47",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.785Z"
+  },
+  {
+    "id": "0042bf27-8434-41aa-b0b5-a559f4bff55b",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.788Z"
+  },
+  {
+    "id": "10487cce-4e60-44b5-92a0-d212e24813e7",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.795Z"
+  },
+  {
+    "id": "657187e3-4cfc-4ff6-92a9-3bec9582ea4c",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.798Z"
+  },
+  {
+    "id": "bb7f7ea3-12f0-41d4-8866-2313d7d279d2",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:14:51.800Z"
+  },
+  {
+    "id": "d050cbc8-b3a6-4cdb-82e5-9842f6be29ce",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.443Z"
+  },
+  {
+    "id": "eb3f1ea1-2d69-40a3-90ce-cc16c5a1cd57",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.447Z"
+  },
+  {
+    "id": "60cbf786-1b27-4985-953b-5512c2b03da6",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.452Z"
+  },
+  {
+    "id": "9eed439c-ade9-4c37-9438-a6406e00ec6c",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.456Z"
+  },
+  {
+    "id": "0869750a-f721-40df-b024-ca1c2690607b",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.459Z"
+  },
+  {
+    "id": "8520956d-77a3-4489-9a01-2c8a027135fc",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.467Z"
+  },
+  {
+    "id": "ef27a2ae-9792-40c8-a389-d61da82329c6",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.470Z"
+  },
+  {
+    "id": "b307c148-117f-4858-b197-f5cffd20f1c2",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:30:57.472Z"
+  },
+  {
+    "id": "df410c6f-ec21-4f98-9102-19b553fda437",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.939Z"
+  },
+  {
+    "id": "ba503295-7aba-4ad1-b666-e8aee7b1e38d",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.942Z"
+  },
+  {
+    "id": "b59af2db-e973-4fbd-9298-8269aa2165c4",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.947Z"
+  },
+  {
+    "id": "2691e4df-4993-4373-9dc4-827dbe390d4d",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.950Z"
+  },
+  {
+    "id": "e06cda74-fa39-4acf-9a43-4e8837f9a913",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.954Z"
+  },
+  {
+    "id": "8d3e1fa2-75ea-4d24-9d51-56ce480c528d",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.961Z"
+  },
+  {
+    "id": "72758b1e-f51c-4478-8e78-7521c3afd8e0",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.964Z"
+  },
+  {
+    "id": "19944f76-677b-4aeb-9850-339f953f28c5",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:33:38.966Z"
+  },
+  {
+    "id": "c5ff69a3-0901-4140-8240-7e4e006c4196",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.773Z"
+  },
+  {
+    "id": "5e15a4fa-17df-401f-81c4-b75898286df6",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.775Z"
+  },
+  {
+    "id": "1bedc594-bb93-4d70-8fb4-616c2f337090",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.780Z"
+  },
+  {
+    "id": "6009d800-1bc4-40c4-b53a-4f6ef3b87c9b",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.783Z"
+  },
+  {
+    "id": "c160e6b8-d7e3-4be0-9135-46f4c8395e1b",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.786Z"
+  },
+  {
+    "id": "0c8e4eeb-0633-4627-8f4f-3613b4804274",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.792Z"
+  },
+  {
+    "id": "b45b1fde-1fb9-49cf-9a2a-8c1c16554df3",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.795Z"
+  },
+  {
+    "id": "2eff188b-2388-45e2-98a5-cf017437bd95",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:35:50.798Z"
+  },
+  {
+    "id": "36c33385-cf57-4976-af20-e6dd0f5a3dc7",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.765Z"
+  },
+  {
+    "id": "c4cfd162-4dc1-469d-a762-373c0f57911b",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.768Z"
+  },
+  {
+    "id": "f3c5f23c-5d01-40c2-8933-b774a25a16bc",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.773Z"
+  },
+  {
+    "id": "cf49ff75-7bd7-4db7-a42a-837e30e4ebf7",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.776Z"
+  },
+  {
+    "id": "a7306e70-39d9-43df-b261-65bcacb176ab",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.779Z"
+  },
+  {
+    "id": "c7f3eb90-fc50-4c59-a420-fa521b13603a",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.786Z"
+  },
+  {
+    "id": "146d8163-3ec8-40ec-b019-9f23eb5a8003",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.789Z"
+  },
+  {
+    "id": "955539da-31ef-4f72-90c2-70da0726608d",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:38:57.791Z"
+  },
+  {
+    "id": "580fb31a-5e1f-4602-9fd0-9fe6b6f3cc80",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.617Z"
+  },
+  {
+    "id": "221c51d3-f3d4-4995-91bb-4247a1e7a749",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.620Z"
+  },
+  {
+    "id": "318ccdf4-99b2-4dcf-94ef-1c434b86175c",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.626Z"
+  },
+  {
+    "id": "11741805-1f86-477e-aacf-170588868dd6",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.629Z"
+  },
+  {
+    "id": "43aec621-e677-4600-8844-044e0322f351",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.634Z"
+  },
+  {
+    "id": "07284f3e-b555-4ad4-83c4-eb1921c20582",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.640Z"
+  },
+  {
+    "id": "4a94462b-3811-4296-a053-21c2dcfb265e",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.643Z"
+  },
+  {
+    "id": "890ad65e-3bb9-47c5-afd7-73ef412be787",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T17:54:37.645Z"
+  },
+  {
+    "id": "cec01cb3-673d-420f-92e6-9027b78884da",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.682Z"
+  },
+  {
+    "id": "f51b108f-42ef-42f6-bea6-bac8f25e75b6",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.684Z"
+  },
+  {
+    "id": "d6b75043-98c1-42a6-adc4-ad124d1799b1",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.688Z"
+  },
+  {
+    "id": "0b057c7f-6514-4f1a-960e-4c2278ed15c8",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.691Z"
+  },
+  {
+    "id": "18fd4c4f-be15-491f-ab01-d4562d2fe016",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.696Z"
+  },
+  {
+    "id": "1b5d9cf0-324b-4d80-8bc8-b20c3601197e",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.701Z"
+  },
+  {
+    "id": "ada2face-da72-4496-addf-cb77d73b5263",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.704Z"
+  },
+  {
+    "id": "4a84522d-b1df-4a62-a57b-078ebf7f6d09",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:00:43.706Z"
+  },
+  {
+    "id": "60010b04-0e7c-48f1-ab8d-398fa23af024",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.551Z"
+  },
+  {
+    "id": "9493a016-4c8a-418d-aef2-47a395bd3693",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.553Z"
+  },
+  {
+    "id": "b4028f31-7940-4dc8-b1b2-a085d62137a2",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.558Z"
+  },
+  {
+    "id": "8ad0b7fb-6423-4439-a8cb-a021d45aad56",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.562Z"
+  },
+  {
+    "id": "f9636daf-3e9d-49c7-88db-0c5bb8dcd5e5",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.567Z"
+  },
+  {
+    "id": "8ea180b1-f77a-4d40-8b0a-93824e09ca16",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.572Z"
+  },
+  {
+    "id": "ffc803d2-152f-4363-8a13-1343f248285b",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.575Z"
+  },
+  {
+    "id": "526a8d0c-c63c-4cb1-958d-23b4f6360064",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:05:25.577Z"
+  },
+  {
+    "id": "122cbd8b-9ec3-428b-b9b3-4136de587443",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.821Z"
+  },
+  {
+    "id": "f704c636-bf34-4cf7-8ade-a67f6b22fd0c",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.823Z"
+  },
+  {
+    "id": "ba1be033-24cc-4cba-b68a-449e1592df34",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.828Z"
+  },
+  {
+    "id": "9dccef11-f76a-44d7-9edc-52fd8624e2c1",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.831Z"
+  },
+  {
+    "id": "bac55952-a786-4277-99fa-f030572ba9e8",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.835Z"
+  },
+  {
+    "id": "a695cb1a-a417-4254-996a-9399793886e5",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.841Z"
+  },
+  {
+    "id": "899b151f-d09b-4f68-85ea-5639b46d5339",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.844Z"
+  },
+  {
+    "id": "2fbdf9c1-e586-4a6b-be16-b5f7cc73a89d",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:09:17.846Z"
+  },
+  {
+    "id": "63875943-b0e1-480f-ba1c-752ceb1c48a2",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.921Z"
+  },
+  {
+    "id": "641fc247-cb3f-4601-adbe-0d85aa361946",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.923Z"
+  },
+  {
+    "id": "c08477aa-1286-4756-99b8-5e7401315ef3",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.927Z"
+  },
+  {
+    "id": "b94261f7-0531-4ff1-a286-4971a11d5b49",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.930Z"
+  },
+  {
+    "id": "e6ec153f-ab41-47ec-b20a-7f0f4149d5c4",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.934Z"
+  },
+  {
+    "id": "35786d1b-e4f8-4c98-8fd2-5bcb4e360a70",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.940Z"
+  },
+  {
+    "id": "5c98429a-fe7c-4279-9ce6-33772d40bd39",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.943Z"
+  },
+  {
+    "id": "e9006690-8593-44a1-93d1-61861d66e905",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:11:25.945Z"
+  },
+  {
+    "id": "33fea7f9-3d4a-4007-a564-7160da3e6075",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.401Z"
+  },
+  {
+    "id": "11c22484-de02-4573-a4c7-a0ba3771d720",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.403Z"
+  },
+  {
+    "id": "b7089a30-afc8-4dd7-9c91-95000146aeb8",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.408Z"
+  },
+  {
+    "id": "d803f5ba-0702-46e7-aebb-18472e28c96f",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.411Z"
+  },
+  {
+    "id": "5409d32c-996d-4805-8669-d856beabd404",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.415Z"
+  },
+  {
+    "id": "f4851840-536f-4ea6-b512-31bd644ee489",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.421Z"
+  },
+  {
+    "id": "a766845b-8c36-474b-afbb-bfbb50b9a308",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.423Z"
+  },
+  {
+    "id": "c549ebe0-f72e-481f-8c6f-a1a5cad1418b",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:21:38.426Z"
+  },
+  {
+    "id": "1ef7191c-eb17-4064-98b8-d738a19a4530",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.545Z"
+  },
+  {
+    "id": "d34a365e-35a5-4799-8e52-9faaf50bf162",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.547Z"
+  },
+  {
+    "id": "bc9d51ff-109e-479a-92dd-0a870fc99ec6",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.552Z"
+  },
+  {
+    "id": "a562f392-529c-4328-ac0d-6248607ea77b",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.555Z"
+  },
+  {
+    "id": "f40a4017-f080-4ed3-8447-caae056422a9",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.560Z"
+  },
+  {
+    "id": "12a391cf-c578-4c7e-b6be-8004268c626c",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.565Z"
+  },
+  {
+    "id": "c00b5720-37d0-49ad-89b5-fb9253370a0a",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.567Z"
+  },
+  {
+    "id": "4ada5417-d524-491a-a343-ae84a3cbb424",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:25:44.570Z"
   }
 ]

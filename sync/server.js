@@ -1,5 +1,34 @@
 // sync/server.js
 // HTTP + WebSocket server for pxOS
+//
+// Routing: All HTTP routes are registered declaratively via RouteTable
+// (sync/route-table.js) in _registerRoutes(). The table supports exact
+// paths and :param segments. handleHTTPRequest dispatches through
+// RouteTable.match() — no if/else-if chains.
+//
+// Route groups (registered in _registerRoutes):
+//   Viewer & Health    — 5 routes   (/, /viewer/, /viewer.html, /health, /status)
+//   Cells              — 2 routes   (GET/POST /api/v1/cells)
+//   Render             — 3 routes   (GET/POST /api/v1/render, /api/v1/render/:format)
+//   Template           — 1 route    (POST /api/v1/template)
+//   Alerts             — 3 routes   (GET/POST /api/v1/alerts, /api/v1/alerts/history)
+//   History            — 2 routes   (/api/v1/history, /api/v1/history/:cell)
+//   Dashboards         — 4 routes   (CRUD /api/v1/dashboards[/:name])
+//   Cartridges         — 5 routes   (/api/v1/cartridges[/:name], active, state, execute)
+//   VM                 — 3 routes   (execute, state, reset)
+//   PixelVM            — 6 routes   (python, pixels, state, map, reset, viewport)
+//   Experiments        — 3 routes   (list, run, specs)
+//   VCC                — 4 routes   (validate, texture, ascii, stats)
+//   GPU Agent Bridge   — 13 routes  (agent start/stop/stats, inject, wire, gate, circuits, heatmap, bridge, glyphs)
+//   YouTube            — 13 routes  (viewer, feed, audio/video stream, channels CRUD, cookies, personalized, discover)
+//   CMS Nav & Routing  — 2 routes   (nav, page)
+//   CMS Theme Editor   — 6 routes   (get, save, reset, preset, preview, generate)
+//   CMS Export         — 2 routes   (png, html)
+//   CMS AI             — 2 routes   (architect, refine)
+//   Agent Registry     — 11 routes  (register, list, heartbeat, logs, metrics, CRUD, task assign)
+//   Audit Trail        — 1 route    (GET /api/v1/audit)
+//   Task Queue         — 6 routes   (create, list, stats, claim, complete, fail, get)
+//   Total: ~95 routes
 
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -155,13 +184,15 @@ export class PxOSServer {
         const t = this.routeTable;
 
         // Helper: register a route with a handler that takes no extra args
-        const h = (method, pattern, fn) => t.register(method, pattern, (req, res /*, pathname, url */) => fn.call(this, req, res));
+        const h = (method, pattern, fn) => t.register(method, pattern, (req, res /*, pathname, url, params */) => fn.call(this, req, res));
         // Helper: register a route with a handler that takes (req, res, url)
         const hu = (method, pattern, fn) => t.register(method, pattern, (req, res, _pathname, url) => fn.call(this, req, res, url));
-        // Helper: register a route with a handler that takes (req, res, pathname)
-        const hp = (method, pattern, fn) => t.register(method, pattern, (req, res, pathname) => fn.call(this, req, res, pathname));
-        // Helper: register a route with a handler that takes (req, res, pathname, url)
-        const hpu = (method, pattern, fn) => t.register(method, pattern, (req, res, pathname, url) => fn.call(this, req, res, pathname, url));
+        // Helper: register a route with a handler that takes (req, res, params)
+        const hp = (method, pattern, fn) => t.register(method, pattern, (req, res, _pathname, _url, params) => fn.call(this, req, res, params));
+        // Helper: register a route with a handler that takes (req, res, params, url)
+        const hpu = (method, pattern, fn) => t.register(method, pattern, (req, res, _pathname, url, params) => fn.call(this, req, res, params, url));
+        // Helper: register a parametric route with a handler that takes (req, res, url, params)
+        const hup = (method, pattern, fn) => t.register(method, pattern, (req, res, _pathname, url, params) => fn.call(this, req, res, url, params));
 
         // ── Viewer & Health ───────────────────────────────────────
         t.register('*', '/', (req, res) => this.serveViewer(req, res));
@@ -188,18 +219,18 @@ export class PxOSServer {
         h('*', '/api/v1/alerts/history', this.handleGetAlertHistory);
 
         // ── History (Time Series) ─────────────────────────────────
-        hu('*', '/api/v1/history/:cell', this.handleGetCellHistory);
+        hup('*', '/api/v1/history/:cell', this.handleGetCellHistory);
         hu('*', '/api/v1/history', this.handleGetAllHistory);
 
         // ── Dashboards ────────────────────────────────────────────
         h('GET', '/api/v1/dashboards', this.handleListDashboards);
         h('POST', '/api/v1/dashboards', this.handleSaveDashboard);
-        hu('GET', '/api/v1/dashboards/:name', this.handleLoadDashboard);
-        hu('DELETE', '/api/v1/dashboards/:name', this.handleDeleteDashboard);
+        hup('GET', '/api/v1/dashboards/:name', this.handleLoadDashboard);
+        hup('DELETE', '/api/v1/dashboards/:name', this.handleDeleteDashboard);
 
         // ── Cartridges ────────────────────────────────────────────
         h('GET', '/api/v1/cartridges', this.handleListCartridges);
-        hu('GET', '/api/v1/cartridges/:name', this.handleGetCartridge);
+        hup('GET', '/api/v1/cartridges/:name', this.handleGetCartridge);
         h('GET', '/api/v1/cartridge/active', this.handleGetActiveCartridge);
         h('GET', '/api/v1/cartridge/state', this.handleGetCartridgeState);
         h('POST', '/api/v1/cartridge/execute', this.handleExecuteOpcode);
@@ -250,7 +281,7 @@ export class PxOSServer {
         t.register('*', '/api/youtube/video', (req, res, _p, url) => this.handleYouTubeStream(req, res, url, 'video'));
         h('GET', '/api/youtube/channels', this.handleYouTubeChannels);
         h('POST', '/api/youtube/channels', this.handleAddYouTubeChannel);
-        hu('DELETE', '/api/youtube/channels/:id', this.handleRemoveYouTubeChannel);
+        hup('DELETE', '/api/youtube/channels/:id', this.handleRemoveYouTubeChannel);
         h('POST', '/api/youtube/cookies', this.handleYouTubeCookies);
         hu('*', '/api/youtube/personalized', this.handleYouTubePersonalized);
         hu('*', '/api/youtube/personalized/v2', this.handleYouTubePersonalizedV2);
@@ -450,7 +481,7 @@ export class PxOSServer {
             // Dispatch via declarative route table
             const match = this.routeTable.match(pathname, req.method);
             if (match) {
-                return await match.handler(req, res, pathname, url);
+                return await match.handler(req, res, pathname, url, match.params);
             }
 
             // Path exists but method not allowed?
@@ -636,8 +667,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, this.alertEngine.getHistory());
     }
 
-    handleGetCellHistory(req, res, url) {
-        const cell = url.pathname.replace('/api/v1/history/', '');
+    handleGetCellHistory(req, res, url, params) {
+        const cell = params.cell;
         const points = parseInt(url.searchParams.get('points')) || 100;
         const history = this.timeSeriesStore.getHistory(cell, points);
         this.sendJSON(res, 200, history);
@@ -666,8 +697,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, { ok: true, name });
     }
 
-    handleLoadDashboard(req, res, url) {
-        const name = url.pathname.replace('/api/v1/dashboards/', '');
+    handleLoadDashboard(req, res, url, params) {
+        const name = params.name;
         const dashboard = this.dashboardStore.load(name);
 
         if (!dashboard) {
@@ -682,8 +713,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, { ok: true, ...dashboard });
     }
 
-    handleDeleteDashboard(req, res, url) {
-        const name = url.pathname.replace('/api/v1/dashboards/', '');
+    handleDeleteDashboard(req, res, url, params) {
+        const name = params.name;
         const deleted = this.dashboardStore.delete(name);
 
         this.sendJSON(res, 200, { ok: deleted });
@@ -1138,15 +1169,15 @@ export class PxOSServer {
         this.sendJSON(res, 200, agents);
     }
 
-    handleGetAgent(req, res, pathname) {
-        const id = pathname.replace('/api/v1/agents/', '');
+    handleGetAgent(req, res, params) {
+        const id = params.agentId;
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
         this.sendJSON(res, 200, agent.toJSON());
     }
 
-    async handleAgentHeartbeat(req, res, pathname) {
-        const id = pathname.replace('/api/v1/agents/', '').replace('/heartbeat', '');
+    async handleAgentHeartbeat(req, res, params) {
+        const id = params.agentId;
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
         const prevStatus = agent.status;
@@ -1161,8 +1192,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, { ok: true });
     }
 
-    handleDeleteAgent(req, res, pathname) {
-        const id = pathname.replace('/api/v1/agents/', '');
+    handleDeleteAgent(req, res, params) {
+        const id = params.agentId;
         const removed = this.agentRegistry.remove(id);
         if (!removed) return this.sendError(res, 404, 'Agent not found');
         res.writeHead(204);
@@ -1172,8 +1203,8 @@ export class PxOSServer {
     // ─────────────────────────────────────────────────────
     // Agent Logs API
 
-    async handlePostAgentLogs(req, res, pathname, url) {
-        const id = pathname.replace('/api/v1/agents/', '').replace('/logs', '');
+    async handlePostAgentLogs(req, res, params, url) {
+        const id = params.agentId;
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
 
@@ -1199,8 +1230,8 @@ export class PxOSServer {
         this.sendJSON(res, 201, entry);
     }
 
-    handleGetAgentLogs(req, res, pathname, url) {
-        const id = pathname.replace('/api/v1/agents/', '').replace('/logs', '');
+    handleGetAgentLogs(req, res, params, url) {
+        const id = params.agentId;
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
 
@@ -1214,8 +1245,8 @@ export class PxOSServer {
     // ─────────────────────────────────────────────────────
     // Agent Metrics API
 
-    async handlePostAgentMetrics(req, res, pathname) {
-        const id = pathname.replace('/api/v1/agents/', '').replace('/metrics', '');
+    async handlePostAgentMetrics(req, res, params) {
+        const id = params.agentId;
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
 
@@ -1235,8 +1266,8 @@ export class PxOSServer {
         this.sendJSON(res, 201, { ok: true, key: data.key });
     }
 
-    handleGetAgentMetrics(req, res, pathname) {
-        const id = pathname.replace('/api/v1/agents/', '').replace('/metrics', '');
+    handleGetAgentMetrics(req, res, params) {
+        const id = params.agentId;
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
 
@@ -1252,11 +1283,9 @@ export class PxOSServer {
         this.sendJSON(res, 200, { agentId: id, metrics });
     }
 
-    handleGetAgentMetricHistory(req, res, pathname) {
-        // Path: /api/v1/agents/:id/metrics/:key/history
-        const parts = pathname.replace('/api/v1/agents/', '').split('/');
-        const id = parts[0];
-        const key = parts[2]; // parts = [id, 'metrics', key, 'history']
+    handleGetAgentMetricHistory(req, res, params) {
+        const id = params.agentId;
+        const key = params.name;
 
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
@@ -1269,8 +1298,8 @@ export class PxOSServer {
     // ─────────────────────────────────────────────────────
     // Agent Task Assignment
 
-    async handleAssignTask(req, res, pathname) {
-        const id = pathname.replace('/api/v1/agents/', '').replace('/tasks', '');
+    async handleAssignTask(req, res, params) {
+        const id = params.agentId;
         const agent = this.agentRegistry.get(id);
         if (!agent) return this.sendError(res, 404, 'Agent not found');
 
@@ -1462,8 +1491,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, { ok: true, channel: { id, url, name: name || id } });
     }
 
-    handleRemoveYouTubeChannel(req, res, url) {
-        const id = url.pathname.replace('/api/youtube/channels/', '');
+    handleRemoveYouTubeChannel(req, res, url, params) {
+        const id = params.id;
 
         const index = this.youtubeChannels.channels.findIndex(ch => ch.id === id);
         if (index === -1) {
@@ -1598,8 +1627,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, { cartridges, count: cartridges.length });
     }
 
-    handleGetCartridge(req, res, url) {
-        const name = url.pathname.split('/').pop();
+    handleGetCartridge(req, res, url, params) {
+        const name = params.name;
         const cart = this.cartridgeStore.get(name);
         if (!cart) {
             return this.sendError(res, 404, 'Cartridge not found');
@@ -1898,15 +1927,15 @@ export class PxOSServer {
         this.sendJSON(res, 200, tasks);
     }
 
-    handleGetTask(req, res, pathname) {
-        const id = pathname.replace('/api/v1/tasks/', '');
+    handleGetTask(req, res, params) {
+        const id = params.taskId;
         const task = this.taskStore.get(id);
         if (!task) return this.sendError(res, 404, 'Task not found');
         this.sendJSON(res, 200, task.toJSON());
     }
 
-    async handleClaimTask(req, res, pathname) {
-        const id = pathname.replace('/api/v1/tasks/', '').replace('/claim', '');
+    async handleClaimTask(req, res, params) {
+        const id = params.taskId;
         const body = await this.readBody(req);
         const data = JSON.parse(body);
         if (!data.agentId) {
@@ -1923,8 +1952,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, task.toJSON());
     }
 
-    async handleCompleteTask(req, res, pathname) {
-        const id = pathname.replace('/api/v1/tasks/', '').replace('/complete', '');
+    async handleCompleteTask(req, res, params) {
+        const id = params.taskId;
         const body = await this.readBody(req);
         const data = JSON.parse(body);
         const task = this.taskStore.complete(id, data.result);
@@ -1932,8 +1961,8 @@ export class PxOSServer {
         this.sendJSON(res, 200, task.toJSON());
     }
 
-    async handleFailTask(req, res, pathname) {
-        const id = pathname.replace('/api/v1/tasks/', '').replace('/fail', '');
+    async handleFailTask(req, res, params) {
+        const id = params.taskId;
         const body = await this.readBody(req);
         const data = JSON.parse(body);
         const task = this.taskStore.fail(id, data.error);

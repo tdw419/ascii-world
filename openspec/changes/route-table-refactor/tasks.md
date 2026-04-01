@@ -10,6 +10,6 @@
 - [x] 2.3 Keep the CORS, OPTIONS, request tracking, and error-wrapping logic in handleHTTPRequest as-is -- only the dispatch changes.
 
 ## 3. Phase 3: Validation and Cleanup
-- [ ] 3.1 Run full test suite (86 test files) and confirm all pass with zero changes to test files.
-- [ ] 3.2 Remove the regex-based pathname.match() calls that were needed for parametric routes (agents/:id/logs, agents/:id/metrics/:name/history, tasks/:id/claim, etc.) -- the RouteTable handles param extraction now.
-- [ ] 3.3 Update server.js doc comment to reflect the new routing architecture and add a comment block listing the route groups (cells, render, alerts, agents, tasks, cms, gpu, youtube, etc.) with their approximate route counts.
+- [x] 3.1 Run full test suite (86 test files) and confirm all pass with zero changes to test files.
+- [x] 3.2 Remove the pathname.replace()/pathname.split() calls that were needed for parametric routes (agents/:id/logs, agents/:id/metrics/:name/history, tasks/:id/claim, etc.) -- the RouteTable handles param extraction now. Updated wrappers (hp, hpu, hup) to pass params object to handlers.
+- [x] 3.3 Update server.js doc comment to reflect the new routing architecture and add a comment block listing the route groups (cells, render, alerts, agents, tasks, cms, gpu, youtube, etc.) with their approximate route counts.

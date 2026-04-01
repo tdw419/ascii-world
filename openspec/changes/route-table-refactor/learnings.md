@@ -33,3 +33,15 @@
 - Route count: 98 registered entries (original had ~94 if/else branches; some branches handled multiple methods for the same path, and the viewer path matched 3 patterns in one branch).
 - Full test suite: 1890 tests, 1889 pass, 0 fail, 1 cancelled (pre-existing server.test.js timeout). Zero test changes needed.
 - The `return await match.handler(...)` pattern is important — without `return`, execution would fall through to the 404/405 check after a handler already sent a response.
+
+- **[pattern]** (from SEC-2) [modified] sync/route-table.js
+
+- **[pattern]** (from SEC-2) [modified] sync/server.js
+
+- **[pattern]** (from SEC-2) [added] .test-fixtures/task-store/deep-1775064818883/sub/tasks.json
+
+- **[pattern]** (from SEC-2) [added] .test-fixtures/task-store/deep-1775064950720/sub/tasks.json
+
+- **[pattern]** (from SEC-2) [added] .test-fixtures/task-store/deep-1775064657383/sub/tasks.json
+
+- **[discovery]** (from SEC-2) Agent strategy: created 3 files, modified 8 files, refactored, added tests, fix attempt

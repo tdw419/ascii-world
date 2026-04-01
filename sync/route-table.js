@@ -63,16 +63,21 @@ export class RouteTable {
     match(pathname, method) {
         const normalized = this._normalize(pathname);
 
-        // 1. Try exact match first (precedence)
+        // 1. Try exact match first (precedence), then wildcard method
         const exactKey = `${method}\0${normalized}`;
         const exactEntry = this._exact.get(exactKey);
         if (exactEntry) {
             return { handler: exactEntry.handler, params: {} };
         }
+        const wildcardKey = `*\0${normalized}`;
+        const wildcardEntry = this._exact.get(wildcardKey);
+        if (wildcardEntry) {
+            return { handler: wildcardEntry.handler, params: {} };
+        }
 
         // 2. Try parametric routes (first match wins)
         for (const { regex, paramNames, entry } of this._parametric) {
-            if (entry.method !== method) continue;
+            if (entry.method !== method && entry.method !== '*') continue;
             const m = normalized.match(regex);
             if (m) {
                 const params = {};
@@ -84,6 +89,29 @@ export class RouteTable {
         }
 
         return null;
+    }
+
+    /**
+     * Check if any route matches the pathname (ignoring method).
+     * Useful for generating 405 Method Not Allowed responses.
+     * @param {string} pathname
+     * @returns {boolean}
+     */
+    hasPath(pathname) {
+        const normalized = this._normalize(pathname);
+
+        // Check exact entries (any method)
+        for (const [key] of this._exact) {
+            const keyPath = key.split('\0')[1];
+            if (keyPath === normalized) return true;
+        }
+
+        // Check parametric entries
+        for (const { regex, entry } of this._parametric) {
+            if (normalized.match(regex)) return true;
+        }
+
+        return false;
     }
 
     // ── Internal ──────────────────────────────────────────────

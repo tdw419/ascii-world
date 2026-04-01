@@ -35,6 +35,7 @@ import { AgentRegistry } from './agent-registry.js';
 import { AgentLogStore } from './agent-log-store.js';
 import { AuditTrail } from './audit-trail.js';
 import { TaskStore } from './task-store.js';
+import { RouteTable } from './route-table.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readFile } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -139,6 +140,168 @@ export class PxOSServer {
 
         // Task Store (agent task queue)
         this.taskStore = new TaskStore({ dataPath: './data/tasks.json' });
+
+        // Route table (declarative HTTP dispatch)
+        this.routeTable = new RouteTable();
+        this._registerRoutes();
+    }
+
+    /**
+     * Register all HTTP routes in the declarative route table.
+     * Each handler wrapper preserves the original calling convention
+     * (req, res[, pathname][, url]) so that no handler logic changes.
+     */
+    _registerRoutes() {
+        const t = this.routeTable;
+
+        // Helper: register a route with a handler that takes no extra args
+        const h = (method, pattern, fn) => t.register(method, pattern, (req, res /*, pathname, url */) => fn.call(this, req, res));
+        // Helper: register a route with a handler that takes (req, res, url)
+        const hu = (method, pattern, fn) => t.register(method, pattern, (req, res, _pathname, url) => fn.call(this, req, res, url));
+        // Helper: register a route with a handler that takes (req, res, pathname)
+        const hp = (method, pattern, fn) => t.register(method, pattern, (req, res, pathname) => fn.call(this, req, res, pathname));
+        // Helper: register a route with a handler that takes (req, res, pathname, url)
+        const hpu = (method, pattern, fn) => t.register(method, pattern, (req, res, pathname, url) => fn.call(this, req, res, pathname, url));
+
+        // ── Viewer & Health ───────────────────────────────────────
+        t.register('*', '/', (req, res) => this.serveViewer(req, res));
+        t.register('*', '/viewer/', (req, res) => this.serveViewer(req, res));
+        t.register('*', '/viewer.html', (req, res) => this.serveViewer(req, res));
+        h('*', '/health', this.handleHealth);
+        h('*', '/status', this.handleStatus);
+
+        // ── Cells ─────────────────────────────────────────────────
+        h('GET', '/api/v1/cells', this.handleGetCells);
+        h('POST', '/api/v1/cells', this.handlePostCells);
+
+        // ── Render ────────────────────────────────────────────────
+        hu('POST', '/api/v1/render', this.handleMultiRender);
+        h('GET', '/api/v1/render', this.handleRender);
+        hu('*', '/api/v1/render/:format', this.handleMultiRender);
+
+        // ── Template ──────────────────────────────────────────────
+        h('POST', '/api/v1/template', this.handlePostTemplate);
+
+        // ── Alerts ────────────────────────────────────────────────
+        h('GET', '/api/v1/alerts', this.handleGetAlerts);
+        h('POST', '/api/v1/alerts', this.handlePostAlerts);
+        h('*', '/api/v1/alerts/history', this.handleGetAlertHistory);
+
+        // ── History (Time Series) ─────────────────────────────────
+        hu('*', '/api/v1/history/:cell', this.handleGetCellHistory);
+        hu('*', '/api/v1/history', this.handleGetAllHistory);
+
+        // ── Dashboards ────────────────────────────────────────────
+        h('GET', '/api/v1/dashboards', this.handleListDashboards);
+        h('POST', '/api/v1/dashboards', this.handleSaveDashboard);
+        hu('GET', '/api/v1/dashboards/:name', this.handleLoadDashboard);
+        hu('DELETE', '/api/v1/dashboards/:name', this.handleDeleteDashboard);
+
+        // ── Cartridges ────────────────────────────────────────────
+        h('GET', '/api/v1/cartridges', this.handleListCartridges);
+        hu('GET', '/api/v1/cartridges/:name', this.handleGetCartridge);
+        h('GET', '/api/v1/cartridge/active', this.handleGetActiveCartridge);
+        h('GET', '/api/v1/cartridge/state', this.handleGetCartridgeState);
+        h('POST', '/api/v1/cartridge/execute', this.handleExecuteOpcode);
+
+        // ── VM ────────────────────────────────────────────────────
+        h('POST', '/api/v1/vm/execute', this.handleVMExecute);
+        h('GET', '/api/v1/vm/state', this.handleVMState);
+        h('POST', '/api/v1/vm/reset', this.handleVMReset);
+
+        // ── PixelVM ───────────────────────────────────────────────
+        h('POST', '/api/v1/pixelvm/python', this.handlePixelPython);
+        h('POST', '/api/v1/pixelvm/pixels', this.handlePixelPixels);
+        h('GET', '/api/v1/pixelvm/state', this.handlePixelState);
+        h('GET', '/api/v1/pixelvm/map', this.handlePixelMap);
+        h('POST', '/api/v1/pixelvm/reset', this.handlePixelReset);
+        h('GET', '/api/v1/pixelvm/viewport', this.handlePixelViewport);
+
+        // ── Experiments ───────────────────────────────────────────
+        h('GET', '/api/v1/experiments', this.handleGetExperiments);
+        h('POST', '/api/v1/experiments/run', this.handleRunExperiment);
+        h('GET', '/api/v1/experiments/specs', this.handleGetExperimentSpecs);
+
+        // ── VCC ───────────────────────────────────────────────────
+        h('POST', '/api/v1/vcc/validate', this.handleVCCValidate);
+        h('GET', '/api/v1/vcc/texture', this.handleVCCTexture);
+        h('GET', '/api/v1/vcc/ascii', this.handleVCCASCII);
+        h('GET', '/api/v1/vcc/stats', this.handleVCCStats);
+
+        // ── GPU Agent Bridge ──────────────────────────────────────
+        h('POST', '/api/v1/gpu/agent/start', this.handleGPUAgentStart);
+        h('POST', '/api/v1/gpu/agent/stop', this.handleGPUAgentStop);
+        h('GET', '/api/v1/gpu/agent/stats', this.handleGPUAgentStats);
+        h('POST', '/api/v1/gpu/inject', this.handleGPUInject);
+        h('POST', '/api/v1/gpu/wire', this.handleGPUWire);
+        h('POST', '/api/v1/gpu/gate', this.handleGPUGate);
+        h('POST', '/api/v1/gpu/circuit/load', this.handleGPUCircuitLoad);
+        hu('GET', '/api/v1/gpu/circuit/scan', this.handleGPUCircuitScan);
+        h('GET', '/api/v1/gpu/circuit/templates', this.handleGPUCircuitTemplates);
+        h('POST', '/api/v1/gpu/heatmap', this.handleGPUHeatmap);
+        h('POST', '/api/v1/gpu/bridge/start', this.handleGPUBridgeStart);
+        h('POST', '/api/v1/gpu/bridge/connect', this.handleGPUBridgeConnect);
+        h('GET', '/api/v1/gpu/glyphs', this.handleGPUGlyphs);
+
+        // ── YouTube ───────────────────────────────────────────────
+        h('*', '/youtube', this.handleYouTubeViewer);
+        h('*', '/api/youtube/feed', this.handleYouTubeFeed);
+        t.register('*', '/api/youtube/audio', (req, res, _p, url) => this.handleYouTubeStream(req, res, url, 'audio'));
+        t.register('*', '/api/youtube/video', (req, res, _p, url) => this.handleYouTubeStream(req, res, url, 'video'));
+        h('GET', '/api/youtube/channels', this.handleYouTubeChannels);
+        h('POST', '/api/youtube/channels', this.handleAddYouTubeChannel);
+        hu('DELETE', '/api/youtube/channels/:id', this.handleRemoveYouTubeChannel);
+        h('POST', '/api/youtube/cookies', this.handleYouTubeCookies);
+        hu('*', '/api/youtube/personalized', this.handleYouTubePersonalized);
+        hu('*', '/api/youtube/personalized/v2', this.handleYouTubePersonalizedV2);
+        h('*', '/api/youtube/subscriptions', this.handleYouTubeSubscriptions);
+        hu('*', '/api/youtube/discover', this.handleYouTubeDiscover);
+        hu('*', '/api/youtube/video-info', this.handleYouTubeSpecificVideo);
+
+        // ── CMS Navigation & Routing ──────────────────────────────
+        h('GET', '/api/cms/nav', this.handleCMSNav);
+        hu('GET', '/api/cms/page', this.handleCMSPage);
+
+        // ── CMS Theme Editor ──────────────────────────────────────
+        h('GET', '/api/cms/theme', this.handleCMSThemeGet);
+        h('POST', '/api/cms/theme/save', this.handleCMSThemeSave);
+        h('POST', '/api/cms/theme/reset', this.handleCMSThemeReset);
+        hu('GET', '/api/cms/theme/preset', this.handleCMSThemePreset);
+        h('GET', '/api/cms/theme/preview', this.handleCMSThemePreview);
+        h('POST', '/api/cms/theme/generate', this.handleCMSThemeGenerate);
+
+        // ── CMS Export ────────────────────────────────────────────
+        h('POST', '/api/cms/export/png', this.handleCMSExportPNG);
+        h('POST', '/api/cms/export/html', this.handleCMSExportHTML);
+
+        // ── CMS AI Architect ──────────────────────────────────────
+        h('POST', '/api/cms/architect', this.handleCMSArchitect);
+        h('POST', '/api/cms/refine', this.handleCMSRefine);
+
+        // ── Agent Registry ────────────────────────────────────────
+        h('POST', '/api/v1/agents', this.handleRegisterAgent);
+        h('GET', '/api/v1/agents', this.handleListAgents);
+        hp('PUT', '/api/v1/agents/:agentId/heartbeat', this.handleAgentHeartbeat);
+        hpu('POST', '/api/v1/agents/:agentId/logs', this.handlePostAgentLogs);
+        hpu('GET', '/api/v1/agents/:agentId/logs', this.handleGetAgentLogs);
+        hp('GET', '/api/v1/agents/:agentId/metrics/:name/history', this.handleGetAgentMetricHistory);
+        hp('POST', '/api/v1/agents/:agentId/metrics', this.handlePostAgentMetrics);
+        hp('GET', '/api/v1/agents/:agentId/metrics', this.handleGetAgentMetrics);
+        hp('GET', '/api/v1/agents/:agentId', this.handleGetAgent);
+        hp('DELETE', '/api/v1/agents/:agentId', this.handleDeleteAgent);
+        hp('POST', '/api/v1/agents/:agentId/tasks', this.handleAssignTask);
+
+        // ── Audit Trail ───────────────────────────────────────────
+        hu('GET', '/api/v1/audit', this.handleGetAudit);
+
+        // ── Task Queue ────────────────────────────────────────────
+        h('POST', '/api/v1/tasks', this.handleCreateTask);
+        hu('GET', '/api/v1/tasks', this.handleListTasks);
+        h('GET', '/api/v1/tasks/stats', this.handleTaskStats);
+        hp('PUT', '/api/v1/tasks/:taskId/claim', this.handleClaimTask);
+        hp('PUT', '/api/v1/tasks/:taskId/complete', this.handleCompleteTask);
+        hp('PUT', '/api/v1/tasks/:taskId/fail', this.handleFailTask);
+        hp('GET', '/api/v1/tasks/:taskId', this.handleGetTask);
     }
 
     async start() {
@@ -284,225 +447,15 @@ export class PxOSServer {
         }
 
         try {
-            if (pathname === '/' || pathname === '/viewer/' || pathname === '/viewer.html') {
-                this.serveViewer(req, res);
-            } else if (pathname === '/health') {
-                this.handleHealth(req, res);
-            } else if (pathname === '/status') {
-                await this.handleStatus(req, res);
-            } else if (pathname === '/api/v1/cells') {
-                if (req.method === 'GET') {
-                    this.handleGetCells(req, res);
-                } else if (req.method === 'POST') {
-                    await this.handlePostCells(req, res);
-                } else {
-                    this.sendError(res, 405, 'Method not allowed');
-                }
-            } else if (pathname === '/api/v1/render') {
-                if (req.method === 'POST') {
-                    await this.handleMultiRender(req, res, url);
-                } else {
-                    await this.handleRender(req, res);
-                }
-            } else if (pathname.startsWith('/api/v1/render/')) {
-                await this.handleMultiRender(req, res, url);
-            } else if (pathname === '/api/v1/template') {
-                if (req.method === 'POST') {
-                    await this.handlePostTemplate(req, res);
-                } else {
-                    this.sendError(res, 405, 'Method not allowed');
-                }
-            } else if (pathname === '/api/v1/alerts') {
-                if (req.method === 'GET') {
-                    this.handleGetAlerts(req, res);
-                } else if (req.method === 'POST') {
-                    await this.handlePostAlerts(req, res);
-                } else {
-                    this.sendError(res, 405, 'Method not allowed');
-                }
-            } else if (pathname === '/api/v1/alerts/history') {
-                this.handleGetAlertHistory(req, res);
-            } else if (pathname.startsWith('/api/v1/history/')) {
-                this.handleGetCellHistory(req, res, url);
-            } else if (pathname === '/api/v1/history') {
-                this.handleGetAllHistory(req, res, url);
-            } else if (pathname === '/api/v1/dashboards' && req.method === 'GET') {
-                this.handleListDashboards(req, res);
-            } else if (pathname === '/api/v1/dashboards' && req.method === 'POST') {
-                await this.handleSaveDashboard(req, res);
-            } else if (pathname.startsWith('/api/v1/dashboards/') && req.method === 'GET') {
-                this.handleLoadDashboard(req, res, url);
-            } else if (pathname.startsWith('/api/v1/dashboards/') && req.method === 'DELETE') {
-                this.handleDeleteDashboard(req, res, url);
-            } else if (pathname === '/api/v1/cartridges' && req.method === 'GET') {
-                this.handleListCartridges(req, res);
-            } else if (pathname.startsWith('/api/v1/cartridges/') && req.method === 'GET') {
-                this.handleGetCartridge(req, res, url);
-            } else if (pathname === '/api/v1/cartridge/active' && req.method === 'GET') {
-                this.handleGetActiveCartridge(req, res);
-            } else if (pathname === '/api/v1/cartridge/state' && req.method === 'GET') {
-                this.handleGetCartridgeState(req, res);
-            } else if (pathname === '/api/v1/cartridge/execute' && req.method === 'POST') {
-                await this.handleExecuteOpcode(req, res);
-            } else if (pathname === '/api/v1/vm/execute' && req.method === 'POST') {
-                await this.handleVMExecute(req, res);
-            } else if (pathname === '/api/v1/vm/state' && req.method === 'GET') {
-                this.handleVMState(req, res);
-            } else if (pathname === '/api/v1/vm/reset' && req.method === 'POST') {
-                this.handleVMReset(req, res);
-            } else if (pathname === '/api/v1/pixelvm/python' && req.method === 'POST') {
-                await this.handlePixelPython(req, res);
-            } else if (pathname === '/api/v1/pixelvm/pixels' && req.method === 'POST') {
-                await this.handlePixelPixels(req, res);
-            } else if (pathname === '/api/v1/pixelvm/state' && req.method === 'GET') {
-                this.handlePixelState(req, res);
-            } else if (pathname === '/api/v1/pixelvm/map' && req.method === 'GET') {
-                this.handlePixelMap(req, res);
-            } else if (pathname === '/api/v1/pixelvm/reset' && req.method === 'POST') {
-                this.handlePixelReset(req, res);
-            } else if (pathname === '/api/v1/pixelvm/viewport' && req.method === 'GET') {
-                await this.handlePixelViewport(req, res);
-            } else if (pathname === '/api/v1/experiments' && req.method === 'GET') {
-                this.handleGetExperiments(req, res);
-            } else if (pathname === '/api/v1/experiments/run' && req.method === 'POST') {
-                await this.handleRunExperiment(req, res);
-            } else if (pathname === '/api/v1/experiments/specs' && req.method === 'GET') {
-                this.handleGetExperimentSpecs(req, res);
-            } else if (pathname === '/api/v1/vcc/validate' && req.method === 'POST') {
-                await this.handleVCCValidate(req, res);
-            // GPU Agent Bridge API
-            } else if (pathname === '/api/v1/gpu/agent/start' && req.method === 'POST') {
-                await this.handleGPUAgentStart(req, res);
-            } else if (pathname === '/api/v1/gpu/agent/stop' && req.method === 'POST') {
-                await this.handleGPUAgentStop(req, res);
-            } else if (pathname === '/api/v1/gpu/agent/stats' && req.method === 'GET') {
-                this.handleGPUAgentStats(req, res);
-            } else if (pathname === '/api/v1/gpu/inject' && req.method === 'POST') {
-                await this.handleGPUInject(req, res);
-            } else if (pathname === '/api/v1/gpu/wire' && req.method === 'POST') {
-                await this.handleGPUWire(req, res);
-            } else if (pathname === '/api/v1/gpu/gate' && req.method === 'POST') {
-                await this.handleGPUGate(req, res);
-            } else if (pathname === '/api/v1/gpu/circuit/load' && req.method === 'POST') {
-                await this.handleGPUCircuitLoad(req, res);
-            } else if (pathname === '/api/v1/gpu/circuit/scan' && req.method === 'GET') {
-                await this.handleGPUCircuitScan(req, res, url);
-            } else if (pathname === '/api/v1/gpu/circuit/templates' && req.method === 'GET') {
-                this.handleGPUCircuitTemplates(req, res);
-            } else if (pathname === '/api/v1/gpu/heatmap' && req.method === 'POST') {
-                await this.handleGPUHeatmap(req, res);
-            } else if (pathname === '/api/v1/gpu/bridge/start' && req.method === 'POST') {
-                await this.handleGPUBridgeStart(req, res);
-            } else if (pathname === '/api/v1/gpu/bridge/connect' && req.method === 'POST') {
-                await this.handleGPUBridgeConnect(req, res);
-            } else if (pathname === '/api/v1/gpu/glyphs' && req.method === 'GET') {
-                this.handleGPUGlyphs(req, res);
-            // VCC Colony Texture API
-            } else if (pathname === '/api/v1/vcc/texture' && req.method === 'GET') {
-                this.handleVCCTexture(req, res);
-            } else if (pathname === '/api/v1/vcc/ascii' && req.method === 'GET') {
-                this.handleVCCASCII(req, res);
-            } else if (pathname === '/api/v1/vcc/stats' && req.method === 'GET') {
-                this.handleVCCStats(req, res);
-            // YouTube API
-            } else if (pathname === '/youtube') {
-                this.handleYouTubeViewer(req, res);
-            } else if (pathname === '/api/youtube/feed') {
-                await this.handleYouTubeFeed(req, res);
-            } else if (pathname === '/api/youtube/audio') {
-                await this.handleYouTubeStream(req, res, url, 'audio');
-            } else if (pathname === '/api/youtube/video') {
-                await this.handleYouTubeStream(req, res, url, 'video');
-            } else if (pathname === '/api/youtube/channels' && req.method === 'GET') {
-                this.handleYouTubeChannels(req, res);
-            } else if (pathname === '/api/youtube/channels' && req.method === 'POST') {
-                await this.handleAddYouTubeChannel(req, res);
-            } else if (pathname.startsWith('/api/youtube/channels/') && req.method === 'DELETE') {
-                this.handleRemoveYouTubeChannel(req, res, url);
-            } else if (pathname === '/api/youtube/cookies' && req.method === 'POST') {
-                await this.handleYouTubeCookies(req, res);
-            } else if (pathname === '/api/youtube/personalized') {
-                await this.handleYouTubePersonalized(req, res, url);
-            } else if (pathname === '/api/youtube/personalized/v2') {
-                await this.handleYouTubePersonalizedV2(req, res, url);
-            } else if (pathname === '/api/youtube/subscriptions') {
-                await this.handleYouTubeSubscriptions(req, res);
-            } else if (pathname === '/api/youtube/discover') {
-                await this.handleYouTubeDiscover(req, res, url);
-            } else if (pathname === '/api/youtube/video-info') {
-                await this.handleYouTubeSpecificVideo(req, res, url);
-            // CMS Navigation & Routing
-            } else if (pathname === '/api/cms/nav' && req.method === 'GET') {
-                this.handleCMSNav(req, res);
-            } else if (pathname === '/api/cms/page' && req.method === 'GET') {
-                this.handleCMSPage(req, res, url);
-            // CMS Theme Editor API
-            } else if (pathname === '/api/cms/theme' && req.method === 'GET') {
-                this.handleCMSThemeGet(req, res);
-            } else if (pathname === '/api/cms/theme/save' && req.method === 'POST') {
-                await this.handleCMSThemeSave(req, res);
-            } else if (pathname === '/api/cms/theme/reset' && req.method === 'POST') {
-                this.handleCMSThemeReset(req, res);
-            } else if (pathname === '/api/cms/theme/preset' && req.method === 'GET') {
-                this.handleCMSThemePreset(req, res, url);
-            } else if (pathname === '/api/cms/theme/preview' && req.method === 'GET') {
-                this.handleCMSThemePreview(req, res);
-            } else if (pathname === '/api/cms/theme/generate' && req.method === 'POST') {
-                await this.handleCMSThemeGenerate(req, res);
-            // CMS Export API
-            } else if (pathname === '/api/cms/export/png' && req.method === 'POST') {
-                await this.handleCMSExportPNG(req, res);
-            } else if (pathname === '/api/cms/export/html' && req.method === 'POST') {
-                await this.handleCMSExportHTML(req, res);
-            // CMS AI Architect API
-            } else if (pathname === '/api/cms/architect' && req.method === 'POST') {
-                await this.handleCMSArchitect(req, res);
-            } else if (pathname === '/api/cms/refine' && req.method === 'POST') {
-                await this.handleCMSRefine(req, res);
-            // Agent Registry API
-            } else if (pathname === '/api/v1/agents' && req.method === 'POST') {
-                await this.handleRegisterAgent(req, res);
-            } else if (pathname === '/api/v1/agents' && req.method === 'GET') {
-                this.handleListAgents(req, res);
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/heartbeat$/) && req.method === 'PUT') {
-                await this.handleAgentHeartbeat(req, res, pathname);
-            // Agent Logs API
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/logs$/) && req.method === 'POST') {
-                await this.handlePostAgentLogs(req, res, pathname, url);
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/logs$/) && req.method === 'GET') {
-                this.handleGetAgentLogs(req, res, pathname, url);
-            // Agent Metrics API
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/metrics\/[^/]+\/history$/) && req.method === 'GET') {
-                this.handleGetAgentMetricHistory(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/metrics$/) && req.method === 'POST') {
-                await this.handlePostAgentMetrics(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/metrics$/) && req.method === 'GET') {
-                this.handleGetAgentMetrics(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+$/) && req.method === 'GET') {
-                this.handleGetAgent(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^\/]+$/) && req.method === 'DELETE') {
-                this.handleDeleteAgent(req, res, pathname);
-            // Agent Task Assignment API
-            } else if (pathname.match(/^\/api\/v1\/agents\/[^\/]+\/tasks$/) && req.method === 'POST') {
-                await this.handleAssignTask(req, res, pathname);
-            // Audit Trail API
-            } else if (pathname === '/api/v1/audit' && req.method === 'GET') {
-                this.handleGetAudit(req, res, url);
-            // Task Queue API
-            } else if (pathname === '/api/v1/tasks' && req.method === 'POST') {
-                await this.handleCreateTask(req, res);
-            } else if (pathname === '/api/v1/tasks' && req.method === 'GET') {
-                this.handleListTasks(req, res, url);
-            } else if (pathname === '/api/v1/tasks/stats' && req.method === 'GET') {
-                this.handleTaskStats(req, res);
-            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+\/claim$/) && req.method === 'PUT') {
-                await this.handleClaimTask(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+\/complete$/) && req.method === 'PUT') {
-                await this.handleCompleteTask(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+\/fail$/) && req.method === 'PUT') {
-                await this.handleFailTask(req, res, pathname);
-            } else if (pathname.match(/^\/api\/v1\/tasks\/[^/]+$/) && req.method === 'GET') {
-                this.handleGetTask(req, res, pathname);
+            // Dispatch via declarative route table
+            const match = this.routeTable.match(pathname, req.method);
+            if (match) {
+                return await match.handler(req, res, pathname, url);
+            }
+
+            // Path exists but method not allowed?
+            if (this.routeTable.hasPath(pathname)) {
+                this.sendError(res, 405, 'Method not allowed');
             } else {
                 this.sendError(res, 404, 'Not found');
             }

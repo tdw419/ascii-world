@@ -5,9 +5,9 @@
 - [x] 1.2 Add unit tests for RouteTable: exact match, param extraction, method filtering, 404 fallback, precedence (exact before parametric). Target ~20 tests.
 
 ## 2. Phase 2: Migrate Routes from handleHTTPRequest
-- [ ] 2.1 In PxOSServer constructor, instantiate this.routeTable = new RouteTable() and register all 94 current routes as table entries pointing to their existing handler methods (no handler logic changes).
-- [ ] 2.2 Replace the 500-line if/else-if chain in handleHTTPRequest with: const match = this.routeTable.match(pathname, req.method); if (match) return match.handler(req, res, match.params, url); else this.sendError(res, 404, 'Not found');
-- [ ] 2.3 Keep the CORS, OPTIONS, request tracking, and error-wrapping logic in handleHTTPRequest as-is -- only the dispatch changes.
+- [x] 2.1 In PxOSServer constructor, instantiate this.routeTable = new RouteTable() and register all 94 current routes as table entries pointing to their existing handler methods (no handler logic changes).
+- [x] 2.2 Replace the 500-line if/else-if chain in handleHTTPRequest with: const match = this.routeTable.match(pathname, req.method); if (match) return match.handler(req, res, match.params, url); else this.sendError(res, 404, 'Not found');
+- [x] 2.3 Keep the CORS, OPTIONS, request tracking, and error-wrapping logic in handleHTTPRequest as-is -- only the dispatch changes.
 
 ## 3. Phase 3: Validation and Cleanup
 - [ ] 3.1 Run full test suite (86 test files) and confirm all pass with zero changes to test files.

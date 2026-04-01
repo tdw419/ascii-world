@@ -7,15 +7,15 @@
 - [x] 1.4 Add Task.isExpired(timeoutMs) method for timeout detection
 
 ## 2. Task Store
-- [ ] 2.1 Create sync/task-store.js with TaskStore class using Map for in-memory storage
-- [ ] 2.2 Add create(payload, priority) method: creates pending task, returns Task
-- [ ] 2.3 Add get(id) method: returns task or null
-- [ ] 2.4 Add list(filters) method: filter by status, agentId; return array sorted by priority desc, createdAt asc
-- [ ] 2.5 Add claim(agentId) method: atomically picks highest-priority pending task, sets status=running, agentId, startedAt
-- [ ] 2.6 Add complete(id, result) method: sets status=completed, result, completedAt
-- [ ] 2.7 Add fail(id, error) method: sets status=failed, error, completedAt
-- [ ] 2.8 Add persist() and load() methods for data/tasks.json
-- [ ] 2.9 Add getStats() method: returns {pending: N, running: N, completed: N, failed: N}
+- [x] 2.1 Create sync/task-store.js with TaskStore class using Map for in-memory storage
+- [x] 2.2 Add create(payload, priority) method: creates pending task, returns Task
+- [x] 2.3 Add get(id) method: returns task or null
+- [x] 2.4 Add list(filters) method: filter by status, agentId; return array sorted by priority desc, createdAt asc
+- [x] 2.5 Add claim(agentId) method: atomically picks highest-priority pending task, sets status=running, agentId, startedAt
+- [x] 2.6 Add complete(id, result) method: sets status=completed, result, completedAt
+- [x] 2.7 Add fail(id, error) method: sets status=failed, error, completedAt
+- [x] 2.8 Add persist() and load() methods for data/tasks.json
+- [x] 2.9 Add getStats() method: returns {pending: N, running: N, completed: N, failed: N}
 
 ## 3. REST API Endpoints
 - [ ] 3.1 Add POST /api/v1/tasks to server.js: body {payload, priority?}, calls store.create(), returns 201 with task

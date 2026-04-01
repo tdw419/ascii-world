@@ -432,6 +432,13 @@ export class PxOSServer {
                 this.handleListAgents(req, res);
             } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/heartbeat$/) && req.method === 'PUT') {
                 await this.handleAgentHeartbeat(req, res, pathname);
+            // Agent Metrics API
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/metrics\/[^/]+\/history$/) && req.method === 'GET') {
+                this.handleGetAgentMetricHistory(req, res, pathname);
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/metrics$/) && req.method === 'POST') {
+                await this.handlePostAgentMetrics(req, res, pathname);
+            } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+\/metrics$/) && req.method === 'GET') {
+                this.handleGetAgentMetrics(req, res, pathname);
             } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+$/) && req.method === 'GET') {
                 this.handleGetAgent(req, res, pathname);
             } else if (pathname.match(/^\/api\/v1\/agents\/[^/]+$/) && req.method === 'DELETE') {
@@ -1133,6 +1140,61 @@ export class PxOSServer {
         if (!removed) return this.sendError(res, 404, 'Agent not found');
         res.writeHead(204);
         res.end();
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Agent Metrics API
+
+    async handlePostAgentMetrics(req, res, pathname) {
+        const id = pathname.replace('/api/v1/agents/', '').replace('/metrics', '');
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+
+        const body = await this.readBody(req);
+        let data;
+        try { data = JSON.parse(body); } catch { return this.sendError(res, 400, 'Invalid JSON'); }
+
+        if (!data.key || typeof data.key !== 'string') {
+            return this.sendError(res, 400, 'key is required and must be a string');
+        }
+        if (data.value === undefined || data.value === null) {
+            return this.sendError(res, 400, 'value is required');
+        }
+
+        const tsKey = `agent:${id}:${data.key}`;
+        this.timeSeriesStore.record(tsKey, data.value);
+        this.sendJSON(res, 201, { ok: true, key: data.key });
+    }
+
+    handleGetAgentMetrics(req, res, pathname) {
+        const id = pathname.replace('/api/v1/agents/', '').replace('/metrics', '');
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+
+        // Collect latest values for all metrics belonging to this agent
+        const prefix = `agent:${id}:`;
+        const metrics = {};
+        for (const [cell, points] of this.timeSeriesStore.history) {
+            if (cell.startsWith(prefix) && points.length > 0) {
+                const key = cell.slice(prefix.length);
+                metrics[key] = points[points.length - 1].v;
+            }
+        }
+        this.sendJSON(res, 200, { agentId: id, metrics });
+    }
+
+    handleGetAgentMetricHistory(req, res, pathname) {
+        // Path: /api/v1/agents/:id/metrics/:key/history
+        const parts = pathname.replace('/api/v1/agents/', '').split('/');
+        const id = parts[0];
+        const key = parts[2]; // parts = [id, 'metrics', key, 'history']
+
+        const agent = this.agentRegistry.get(id);
+        if (!agent) return this.sendError(res, 404, 'Agent not found');
+
+        const tsKey = `agent:${id}:${key}`;
+        const history = this.timeSeriesStore.getHistory(tsKey);
+        this.sendJSON(res, 200, { agentId: id, key, history });
     }
 
     readBody(req) {

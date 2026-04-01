@@ -62,3 +62,13 @@
 - **[discovery]** (from SEC-5) Agent strategy: created 1 file, modified 2 files, added tests, fix attempt
 
 - **[discovery]** (from SEC-5) Tests improved by 23 (1604 -> 1627)
+
+- **[pattern]** (from SEC-6) [added] docs/AGENT-DASHBOARD.md
+
+- **[pattern]** (from SEC-6) [modified] data/cms-content.json
+
+- **[pattern]** (from SEC-6) [modified] data/dashboards.json
+
+- **[pattern]** (from SEC-6) [modified] openspec/changes/018-agent-dashboard-ui/tasks.md
+
+- **[discovery]** (from SEC-6) Agent strategy: created 1 file, modified 3 files, added tests

@@ -7,6 +7,7 @@ import { mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import http from 'node:http';
 import { PxOSServer } from '../sync/server.js';
+import { TimeSeriesStore } from '../sync/time-series-store.js';
 
 const TEST_PORT = 13839;
 const BASE = `http://localhost:${TEST_PORT}`;
@@ -46,6 +47,8 @@ describe('Agent Registry REST API', () => {
         // Override the agentRegistry to use a temp file so we don't pollute real data
         const { AgentRegistry } = await import('../sync/agent-registry.js');
         server.agentRegistry = new AgentRegistry({ filePath: join(TMP_DATA_DIR, 'agents.json') });
+        // Override timeSeriesStore with no minInterval for fast test writes
+        server.timeSeriesStore = new TimeSeriesStore({ maxPoints: 1000, minInterval: 0 });
         await server.start();
     });
 
@@ -166,6 +169,148 @@ describe('Agent Registry REST API', () => {
             const list = await request('GET', '/api/v1/agents');
             const remaining = list.body.filter(a => a.id === a1.body.id || a.id === a2.body.id);
             assert.equal(remaining.length, 0);
+        });
+    });
+
+    describe('POST /api/v1/agents/:id/metrics', () => {
+        it('accepts a metric and returns 201', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'MetricBot' });
+            const res = await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'cpu', value: 0.72,
+            });
+            assert.equal(res.status, 201);
+            assert.equal(res.body.ok, true);
+            assert.equal(res.body.key, 'cpu');
+        });
+
+        it('rejects missing key', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'NoKeyBot' });
+            const res = await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                value: 42,
+            });
+            assert.equal(res.status, 400);
+            assert.ok(res.body.error.includes('key'));
+        });
+
+        it('rejects missing value', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'NoValBot' });
+            const res = await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'mem',
+            });
+            assert.equal(res.status, 400);
+            assert.ok(res.body.error.includes('value'));
+        });
+
+        it('returns 404 for unknown agent', async () => {
+            const res = await request('POST', '/api/v1/agents/ghost-agent/metrics', {
+                key: 'cpu', value: 0.5,
+            });
+            assert.equal(res.status, 404);
+        });
+
+        it('stores multiple metrics for same agent', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'MultiMetric' });
+            await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'cpu', value: 0.5,
+            });
+            await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'mem', value: 0.8,
+            });
+            // Retrieve and verify both are present
+            const getRes = await request('GET', `/api/v1/agents/${created.body.id}/metrics`);
+            assert.equal(getRes.status, 200);
+            assert.equal(getRes.body.metrics.cpu, 0.5);
+            assert.equal(getRes.body.metrics.mem, 0.8);
+        });
+
+        it('accepts numeric, string, and boolean values', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'ValTypes' });
+            const r1 = await request('POST', `/api/v1/agents/${created.body.id}/metrics`, { key: 'num', value: 42 });
+            assert.equal(r1.status, 201);
+            const r2 = await request('POST', `/api/v1/agents/${created.body.id}/metrics`, { key: 'str', value: 'ok' });
+            assert.equal(r2.status, 201);
+            const r3 = await request('POST', `/api/v1/agents/${created.body.id}/metrics`, { key: 'bool', value: true });
+            assert.equal(r3.status, 201);
+        });
+    });
+
+    describe('GET /api/v1/agents/:id/metrics', () => {
+        it('returns latest values for all agent metrics', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'GetMetrics' });
+            await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'cpu', value: 0.3,
+            });
+            await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'cpu', value: 0.7,
+            });
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/metrics`);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.agentId, created.body.id);
+            assert.equal(res.body.metrics.cpu, 0.7); // latest value
+        });
+
+        it('returns empty metrics object for agent with no metrics', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'EmptyMetrics' });
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/metrics`);
+            assert.equal(res.status, 200);
+            assert.deepStrictEqual(res.body.metrics, {});
+        });
+
+        it('returns 404 for unknown agent', async () => {
+            const res = await request('GET', '/api/v1/agents/no-such-agent/metrics');
+            assert.equal(res.status, 404);
+        });
+    });
+
+    describe('GET /api/v1/agents/:id/metrics/:key/history', () => {
+        it('returns time-series history for a specific metric', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'HistoryBot' });
+            await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'cpu', value: 0.1,
+            });
+            await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'cpu', value: 0.2,
+            });
+            await request('POST', `/api/v1/agents/${created.body.id}/metrics`, {
+                key: 'cpu', value: 0.3,
+            });
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/metrics/cpu/history`);
+            assert.equal(res.status, 200);
+            assert.equal(res.body.agentId, created.body.id);
+            assert.equal(res.body.key, 'cpu');
+            assert.equal(res.body.history.length, 3);
+            assert.equal(res.body.history[0].v, 0.1);
+            assert.equal(res.body.history[1].v, 0.2);
+            assert.equal(res.body.history[2].v, 0.3);
+            // Each point should have a timestamp
+            assert.ok(res.body.history[0].t > 0);
+        });
+
+        it('returns empty history for unknown metric key', async () => {
+            const created = await request('POST', '/api/v1/agents', { name: 'NoHistory' });
+            const res = await request('GET', `/api/v1/agents/${created.body.id}/metrics/nonexistent/history`);
+            assert.equal(res.status, 200);
+            assert.deepStrictEqual(res.body.history, []);
+        });
+
+        it('returns 404 for unknown agent', async () => {
+            const res = await request('GET', '/api/v1/agents/no-such-agent/metrics/cpu/history');
+            assert.equal(res.status, 404);
+        });
+
+        it('isolates metrics between different agents', async () => {
+            const a1 = await request('POST', '/api/v1/agents', { name: 'Isolated1' });
+            const a2 = await request('POST', '/api/v1/agents', { name: 'Isolated2' });
+            await request('POST', `/api/v1/agents/${a1.body.id}/metrics`, {
+                key: 'cpu', value: 0.9,
+            });
+            await request('POST', `/api/v1/agents/${a2.body.id}/metrics`, {
+                key: 'cpu', value: 0.1,
+            });
+            const h1 = await request('GET', `/api/v1/agents/${a1.body.id}/metrics/cpu/history`);
+            const h2 = await request('GET', `/api/v1/agents/${a2.body.id}/metrics/cpu/history`);
+            assert.equal(h1.body.history[0].v, 0.9);
+            assert.equal(h2.body.history[0].v, 0.1);
         });
     });
 });

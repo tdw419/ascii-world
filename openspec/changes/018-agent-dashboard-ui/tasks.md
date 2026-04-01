@@ -34,4 +34,4 @@
 ## 6. Documentation
 - [x] 6.1 Update README with agent formula functions reference
 - [x] 6.2 Add agent dashboard templates section to README
-- [ ] 6.3 Commit and push
+- [x] 6.3 Commit and push

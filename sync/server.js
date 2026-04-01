@@ -20,6 +20,7 @@ import { PixelVMBridge } from './pixelvm-bridge.js';
 import { renderers, detectFormat } from './renderers/index.js';
 import { runAllVCCTests } from './renderers/vcc-evaluator.js';
 import { GPUAgentBridge, GLYPH_TO_OPCODE, OPCODE_COLORS } from './gpu-agent-bridge.js';
+import { VCCTextureBridge } from './vcc-texture-bridge.js';
 import { YouTubeScraper } from './youtube-scraper.js';
 import { YouTubeExtractor } from './youtube-extractor.js';
 import { exportPNG } from './publish/png-export.js';
@@ -62,6 +63,15 @@ export class PxOSServer {
             },
             onError: (err) => {
                 console.error('[GPU Agent Bridge]', err);
+            }
+        });
+        this.vccBridge = new VCCTextureBridge({
+            cellStore: this.cellStore,
+            onFrame: ({ rgba, stats }) => {
+                this.broadcast({ type: 'vcc-frame', stats });
+            },
+            onError: (err) => {
+                console.error('[VCC Bridge]', err);
             }
         });
         this.template = [];
@@ -128,6 +138,9 @@ export class PxOSServer {
         // Start GPU Bridge
         this.gpuBridge.start(500);
 
+        // Start VCC Texture Bridge (reads GlyphLang colony from SHM)
+        this.vccBridge.start(100);
+
         // Start Evolutionary Agent
         this.evoAgent.start();
 
@@ -176,6 +189,9 @@ export class PxOSServer {
     async stop() {
         // Stop GPU Bridge
         this.gpuBridge.stop();
+
+        // Stop VCC Texture Bridge
+        this.vccBridge.stop();
 
         // Stop Evolutionary Agent
         if (this.evoAgent && this.evoAgent.stop) {
@@ -336,6 +352,13 @@ export class PxOSServer {
                 await this.handleGPUBridgeConnect(req, res);
             } else if (pathname === '/api/v1/gpu/glyphs' && req.method === 'GET') {
                 this.handleGPUGlyphs(req, res);
+            // VCC Colony Texture API
+            } else if (pathname === '/api/v1/vcc/texture' && req.method === 'GET') {
+                this.handleVCCTexture(req, res);
+            } else if (pathname === '/api/v1/vcc/ascii' && req.method === 'GET') {
+                this.handleVCCASCII(req, res);
+            } else if (pathname === '/api/v1/vcc/stats' && req.method === 'GET') {
+                this.handleVCCStats(req, res);
             // YouTube API
             } else if (pathname === '/youtube') {
                 this.handleYouTubeViewer(req, res);
@@ -361,6 +384,8 @@ export class PxOSServer {
                 await this.handleYouTubeSubscriptions(req, res);
             } else if (pathname === '/api/youtube/discover') {
                 await this.handleYouTubeDiscover(req, res, url);
+            } else if (pathname === '/api/youtube/video-info') {
+                await this.handleYouTubeSpecificVideo(req, res, url);
             // CMS Navigation & Routing
             } else if (pathname === '/api/cms/nav' && req.method === 'GET') {
                 this.handleCMSNav(req, res);
@@ -510,6 +535,42 @@ export class PxOSServer {
         } catch (err) {
             this.sendError(res, 500, `VCC validation error: ${err.message}`);
         }
+    }
+
+    // ── VCC Colony Texture API ──
+
+    handleVCCTexture(req, res) {
+        // Serve raw RGBA from shared memory as binary
+        try {
+            const rgba = this.vccBridge.getRawRGBA();
+            if (!rgba || rgba.length === 0) {
+                return this.sendError(res, 503, 'VCC texture not available');
+            }
+            res.writeHead(200, {
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': rgba.length,
+                'X-VCC-Width': 256,
+                'X-VCC-Height': 256,
+                'X-VCC-Format': 'rgba8',
+                'Cache-Control': 'no-cache',
+            });
+            res.end(rgba);
+        } catch (err) {
+            this.sendError(res, 500, `VCC texture error: ${err.message}`);
+        }
+    }
+
+    handleVCCASCII(req, res) {
+        try {
+            const ascii = this.vccBridge.toASCII(80, 24);
+            this.sendJSON(res, 200, { ascii, width: 80, height: 24 });
+        } catch (err) {
+            this.sendError(res, 500, `VCC ASCII error: ${err.message}`);
+        }
+    }
+
+    handleVCCStats(req, res) {
+        this.sendJSON(res, 200, this.vccBridge.getStats());
     }
 
     async handlePostTemplate(req, res) {
@@ -1204,19 +1265,62 @@ export class PxOSServer {
         }
     }
 
-    async handleYouTubePersonalized(req, res) {
+    async handleYouTubePersonalized(req, res, url) {
         try {
-            console.log('[PERSONALIZED] Fetching videos with chromium cookies...');
-            const videos = await this.youtubeScraper.fetchPersonalizedHomepage();
-            console.log('[PERSONALIZED] Found', videos.length, 'videos');
+            const continuation = url.searchParams.get('c');
+            console.log(`[PERSONALIZED] Fetching videos ${continuation ? '(Next Page)' : '...'}`);
+            const result = await this.youtubeScraper.fetchPersonalizedHomepage(continuation);
+
             this.sendJSON(res, 200, {
-                videos,
+                videos: Array.isArray(result) ? result : result.videos,
+                continuation: result.continuation || null,
                 fetched: new Date().toISOString(),
                 source: 'personal'
             });
         } catch (err) {
             console.error('[PERSONALIZED] Error:', err.message);
             this.sendError(res, 500, `Failed to fetch personalized feed: ${err.message}`);
+        }
+    }
+
+    async handleYouTubePersonalizedV2(req, res, url) {
+        try {
+            console.log('[PERSONALIZED-V2] Fetching videos using cookies (preferred)...');
+            let html;
+            try {
+                html = await this.youtubeScraper.fetchWithCookies('https://www.youtube.com/');
+            } catch (err) {
+                console.warn('[PERSONALIZED-V2] Fetch with cookies failed, falling back to Chromium...');
+                html = await this.youtubeScraper.fetchWithChromium('https://www.youtube.com/');
+            }
+
+            // Re-use existing HTML parser
+            const videos = this.youtubeScraper.parseSearchHTML(html);
+
+            this.sendJSON(res, 200, {
+                videos,
+                fetched: new Date().toISOString(),
+                source: 'personalized-v2'
+            });
+        } catch (err) {
+            console.error('[PERSONALIZED-V2] Error:', err.message);
+            this.sendError(res, 500, `Failed to fetch V2 feed: ${err.message}`);
+        }
+    }
+
+    async handleYouTubeSubscriptions(req, res) {
+        try {
+            console.log('[SUBSCRIPTIONS] Fetching videos with cookies...');
+            const videos = await this.youtubeScraper.fetchSubscriptions();
+            console.log('[SUBSCRIPTIONS] Found', videos.length, 'videos');
+            this.sendJSON(res, 200, {
+                videos,
+                fetched: new Date().toISOString(),
+                source: 'subscriptions'
+            });
+        } catch (err) {
+            console.error('[SUBSCRIPTIONS] Error:', err.message);
+            this.sendError(res, 500, `Failed to fetch subscriptions feed: ${err.message}`);
         }
     }
 
@@ -1235,6 +1339,26 @@ export class PxOSServer {
         } catch (err) {
             console.error('[DISCOVER] Error:', err.message);
             this.sendError(res, 500, `Failed to fetch discover feed: ${err.message}`);
+        }
+    }
+
+    async handleYouTubeSpecificVideo(req, res, url) {
+        try {
+            const videoUrl = url.searchParams.get('url');
+            if (!videoUrl) {
+                return this.sendError(res, 400, 'Missing url parameter');
+            }
+            console.log('[VIDEO-INFO] Fetching info for:', videoUrl);
+            const videos = await this.youtubeScraper.fetchHomepage(videoUrl);
+            console.log('[VIDEO-INFO] Found', videos.length, 'videos');
+            
+            this.sendJSON(res, 200, {
+                videos,
+                fetched: new Date().toISOString()
+            });
+        } catch (err) {
+            console.error('[VIDEO-INFO] Error:', err.message);
+            this.sendError(res, 500, `Failed to fetch video info: ${err.message}`);
         }
     }
 

@@ -9,3 +9,8 @@ protected_files:
   - README.md
   - ROADMAP.md
   - project.yaml
+  - aipm/publishers/ssh_server.js
+  - aipm/publishers/http_server.js
+  - aipm/core/cms.js
+  - bin/aipm-dashboard.js
+  - CONTRACTS.md

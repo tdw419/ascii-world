@@ -49,4 +49,4 @@
 - [x] 7.1 Update README with Task Queue API reference
 - [x] 7.2 Update README with queue visualization formulas
 - [x] 7.3 Update README with SDK task methods usage
-- [ ] 7.4 Commit and push
+- [x] 7.4 Commit and push

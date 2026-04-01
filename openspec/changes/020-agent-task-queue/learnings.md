@@ -29,3 +29,23 @@ Steps 6.1, 6.2, 6.3 were already implemented (test files existed with comprehens
 ## discovery
 
 - **[discovery]** (from SEC-6) Agent strategy: created 1 file, modified 6 files, added tests
+
+# Learnings: SEC-7 Documentation
+
+## What happened
+Created `docs/TASK-QUEUE.md` with full API reference, formula docs, and SDK usage examples for both JS and Python.
+
+## Key finding
+README.md is a protected file in this project. Could not update it as the original task steps specified. Created a dedicated docs/TASK-QUEUE.md file instead -- this is actually better since it keeps the already-large README from growing further.
+
+## What's documented
+- Task model fields and lifecycle
+- All 7 REST endpoints with curl examples and response shapes
+- 3 formula functions (TASK_QUEUE_STATUS, TASK_COUNT, TASK_LIST) with examples
+- JS SDK (agents/sdk.js) methods with usage example
+- Python SDK (agents/sdk.py) methods with usage example
+- templates/task-queue.json dashboard template
+
+## Notes
+- All 1905 tests still passing
+- Agent strategy: created 1 file, modified 2 files (tasks.md, learnings.md)

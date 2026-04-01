@@ -12,8 +12,10 @@ describe('PxOSServer', () => {
         server.cmsContentStore.items.clear();
         server.cmsContentStore.manifests.clear();
         await server.start();
-        // Small delay to ensure server is fully ready
-        await new Promise(r => setTimeout(r, 100));
+        // Stop VCC bridge to prevent it from populating cells during tests
+        server.vccBridge.stop();
+        // Clear any cells written by VCC bridge or other subsystems during start
+        server.cellStore.cells = {};
     });
 
     afterEach(async () => {

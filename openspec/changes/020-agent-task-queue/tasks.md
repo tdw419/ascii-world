@@ -27,10 +27,10 @@
 - [x] 3.7 Add GET /api/v1/tasks/stats to server.js: returns store.getStats()
 
 ## 4. Queue Visualization
-- [ ] 4.1 Add TASK_QUEUE_STATUS() formula function: returns {pending, running, completed, failed} counts as formatted string
-- [ ] 4.2 Add TASK_COUNT(status?) formula function: returns count for given status or total
-- [ ] 4.3 Add TASK_LIST(status?) formula function: returns comma-separated task IDs for given status
-- [ ] 4.4 Create templates/task-queue.json: dashboard template showing queue stats as pixel blocks
+- [x] 4.1 Add TASK_QUEUE_STATUS() formula function: returns {pending, running, completed, failed} counts as formatted string
+- [x] 4.2 Add TASK_COUNT(status?) formula function: returns count for given status or total
+- [x] 4.3 Add TASK_LIST(status?) formula function: returns comma-separated task IDs for given status
+- [x] 4.4 Create templates/task-queue.json: dashboard template showing queue stats as pixel blocks
 
 ## 5. Agent SDK Task Methods
 - [ ] 5.1 Add claimTask() to Python agent SDK: GET pending tasks, PUT claim, returns Task or None
@@ -43,7 +43,7 @@
 - [ ] 6.1 Add tests/task-model.test.js: validate, serialize, isExpired
 - [ ] 6.2 Add tests/task-store.test.js: create, get, list, claim, complete, fail, stats, persist
 - [ ] 6.3 Add tests/task-api.test.js: all REST endpoints via supertest
-- [ ] 6.4 Add tests/task-formulas.test.js: TASK_QUEUE_STATUS, TASK_COUNT, TASK_LIST
+- [x] 6.4 Add tests/task-formulas.test.js: TASK_QUEUE_STATUS, TASK_COUNT, TASK_LIST
 
 ## 7. Documentation
 - [ ] 7.1 Update README with Task Queue API reference

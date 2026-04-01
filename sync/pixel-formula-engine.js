@@ -58,6 +58,13 @@ export class PixelFormulaEngine {
     }
 
     /**
+     * Set the task store for task queue formula functions.
+     */
+    setTaskStore(store) {
+        this._taskStore = store;
+    }
+
+    /**
      * AGENT_STATUS(agentId) — returns the status string of the agent, or "unknown".
      */
     AGENT_STATUS(agentId) {
@@ -103,6 +110,44 @@ export class PixelFormulaEngine {
         const id = this.resolveValue(agentId);
         const agent = this._agentRegistry.get(String(id));
         return agent ? agent.name : 'unknown';
+    }
+
+    /**
+     * TASK_QUEUE_STATUS() — returns {pending, running, completed, failed} counts as formatted string.
+     * Example: "pending:5 running:2 completed:10 failed:1"
+     */
+    TASK_QUEUE_STATUS() {
+        if (!this._taskStore) return 'pending:0 running:0 completed:0 failed:0';
+        const stats = this._taskStore.getStats();
+        return `pending:${stats.pending} running:${stats.running} completed:${stats.completed} failed:${stats.failed}`;
+    }
+
+    /**
+     * TASK_COUNT(status?) — returns count for given status, or total if no status.
+     * @param {string} [status] - One of: pending, running, completed, failed. Omit for total.
+     * @returns {number}
+     */
+    TASK_COUNT(status) {
+        if (!this._taskStore) return 0;
+        const s = status !== undefined ? this.resolveValue(status) : undefined;
+        if (s) {
+            const stats = this._taskStore.getStats();
+            return stats[s] ?? 0;
+        }
+        // Total count across all statuses
+        return this._taskStore.list().length;
+    }
+
+    /**
+     * TASK_LIST(status?) — returns comma-separated task IDs for given status.
+     * @param {string} [status] - One of: pending, running, completed, failed. Omit for all.
+     * @returns {string}
+     */
+    TASK_LIST(status) {
+        if (!this._taskStore) return '';
+        const s = status !== undefined ? this.resolveValue(status) : undefined;
+        const filters = s ? { status: s } : {};
+        return this._taskStore.list(filters).map(t => t.id).join(',');
     }
 
     /**

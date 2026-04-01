@@ -1,0 +1,57 @@
+{
+  "name": "Task Queue",
+  "template": [
+    {
+      "fn": "TEXT",
+      "args": [0, 0, "Task Queue"]
+    },
+    {
+      "fn": "RECT",
+      "args": [0, 1, 40, 1, "barFill"]
+    },
+    {
+      "fn": "TEXT",
+      "args": [0, 2, "task_queue_status"]
+    },
+    {
+      "fn": "TEXT",
+      "args": [0, 3, "Pending:"]
+    },
+    {
+      "fn": "NUMBER",
+      "args": [10, 3, "task_count_pending", "0"]
+    },
+    {
+      "fn": "TEXT",
+      "args": [0, 4, "Running:"]
+    },
+    {
+      "fn": "NUMBER",
+      "args": [10, 4, "task_count_running", "0"]
+    },
+    {
+      "fn": "TEXT",
+      "args": [0, 5, "Completed:"]
+    },
+    {
+      "fn": "NUMBER",
+      "args": [10, 5, "task_count_completed", "0"]
+    },
+    {
+      "fn": "TEXT",
+      "args": [0, 6, "Failed:"]
+    },
+    {
+      "fn": "NUMBER",
+      "args": [10, 6, "task_count_failed", "0"]
+    },
+    {
+      "fn": "BAR",
+      "args": [0, 7, "task_completion_rate", 40]
+    }
+  ],
+  "alerts": [],
+  "type": "task-queue",
+  "source": "sync/task-store.js",
+  "refreshInterval": 3000
+}

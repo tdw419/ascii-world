@@ -8,3 +8,21 @@
 - TaskStore was not yet instantiated in the server constructor -- added it.
 - Tests follow the `agent-api.test.js` pattern: raw http.request helper, PxOSServer on a test port, override stores with temp paths.
 - All 21 new tests pass, total suite 1871/1871.
+
+## pattern
+
+- **[pattern]** (from SEC-3) [modified] sync/server.js
+
+- **[pattern]** (from SEC-3) [added] tests/task-api.test.js
+
+- **[pattern]** (from SEC-3) [added] .test-fixtures/task-store/deep-1775048244736/sub/tasks.json
+
+- **[pattern]** (from SEC-3) [added] .test-fixtures/task-store/deep-1775047887027/sub/tasks.json
+
+- **[pattern]** (from SEC-3) [modified] data/cms-content.json
+
+## discovery
+
+- **[discovery]** (from SEC-3) Agent strategy: created 3 files, modified 7 files, added tests
+
+- **[discovery]** (from SEC-3) Tests improved by 21 (1850 -> 1871)

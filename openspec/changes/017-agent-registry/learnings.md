@@ -80,3 +80,15 @@
 - **[discovery]** (from SEC-6) Agent strategy: modified 8 files
 
 - **[discovery]** (from SEC-6) Tests improved by 16 (1446 -> 1462)
+
+- **[pattern]** (from SEC-7) [modified] INTEGRATION.md
+
+- **[pattern]** (from SEC-7) [modified] data/cms-content.json
+
+- **[pattern]** (from SEC-7) [modified] data/dashboards.json
+
+- **[pattern]** (from SEC-7) [modified] data/aipm-status.ascii
+
+- **[pattern]** (from SEC-7) [modified] openspec/changes/017-agent-registry/tasks.md
+
+- **[discovery]** (from SEC-7) Agent strategy: modified 5 files

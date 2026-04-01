@@ -4,6 +4,10 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { PixelFormulaEngine } from '../sync/pixel-formula-engine.js';
+import { AgentRegistry } from '../sync/agent-registry.js';
+import { TimeSeriesStore } from '../sync/time-series-store.js';
+import { mkdirSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 
 describe('PixelFormulaEngine', () => {
     let engine;
@@ -326,5 +330,174 @@ describe('PixelFormulaEngine', () => {
         // Check that table drew pixels with custom headers
         const pixel = engine.buffer.getPixel(15, 5);
         assert.ok(pixel[0] > 0 || pixel[1] > 0 || pixel[2] > 0, 'TABLE should draw pixels');
+    });
+
+    // Agent formula function tests
+
+    describe('AGENT_STATUS', () => {
+        it('returns agent status string', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            const { agent } = reg.register({ id: 'a1', name: 'Alpha', status: 'online' });
+            engine.setAgentRegistry(reg);
+
+            assert.strictEqual(engine.AGENT_STATUS('a1'), 'online');
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it('returns "unknown" for missing agent', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            engine.setAgentRegistry(reg);
+
+            assert.strictEqual(engine.AGENT_STATUS('nope'), 'unknown');
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it('returns "unknown" when no registry set', () => {
+            assert.strictEqual(engine.AGENT_STATUS('a1'), 'unknown');
+        });
+
+        it('resolves cell references for agentId', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            reg.register({ id: 'b1', name: 'Beta', status: 'offline' });
+            engine.setAgentRegistry(reg);
+            engine.setCells({ target_agent: 'b1' });
+
+            assert.strictEqual(engine.AGENT_STATUS('target_agent'), 'offline');
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+    });
+
+    describe('AGENT_LIST', () => {
+        it('returns comma-separated agent IDs', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            reg.register({ id: 'x1', name: 'X' });
+            reg.register({ id: 'x2', name: 'Y' });
+            engine.setAgentRegistry(reg);
+
+            const list = engine.AGENT_LIST();
+            assert.ok(list.includes('x1'));
+            assert.ok(list.includes('x2'));
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it('returns empty string when no registry', () => {
+            assert.strictEqual(engine.AGENT_LIST(), '');
+        });
+
+        it('returns empty string for empty registry', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            engine.setAgentRegistry(reg);
+
+            assert.strictEqual(engine.AGENT_LIST(), '');
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+    });
+
+    describe('AGENT_METRIC', () => {
+        it('returns latest metric value from time-series store', () => {
+            const ts = new TimeSeriesStore({ minInterval: 0 });
+            ts.record('agent:a1:cpu', 0.85);
+            engine.setTimeSeriesStore(ts);
+
+            assert.strictEqual(engine.AGENT_METRIC('a1', 'cpu'), 0.85);
+        });
+
+        it('returns 0 when metric not found', () => {
+            const ts = new TimeSeriesStore({ minInterval: 0 });
+            engine.setTimeSeriesStore(ts);
+
+            assert.strictEqual(engine.AGENT_METRIC('a1', 'cpu'), 0);
+        });
+
+        it('returns 0 when no time-series store set', () => {
+            assert.strictEqual(engine.AGENT_METRIC('a1', 'cpu'), 0);
+        });
+
+        it('resolves cell references', () => {
+            const ts = new TimeSeriesStore({ minInterval: 0 });
+            ts.record('agent:myAgent:mem', 42);
+            engine.setTimeSeriesStore(ts);
+            engine.setCells({ agent_ref: 'myAgent', metric_ref: 'mem' });
+
+            assert.strictEqual(engine.AGENT_METRIC('agent_ref', 'metric_ref'), 42);
+        });
+    });
+
+    describe('AGENT_COUNT', () => {
+        it('returns number of registered agents', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            reg.register({ name: 'One' });
+            reg.register({ name: 'Two' });
+            reg.register({ name: 'Three' });
+            engine.setAgentRegistry(reg);
+
+            assert.strictEqual(engine.AGENT_COUNT(), 3);
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it('returns 0 when no registry', () => {
+            assert.strictEqual(engine.AGENT_COUNT(), 0);
+        });
+
+        it('returns 0 for empty registry', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            engine.setAgentRegistry(reg);
+
+            assert.strictEqual(engine.AGENT_COUNT(), 0);
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+    });
+
+    describe('AGENT_NAME', () => {
+        it('returns agent name string', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            reg.register({ id: 'n1', name: 'Hermes' });
+            engine.setAgentRegistry(reg);
+
+            assert.strictEqual(engine.AGENT_NAME('n1'), 'Hermes');
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it('returns "unknown" for missing agent', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            engine.setAgentRegistry(reg);
+
+            assert.strictEqual(engine.AGENT_NAME('ghost'), 'unknown');
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it('returns "unknown" when no registry set', () => {
+            assert.strictEqual(engine.AGENT_NAME('a1'), 'unknown');
+        });
+
+        it('resolves cell references for agentId', () => {
+            const tmpDir = join('/tmp', `pfe-agent-test-${Date.now()}`);
+            mkdirSync(tmpDir, { recursive: true });
+            const reg = new AgentRegistry({ filePath: join(tmpDir, 'agents.json') });
+            reg.register({ id: 'r1', name: 'Resolved' });
+            engine.setAgentRegistry(reg);
+            engine.setCells({ my_agent: 'r1' });
+
+            assert.strictEqual(engine.AGENT_NAME('my_agent'), 'Resolved');
+            rmSync(tmpDir, { recursive: true, force: true });
+        });
     });
 });

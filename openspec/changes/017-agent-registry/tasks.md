@@ -44,4 +44,4 @@
 ## 7. Documentation
 - [x] 7.1 Update INTEGRATION.md with Agent Registry section (API endpoints, data model)
 - [x] 7.2 Update INTEGRATION.md with Python SDK register/heartbeat/reportMetric usage
-- [ ] 7.3 Commit and push
+- [x] 7.3 Commit and push

@@ -32,6 +32,8 @@ export class PixelFormulaEngine {
         this.buffer = new PixelBuffer(width, height);
         this.atlas = new GlyphAtlas();
         this.cells = {};
+        this._agentRegistry = null;
+        this._timeSeriesStore = null;
     }
 
     /**
@@ -39,6 +41,68 @@ export class PixelFormulaEngine {
      */
     setCells(cells) {
         this.cells = cells;
+    }
+
+    /**
+     * Set the agent registry for agent formula functions.
+     */
+    setAgentRegistry(registry) {
+        this._agentRegistry = registry;
+    }
+
+    /**
+     * Set the time-series store for agent metric queries.
+     */
+    setTimeSeriesStore(store) {
+        this._timeSeriesStore = store;
+    }
+
+    /**
+     * AGENT_STATUS(agentId) — returns the status string of the agent, or "unknown".
+     */
+    AGENT_STATUS(agentId) {
+        if (!this._agentRegistry) return 'unknown';
+        const id = this.resolveValue(agentId);
+        const agent = this._agentRegistry.get(String(id));
+        return agent ? agent.status : 'unknown';
+    }
+
+    /**
+     * AGENT_LIST() — returns comma-separated list of all registered agent IDs.
+     */
+    AGENT_LIST() {
+        if (!this._agentRegistry) return '';
+        return this._agentRegistry.list().map(a => a.id).join(',');
+    }
+
+    /**
+     * AGENT_METRIC(agentId, metricName) — queries time-series for agent:{id}:{metric}, returns latest value.
+     */
+    AGENT_METRIC(agentId, metricName) {
+        const id = this.resolveValue(agentId);
+        const metric = this.resolveValue(metricName);
+        if (!this._timeSeriesStore) return 0;
+        const key = `agent:${id}:${metric}`;
+        const latest = this._timeSeriesStore.getLatest();
+        return latest[key] ?? 0;
+    }
+
+    /**
+     * AGENT_COUNT() — returns the number of registered agents.
+     */
+    AGENT_COUNT() {
+        if (!this._agentRegistry) return 0;
+        return this._agentRegistry.list().length;
+    }
+
+    /**
+     * AGENT_NAME(agentId) — returns the agent name string, or "unknown".
+     */
+    AGENT_NAME(agentId) {
+        if (!this._agentRegistry) return 'unknown';
+        const id = this.resolveValue(agentId);
+        const agent = this._agentRegistry.get(String(id));
+        return agent ? agent.name : 'unknown';
     }
 
     /**

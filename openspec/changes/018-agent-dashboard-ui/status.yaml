@@ -1,2 +1,4 @@
-status: draft
-labels: [autospec, spec-defined]
+labels:
+- autospec
+- spec-defined
+status: in_progress

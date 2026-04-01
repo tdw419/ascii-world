@@ -34,3 +34,11 @@
 - **[discovery]** (from SEC-2) Tests improved by 23 (1402 -> 1425)
 
 - **[discovery]** (from SEC-2) Agent strategy: modified 2 files
+
+- **[pattern]** (from SEC-2) [modified] data/cms-content.json
+
+- **[pattern]** (from SEC-2) [modified] data/dashboards.json
+
+- **[pattern]** (from SEC-2) [modified] openspec/changes/017-agent-registry/tasks.md
+
+- **[discovery]** (from SEC-2) Agent strategy: modified 3 files

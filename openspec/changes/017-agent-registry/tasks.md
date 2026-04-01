@@ -17,9 +17,9 @@
 - [x] 2.9 Add persist() private method: writes map to data/agents.json
 
 ## 3. Heartbeat Liveness Check
-- [ ] 3.1 Add startLivenessCheck(intervalMs=30000) method to AgentRegistry
-- [ ] 3.2 In liveness loop: mark agents with lastHeartbeat older than 60s as offline, older than 120s as error
-- [ ] 3.3 Emit 'agent:offline' and 'agent:error' events on status transitions
+- [x] 3.1 Add startLivenessCheck(intervalMs=30000) method to AgentRegistry
+- [x] 3.2 In liveness loop: mark agents with lastHeartbeat older than 60s as offline, older than 120s as error
+- [x] 3.3 Emit 'agent:offline' and 'agent:error' events on status transitions
 
 ## 4. REST API Endpoints
 - [ ] 4.1 Add POST /api/v1/agents endpoint to server.js: calls registry.register(body), returns 201 with agent
@@ -39,7 +39,7 @@
 - [ ] 6.1 Add tests/agent-model.test.js: validate, serialize, deserialize
 - [x] 6.2 Add tests/agent-registry.test.js: register, get, list, heartbeat, remove, persist, load
 - [ ] 6.3 Add tests/agent-api.test.js: POST/GET/PUT/DELETE agent endpoints via supertest
-- [ ] 6.4 Add test for liveness check marking agents offline
+- [x] 6.4 Add test for liveness check marking agents offline
 
 ## 7. Documentation
 - [ ] 7.1 Update README with Agent Registry section (API endpoints, data model)

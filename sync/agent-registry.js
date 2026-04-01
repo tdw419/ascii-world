@@ -5,14 +5,16 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { Agent } from './agent-model.js';
 
-export class AgentRegistry {
+export class AgentRegistry extends EventTarget {
     /**
      * @param {object} [options]
      * @param {string} [options.filePath] - Path to the JSON persistence file.
      */
     constructor(options = {}) {
+        super();
         this.filePath = options.filePath || 'data/agents.json';
         this._agents = new Map();
+        this._livenessTimer = null;
     }
 
     /**
@@ -115,6 +117,60 @@ export class AgentRegistry {
             }
         } catch {
             // Corrupt or unreadable file — start empty
+        }
+    }
+
+    /**
+     * Start a periodic liveness check that marks agents as offline or error
+     * based on how stale their lastHeartbeat is.
+     *
+     * - No heartbeat or >60s old → offline
+     * - >120s old → error
+     *
+     * Emits 'agent:offline' and 'agent:error' events on status transitions.
+     *
+     * @param {number} [intervalMs=30000] - Check interval in milliseconds.
+     */
+    startLivenessCheck(intervalMs = 30000) {
+        this.stopLivenessCheck();
+        this._livenessTimer = setInterval(() => this._checkLiveness(), intervalMs);
+        // Allow the process to exit even if the timer is running
+        if (this._livenessTimer.unref) this._livenessTimer.unref();
+    }
+
+    /**
+     * Stop the periodic liveness check.
+     */
+    stopLivenessCheck() {
+        if (this._livenessTimer) {
+            clearInterval(this._livenessTimer);
+            this._livenessTimer = null;
+        }
+    }
+
+    /**
+     * Run a single liveness pass over all registered agents.
+     * @private
+     */
+    _checkLiveness() {
+        const now = Date.now();
+        for (const agent of this._agents.values()) {
+            if (!agent.lastHeartbeat) {
+                // Never heartbeated — leave as-is (likely just registered)
+                continue;
+            }
+            const ageMs = now - new Date(agent.lastHeartbeat).getTime();
+            const prevStatus = agent.status;
+
+            if (ageMs > 120_000 && prevStatus !== 'error') {
+                agent.status = 'error';
+                this._persist();
+                this.dispatchEvent(new CustomEvent('agent:error', { detail: { agent } }));
+            } else if (ageMs > 60_000 && prevStatus === 'online') {
+                agent.status = 'offline';
+                this._persist();
+                this.dispatchEvent(new CustomEvent('agent:offline', { detail: { agent } }));
+            }
         }
     }
 

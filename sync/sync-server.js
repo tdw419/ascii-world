@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { contentHash, extractHash, computeContentHash, updateHash, verifyHash } from './hash-utils.js';
 import { actionHandlers } from './action-handlers.js';
+import { handlePaperclipAction, startPaperclipPoller, stopPaperclipPoller } from '../integrations/paperclip/index.js';
 
 const PORT = process.env.SYNC_PORT || 3839;
 const DATA_DIR = process.env.DATA_DIR || path.join(import.meta.dirname, '../data');
@@ -37,6 +38,18 @@ class AsciiSyncServer {
             .on('error', (error) => console.error('Watcher error:', error));
 
         console.log(`Watching ${DATA_DIR} for .ascii files`);
+
+        // Start Paperclip poller - keeps paperclip.ascii in sync with Paperclip API
+        startPaperclipPoller((filepath, content, hash) => {
+            this.fileContents.set(filepath, content);
+            this.broadcast({
+                type: 'file_update',
+                filepath: path.basename(filepath),
+                content,
+                hash,
+                timestamp: Date.now()
+            });
+        });
     }
 
     handleConnection(ws) {
@@ -208,18 +221,33 @@ class AsciiSyncServer {
             return;
         }
 
-        // Process the action
-        const handler = actionHandlers[msg.action];
-        if (!handler) {
-            ws.send(JSON.stringify({
-                type: 'action_error',
-                error: `Unknown action type: ${msg.action}`,
-                action: msg
-            }));
-            return;
+        // Route paperclip.ascii actions to the Paperclip bridge
+        let result;
+        if (filepath.endsWith('paperclip.ascii')) {
+            try {
+                result = await handlePaperclipAction(content, msg);
+            } catch (err) {
+                console.error('Paperclip bridge error:', err);
+                ws.send(JSON.stringify({
+                    type: 'action_error',
+                    error: `Paperclip bridge: ${err.message}`,
+                    action: msg
+                }));
+                return;
+            }
+        } else {
+            // Standard action handler
+            const handler = actionHandlers[msg.action];
+            if (!handler) {
+                ws.send(JSON.stringify({
+                    type: 'action_error',
+                    error: `Unknown action type: ${msg.action}`,
+                    action: msg
+                }));
+                return;
+            }
+            result = handler(content, msg);
         }
-
-        const result = handler(content, msg);
 
         // Write updated content
         try {
@@ -246,8 +274,23 @@ class AsciiSyncServer {
     }
 
     findFileForAction(msg) {
-        // For now, return the first .ascii file
-        // In production, this would use msg.context or active file tracking
+        // Route by context or explicit filepath
+        if (msg.context === 'paperclip' || msg.filepath === 'paperclip.ascii') {
+            for (const filepath of this.fileContents.keys()) {
+                if (filepath.endsWith('paperclip.ascii')) {
+                    return filepath;
+                }
+            }
+        }
+
+        // Fallback: return the first .ascii file that's not paperclip
+        for (const filepath of this.fileContents.keys()) {
+            if (filepath.endsWith('.ascii') && !filepath.endsWith('paperclip.ascii')) {
+                return filepath;
+            }
+        }
+
+        // Last resort: any .ascii file
         for (const filepath of this.fileContents.keys()) {
             if (filepath.endsWith('.ascii')) {
                 return filepath;
@@ -320,6 +363,7 @@ class AsciiSyncServer {
     }
 
     stop() {
+        stopPaperclipPoller();
         if (this.watcher) {
             this.watcher.close();
         }

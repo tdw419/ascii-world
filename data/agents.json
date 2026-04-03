@@ -2561,5 +2561,93 @@
     "lastHeartbeat": null,
     "config": {},
     "createdAt": "2026-04-01T18:25:44.570Z"
+  },
+  {
+    "id": "a953f17a-8e9b-4f50-adbd-8c9d5044809d",
+    "name": "sdk-agent-null",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.318Z"
+  },
+  {
+    "id": "c035f995-bf1f-4c2f-9ace-3691e6aa9b77",
+    "name": "sdk-agent-claim",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.320Z"
+  },
+  {
+    "id": "0ed20ba2-06e6-4798-a927-acae4f8f2f4b",
+    "name": "sdk-agent-complete",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.325Z"
+  },
+  {
+    "id": "469d521e-778e-4621-8731-a8a46169c476",
+    "name": "sdk-agent-nullres",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.328Z"
+  },
+  {
+    "id": "f90ef683-80e0-48a9-8a78-2f1e64eff6fe",
+    "name": "sdk-agent-fail",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.333Z"
+  },
+  {
+    "id": "eb95727e-3bb9-4745-b071-5004ca69dd30",
+    "name": "sdk-agent-lifecycle",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.338Z"
+  },
+  {
+    "id": "d056ee99-7b73-44b5-989d-b16b3a4858f1",
+    "name": "sdk-agent-failflow",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.341Z"
+  },
+  {
+    "id": "ed1e8551-2dd2-4dc7-9f33-f31034d40dac",
+    "name": "sdk-agent-producer",
+    "status": "offline",
+    "capabilities": [
+      "tasks"
+    ],
+    "lastHeartbeat": null,
+    "config": {},
+    "createdAt": "2026-04-01T18:30:05.343Z"
   }
 ]

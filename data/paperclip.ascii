@@ -1,0 +1,72 @@
+╔══════════════════════════════════════════════════════════════╗
+║  PAPERCLIP — GlyphLang                      ver:6af495ea  ║
+╠══════════════════════════════════════════════════════════════╣
+║  [<] Prev  [>] Next  ►GlyphLang   tdw419  ║
+╠══════════════════════════════════════════════════════════════╣
+║  [1] Dashboard  [2] Agents  [3] Issues  [4] Projects  [R] Refresh  ║
+╠══════════════════════════════════════════════════════════════╣
+║  Server ● online  v0.3.1  2026-04-03 16:47:31                ║
+║                                                              ║
+║  ┌─ Overview ──────────────────────────────────────────────┐   ║
+║  │  Agents:  1 active    0 running    0 paused    │   ║
+║  │  Issues:  1 open      0 active      8 done      │   ║
+║  │  Cost:   $    0.00 / $    0.00                  │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                                                              ║
+║  ┌─ Agents ────────────────────────────────────────────────┐   ║
+║  │  Key  Role        Name         Status      Adapter      │   ║
+║  │  ───  ──────────  ───────────  ──────────  ───────────  │   ║
+║  │  [A]  ceo          CEO           ○ idle       hermes_local  │   ║
+║  │  [B]  engineer     GPUEngineer   ◉ error      hermes_local  │   ║
+║  │                                                          │   ║
+║  │  [W] Wake CEO     [P] Pause All     [X] Refresh          │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                                                              ║
+║  ┌─ Issues ────────────────────────────────────────────────┐   ║
+║  │  ID        Pri  Status     Title                        │   ║
+║  │  ────────  ───  ─────────  ──────────────────────────   │   ║
+║  │  GLY-6      →   ✓ done      5.1: Verify all Go packag…  │   ║
+║  │  GLY-2      ↑   ✓ done      3.3: Add experiment resul…  │   ║
+║  │  GLY-3      ↑   ✓ done      4.1: Wire glyph run --gpu…  │   ║
+║  │  GLY-1      ↑   ✓ done      016: GPU Shader Optimizat…  │   ║
+║  │  GLY-9      →   ○ todo      Optimize parse (currently…  │   ║
+║  │  GLY-8      →   ✓ done      Optimize parser (currentl…  │   ║
+║  │  GLY-7      →   ✓ done      5.2: ExperimentLoop produ…  │   ║
+║  │  GLY-5      →   ✓ done      4.3: Test with examples/h…  │   ║
+║  │  ... and 1 more                                          │   ║
+║  │                                                          │   ║
+║  │  [N] New Issue   [E] Execute   [S] Start   [D] Done Next  │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                                                              ║
+║  ┌─ Projects ──────────────────────────────────────────────┐   ║
+║  │  GlyphLang Compiler & GPU  ◐ in_progress                 │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                                                              ║
+║  ┌─ OpenSpec Changes ─────────────────────────────────────┐   ║
+║  │  Change                       Done/Total  Pending  Flr │   ║
+║  │  ────────────────────────────  ─────────  ──────  ─── │   ║
+║  │  015-gpu-developer-experience   4/ 4  ██████████       0    0 │   ║
+║  │  016-gpu-shader-optimization   13/16  ████████░░       3    0 │   ║
+║  │  017-recursive-feedback-loop    0/ 0  ░░░░░░░░░░       0    0 │   ║
+║  │                                                          │   ║
+║  │  [E] Execute Step  [O] Wake CEO to Scan                  │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                                                              ║
+║  ┌─ Benchmarks (last: 2026-04-03 16:44:29 sha:afb0804) ──┐   ║
+║  │  Pipeline            Avg      Min      Max    Trend     │   ║
+║  │  ──────────          ─────    ─────    ─────  ─────     │   ║
+║  │  standard_compile     3.0us   2.0us  88.0us   ▲50%   │   ║
+║  │  ssa_compile_wgsl     3.0us   1.0us 505.0us    -     │   ║
+║  │  parse                2.0us   1.0us 222.0us    ~     │   ║
+║  │  ssa_build            2.0us   1.0us  93.0us    ~     │   ║
+║  │  ssa_compile_cpu      0.0us   0.0us   4.0us    -     │   ║
+║  │  ssa_pass_const_fold   0.0us   0.0us   1.0us    -     │   ║
+║  │                                                          │   ║
+║  │  Slowest: standard_compile                           │   ║
+║  │                                                          │   ║
+║  │  [B] Run Bench   [T] Strategist   [F] Full Cycle        │   ║
+║  └──────────────────────────────────────────────────────────┘   ║
+║                                                              ║
+╠══════════════════════════════════════════════════════════════╣
+║  Actions: Click buttons above  |  Auto-refresh every 5s      ║
+╚══════════════════════════════════════════════════════════════╝
